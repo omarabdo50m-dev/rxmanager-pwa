@@ -16,7 +16,12 @@
 // ═══════════════════════════════════════════════════════════════
 
 const SHELL_VERSION = 'v2';
-const CACHE_NAME    = 'rxmanager-shell-' + SHELL_VERSION;
+const CACHE_NAME = 'rxmanager-v1';
+const PRECACHE_URLS = [
+  '/rxmanager-pwa/',
+  '/rxmanager-pwa/index.html',
+  '/rxmanager-pwa/manifest.json',
+];
 const CDN_CACHE     = 'rxmanager-cdn-v1';
 
 // Files that make up the app shell — cached on first install.
