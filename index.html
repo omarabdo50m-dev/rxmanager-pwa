@@ -4560,14 +4560,66 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .lightbox-toolbar{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);flex-shrink:0;z-index:10}
 .lightbox-counter{color:rgba(255,255,255,.75);font-size:13px;font-weight:700}
 .lightbox-toolbar-actions{display:flex;gap:8px}
-.lb-btn{background:rgba(255,255,255,.12);border:none;color: var(--color-text-inverse);width:38px;height:38px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:.15s}
+.lb-btn{background:rgba(255,255,255,.12);border:none;color:#fff;width:38px;height:38px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:.15s}
 .lb-btn:active{background:rgba(255,255,255,.25)}
 .lightbox-stage{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;touch-action:none}
 .lightbox-stage img{max-width:100%;max-height:100%;object-fit:contain;user-select:none;-webkit-user-select:none;will-change:transform}
-.lightbox-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.12);border:none;color: var(--color-text-inverse);font-size:24px;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;z-index:5}
-.lightbox-nav:active{background:rgba(255,255,255,.25)}
+/* prev/next: dark filled circle with white icon — always visible on any image colour */
+.lightbox-nav{
+  position:absolute;top:50%;transform:translateY(-50%);
+  background:rgba(0,0,0,.55);
+  border:2px solid rgba(255,255,255,.70);
+  color:#fff;
+  font-size:26px;width:48px;height:48px;border-radius:50%;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .15s;z-index:5;
+  box-shadow:0 2px 12px rgba(0,0,0,.5);
+  -webkit-tap-highlight-color:transparent;
+}
+.lightbox-nav:active{background:rgba(0,0,0,.80)}
 .lightbox-nav.prev{left:10px}
 .lightbox-nav.next{right:10px}
+/* Bottom bar — caption + dot navigation */
+.lightbox-bottom{
+  flex-shrink:0;
+  background:rgba(0,0,0,.70);
+  backdrop-filter:blur(10px);
+  padding:10px 16px 14px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+  min-height:52px;
+}
+.lightbox-caption{
+  font-size:13px;
+  font-weight:600;
+  color:#fff;
+  text-align:center;
+  line-height:1.4;
+  max-width:320px;
+  min-height:18px;
+  /* Always rendered — empty string hides it visually without shifting layout */
+}
+.lightbox-dots{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+.lightbox-dot{
+  width:7px;height:7px;
+  border-radius:50%;
+  background:rgba(255,255,255,.35);
+  border:none;padding:0;cursor:pointer;
+  transition:background .2s, transform .2s;
+  flex-shrink:0;
+}
+.lightbox-dot.active{
+  background:#fff;
+  transform:scale(1.3);
+}
 
 /* ── v18: PRODUCT TABLE ─────────────── */
 .product-table-wrap{overflow-x:auto;border-radius:var(--radius-sm);border:1px solid var(--border);margin-top:8px}
@@ -7022,6 +7074,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 
 /* ── Admin-managed gallery strip — Phase X ──────────────── */
 .cv-gallery-section {
+  margin-top: var(--space-4);
   margin-bottom: var(--space-3);
 }
 .cv-gallery-label {
@@ -7041,8 +7094,11 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   overflow-x: auto;
   padding: 0 var(--space-4) var(--space-3);
   scroll-snap-type: x mandatory;
+  scroll-padding-left: var(--space-4);
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
 }
 .cv-gallery-strip::-webkit-scrollbar { display: none; }
 .cv-gallery-thumb {
@@ -8091,6 +8147,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 
 <!-- LIGHTBOX -->
 <div class="lightbox-overlay" id="lightboxOverlay">
+  <!-- Top toolbar: counter + actions -->
   <div class="lightbox-toolbar">
     <span class="lightbox-counter" id="lightboxCounter"></span>
     <div class="lightbox-toolbar-actions">
@@ -8098,10 +8155,16 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
       <button class="lb-btn" onclick="closeLightbox()" title="Close"><i class="ph ph-x" style="font-size:16px"></i></button>
     </div>
   </div>
+  <!-- Image stage with prev/next overlaid -->
   <div class="lightbox-stage" id="lightboxStage">
     <img id="lightboxImg" src="" alt="" draggable="false"/>
     <button class="lightbox-nav prev" id="lbPrev" onclick="lightboxNav(-1)">‹</button>
     <button class="lightbox-nav next" id="lbNext" onclick="lightboxNav(1)">›</button>
+  </div>
+  <!-- Bottom bar: caption + dot strip -->
+  <div class="lightbox-bottom" id="lightboxBottom">
+    <div class="lightbox-caption" id="lightboxCaption"></div>
+    <div class="lightbox-dots" id="lightboxDots"></div>
   </div>
 </div>
 
@@ -12405,23 +12468,16 @@ function renderConditionViewer(data) {
       Clinical Images
     </div>
     <div class="cv-gallery-strip" id="cvGalleryStrip">
-      ${_galleryImages.map((img, i) => {
-        // Only apply Supabase image transform params to Supabase storage URLs.
-        // External URLs (e.g. Google, Wikipedia) must be used as-is — appending
-        // ?width=...&resize=cover breaks them entirely.
-        const thumbSrc = img.url && img.url.includes('/storage/v1/object/public/')
-          ? img.url + '?width=240&height=180&resize=cover'
-          : img.url;
-        return `
+      ${_galleryImages.map((img, i) => `
         <div class="cv-gallery-thumb" onclick="cvGalleryView(${i})">
           <img
-            src="${esc(thumbSrc)}"
+            src="${esc(img.url + '?width=240&height=180&resize=cover')}"
             alt="${esc(img.caption || 'Clinical image ' + (i + 1))}"
             loading="lazy"
           />
           ${img.caption ? `<div class="cv-gallery-caption">${esc(img.caption)}</div>` : ''}
-        </div>`;
-      }).join('')}
+        </div>
+      `).join('')}
     </div>
   </div>`;
   }
@@ -13088,7 +13144,7 @@ function setCvTab(tab, animate) {
     // Ignore touches that originate on interactive children that need
     // their own horizontal scroll (chip strips, combo pickers, etc.)
     const target = e.target;
-    if (target.closest('.cv-iter-tabs-scroll,.combo-search-inp,.cv-age-toggle,.modal-overlay,.lightbox-overlay,.dv-calc-inp-p12')) return;
+    if (target.closest('.cv-iter-tabs-scroll,.combo-search-inp,.cv-age-toggle,.modal-overlay,.lightbox-overlay,.dv-calc-inp-p12,.cv-gallery-strip')) return;
 
     const t = e.touches[0];
     _touch = {
@@ -13297,20 +13353,26 @@ function cvToggleInlineNotesEdit() {
 
 
 /* ── LIGHTBOX — full-screen image viewer ──────────────────────────────── */
+// _lbPhotos: array of { url, caption } objects
 let _lbPhotos = [];
+// Stub — overwritten by initLightboxGestures IIFE below
+function _lbZoomReset() {}
 let _lbIdx    = 0;
 let _lbCtx    = 'cv';
 
 function openLightbox(idx, readonly = false) {
-  _lbIdx = idx || 0;
+  _lbIdx = Math.max(0, Math.min(idx || 0, _lbPhotos.length - 1));
   const overlay = document.getElementById('lightboxOverlay');
   if (!overlay) return;
   overlay.classList.add('open');
+  // Reset zoom on open
+  _lbZoomReset();
   _lbRender();
 }
 
 function closeLightbox() {
   document.getElementById('lightboxOverlay')?.classList.remove('open');
+  _lbZoomReset();
 }
 
 function _lbRender() {
@@ -13318,12 +13380,39 @@ function _lbRender() {
   const counter = document.getElementById('lightboxCounter');
   const prev    = document.getElementById('lbPrev');
   const next    = document.getElementById('lbNext');
+  const captEl  = document.getElementById('lightboxCaption');
+  const dotsEl  = document.getElementById('lightboxDots');
   if (!img) return;
-  const src = _lbPhotos[_lbIdx];
-  img.src = typeof src === 'string' ? src : '';
-  if (counter) counter.textContent = _lbPhotos.length > 1 ? `${_lbIdx + 1} / ${_lbPhotos.length}` : '';
-  if (prev) prev.style.display = _lbIdx > 0 ? '' : 'none';
-  if (next) next.style.display = _lbIdx < _lbPhotos.length - 1 ? '' : 'none';
+
+  const entry   = _lbPhotos[_lbIdx] || {};
+  const src     = typeof entry === 'string' ? entry : (entry.url || '');
+  const caption = typeof entry === 'string' ? '' : (entry.caption || '');
+  const total   = _lbPhotos.length;
+
+  img.src = src;
+  _lbZoomReset();
+
+  // Counter (top toolbar)
+  if (counter) counter.textContent = total > 1 ? `${_lbIdx + 1} / ${total}` : '';
+
+  // Prev / Next buttons
+  if (prev) prev.style.display = _lbIdx > 0       ? '' : 'none';
+  if (next) next.style.display = _lbIdx < total-1 ? '' : 'none';
+
+  // Caption — always rendered, empty string = invisible but no layout shift
+  if (captEl) captEl.textContent = caption;
+
+  // Dot strip — show only when >1 image
+  if (dotsEl) {
+    if (total > 1) {
+      dotsEl.innerHTML = _lbPhotos.map((_, i) =>
+        `<button class="lightbox-dot${i === _lbIdx ? ' active' : ''}"
+          onclick="lightboxNav(${i - _lbIdx})" aria-label="Image ${i+1}"></button>`
+      ).join('');
+    } else {
+      dotsEl.innerHTML = '';
+    }
+  }
 }
 
 function lightboxNav(dir) {
@@ -13334,7 +13423,8 @@ function lightboxNav(dir) {
 }
 
 function lightboxDownload() {
-  const src = _lbPhotos[_lbIdx];
+  const entry = _lbPhotos[_lbIdx];
+  const src   = typeof entry === 'string' ? entry : (entry?.url || '');
   if (!src) return;
   const a = document.createElement('a');
   a.href = src;
@@ -13354,11 +13444,198 @@ function cvGalleryView(idx) {
     ? condition.images.filter(img => img.is_published)
     : [];
   if (!images[idx]) return;
-  // Map to URL strings the lightbox expects (full-size, no transform params)
-  _lbPhotos = images.map(img => img.url);
+  // Store full {url, caption} objects
+  _lbPhotos = images.map(img => ({ url: img.url, caption: img.caption || '' }));
   _lbCtx = 'cv';
-  openLightbox(idx, true);  // readonly = true
+  openLightbox(idx, true);
 }
+
+// ─────────────────────────────────────────────────────────────────
+// LIGHTBOX PINCH-ZOOM + DOUBLE-TAP-ZOOM + SWIPE-TO-NAVIGATE
+// ─────────────────────────────────────────────────────────────────
+(function initLightboxGestures() {
+  // ── Zoom state ──────────────────────────────────────────────────
+  let _scale     = 1;
+  let _originX   = 0;   // transform origin within image (px, relative to img centre)
+  let _originY   = 0;
+  let _translateX = 0;
+  let _translateY = 0;
+  const MIN_SCALE = 1;
+  const MAX_SCALE = 5;
+
+  function _applyZoom() {
+    const img = document.getElementById('lightboxImg');
+    if (!img) return;
+    img.style.transformOrigin = '0 0';
+    img.style.transform =
+      `translate(${_translateX}px, ${_translateY}px) scale(${_scale})`;
+  }
+
+  function _lbZoomResetInternal() {
+    _scale = 1; _translateX = 0; _translateY = 0; _originX = 0; _originY = 0;
+    const img = document.getElementById('lightboxImg');
+    if (img) { img.style.transform = ''; img.style.transformOrigin = ''; }
+  }
+
+  // exposed globally so _lbRender can call it
+  window._lbZoomReset = _lbZoomResetInternal;
+
+  // ── Pinch helpers ──────────────────────────────────────────────
+  function _pinchDist(touches) {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx*dx + dy*dy);
+  }
+  function _pinchMid(touches, rect) {
+    return {
+      x: ((touches[0].clientX + touches[1].clientX) / 2) - rect.left,
+      y: ((touches[0].clientY + touches[1].clientY) / 2) - rect.top,
+    };
+  }
+
+  // ── Touch state ────────────────────────────────────────────────
+  let _t         = null;  // single-touch: { x0, y0, t0 }
+  let _pinch     = null;  // two-finger:   { dist0, scale0, mid, tx0, ty0 }
+  let _lastTap   = 0;     // for double-tap detection
+  let _panning   = false; // true when dragging a zoomed image
+
+  const SWIPE_PX  = 40;
+  const SWIPE_VEL = 0.2;
+  const DBL_TAP_MS = 300;
+  const DBL_TAP_PX = 30;
+  let _tapX0 = 0, _tapY0 = 0;
+
+  function _onStart(e) {
+    if (e.touches.length === 2) {
+      // Pinch start
+      e.preventDefault();
+      const stage = document.getElementById('lightboxStage');
+      const rect  = stage ? stage.getBoundingClientRect() : { left:0, top:0 };
+      const mid   = _pinchMid(e.touches, rect);
+      _pinch = {
+        dist0:  _pinchDist(e.touches),
+        scale0: _scale,
+        mid,
+        tx0: _translateX,
+        ty0: _translateY,
+      };
+      _t = null;
+      return;
+    }
+    if (e.touches.length === 1) {
+      const t = e.touches[0];
+      _t = { x0: t.clientX, y0: t.clientY, t0: Date.now(),
+             tx0: _translateX, ty0: _translateY };
+      _tapX0 = t.clientX; _tapY0 = t.clientY;
+      _panning = _scale > 1;
+      _pinch = null;
+    }
+  }
+
+  function _onMove(e) {
+    if (e.touches.length === 2 && _pinch) {
+      e.preventDefault();
+      const stage = document.getElementById('lightboxStage');
+      const rect  = stage ? stage.getBoundingClientRect() : { left:0, top:0 };
+      const dist  = _pinchDist(e.touches);
+      const mid   = _pinchMid(e.touches, rect);
+      let newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE,
+                      _pinch.scale0 * (dist / _pinch.dist0)));
+
+      // Scale around pinch midpoint
+      const img = document.getElementById('lightboxImg');
+      if (img) {
+        const iw = img.offsetWidth  * _pinch.scale0;
+        const ih = img.offsetHeight * _pinch.scale0;
+        // shift in translate coords
+        const sx = (mid.x - rect.width/2)  - _pinch.mid.x + rect.width/2;
+        const sy = (mid.y - rect.height/2) - _pinch.mid.y + rect.height/2;
+        const ratio = newScale / _pinch.scale0;
+        _translateX = _pinch.tx0 * ratio + sx * (1 - ratio) + (mid.x - _pinch.mid.x);
+        _translateY = _pinch.ty0 * ratio + sy * (1 - ratio) + (mid.y - _pinch.mid.y);
+      }
+      _scale = newScale;
+      _applyZoom();
+      return;
+    }
+    if (e.touches.length === 1 && _t) {
+      if (_panning && _scale > 1) {
+        // Pan zoomed image
+        e.preventDefault();
+        const t = e.touches[0];
+        _translateX = _t.tx0 + (t.clientX - _t.x0);
+        _translateY = _t.ty0 + (t.clientY - _t.y0);
+        _applyZoom();
+      }
+      // If not panning zoomed image, let scroll happen naturally (for swipe detection)
+    }
+  }
+
+  function _onEnd(e) {
+    if (_pinch) {
+      // Snap back to min scale if too small
+      if (_scale <= 1.05) _lbZoomResetInternal();
+      _pinch = null;
+      _t = null;
+      return;
+    }
+    if (!_t) return;
+
+    const touch = e.changedTouches[0];
+    const dx  = touch.clientX - _t.x0;
+    const dy  = touch.clientY - _t.y0;
+    const dt  = Math.max(1, Date.now() - _t.t0);
+    const adx = Math.abs(dx), ady = Math.abs(dy);
+    const now = Date.now();
+
+    // Double-tap to zoom/reset
+    const tapDist = Math.sqrt(
+      (touch.clientX - _tapX0)**2 + (touch.clientY - _tapY0)**2
+    );
+    if (adx < 12 && ady < 12 && dt < 250) {
+      if (now - _lastTap < DBL_TAP_MS && tapDist < DBL_TAP_PX) {
+        // Double tap
+        if (_scale > 1) {
+          _lbZoomResetInternal();
+        } else {
+          // Zoom to 2.5× centred on tap point
+          const stage = document.getElementById('lightboxStage');
+          const img   = document.getElementById('lightboxImg');
+          if (stage && img) {
+            const sr = stage.getBoundingClientRect();
+            const tapX = touch.clientX - sr.left - sr.width / 2;
+            const tapY = touch.clientY - sr.top  - sr.height / 2;
+            _scale = 2.5;
+            _translateX = -tapX * (_scale - 1);
+            _translateY = -tapY * (_scale - 1);
+            _applyZoom();
+          }
+        }
+        _lastTap = 0;
+        _t = null;
+        return;
+      }
+      _lastTap = now;
+    }
+
+    // Swipe to navigate (only when not zoomed)
+    if (_scale <= 1 && adx > ady && (adx > SWIPE_PX || adx/dt > SWIPE_VEL)) {
+      lightboxNav(dx < 0 ? 1 : -1);
+    }
+
+    _t = null;
+  }
+
+  function _onCancel() { _t = null; _pinch = null; }
+
+  const stage = document.getElementById('lightboxStage');
+  if (stage) {
+    stage.addEventListener('touchstart',  _onStart,  { passive: true });
+    stage.addEventListener('touchmove',   _onMove,   { passive: false });
+    stage.addEventListener('touchend',    _onEnd,    { passive: true });
+    stage.addEventListener('touchcancel', _onCancel, { passive: true });
+  }
+}());
 
 // ── Compatibility shim: old openViewer → new openConditionViewer ─────────────
 // The main list rx-cards still call openViewer(id) for IndexedDB entries.
