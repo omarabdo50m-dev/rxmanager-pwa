@@ -15,8 +15,8 @@
 // The activate handler will delete the old cache automatically.
 // ═══════════════════════════════════════════════════════════════
 
-const SHELL_VERSION = 'v4';
-const CACHE_NAME = 'rxmanager-shell-v4';
+const SHELL_VERSION = 'v5';
+const CACHE_NAME = 'rxmanager-shell-v5';
 const PRECACHE_URLS = [
   '/rxmanager-pwa/',
   '/rxmanager-pwa/index.html',
@@ -51,13 +51,18 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('[SW] Caching app shell');
-        // addAll fails if any single URL fails — use individual adds
-        // with catch so a missing icon doesn't abort the install
+        // Use fetch with cache:'no-store' so the install always gets the
+        // live file, not a stale HTTP-cached copy. cache.add() would use
+        // the HTTP cache and could store an outdated index.html.
         return Promise.allSettled(
           SHELL_URLS.map(url =>
-            cache.add(url).catch(err =>
-              console.warn('[SW] Could not cache', url, err)
-            )
+            fetch(url, { cache: 'no-store' })
+              .then(res => {
+                if (res.ok) return cache.put(url, res);
+              })
+              .catch(err =>
+                console.warn('[SW] Could not cache', url, err)
+              )
           )
         );
       })
@@ -145,11 +150,13 @@ self.addEventListener('fetch', event => {
   //   These never change between app versions and don't need freshness.
 
   if (event.request.mode === 'navigate') {
-    // HTML navigate: network-first so mobile PWA always gets latest index.html
+    // HTML navigate: network-first, bypassing the HTTP cache entirely.
+    // Without cache:'no-store', fetch() inside a SW can still return a
+    // browser HTTP-cached copy — defeating the whole point.
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'no-store' })
         .then(response => {
-          // Cache the fresh response for offline fallback
+          // Store fresh copy in SW cache for offline fallback
           if (response.ok && response.type === 'basic') {
             const clone = response.clone();
             caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
@@ -157,7 +164,7 @@ self.addEventListener('fetch', event => {
           return response;
         })
         .catch(() => {
-          // Offline — serve cached shell
+          // Offline — serve SW-cached shell
           return caches.match(event.request)
             .then(cached => cached || caches.match('/rxmanager-pwa/index.html'));
         })
