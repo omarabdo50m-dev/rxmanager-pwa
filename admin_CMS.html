@@ -2552,6 +2552,9 @@ function _checkGatePassword() {
         <button class="an-tab" data-tab="coverage" onclick="analyticsShowTab('coverage')">
           <i class="ph ph-chart-pie-slice"></i> Coverage
         </button>
+        <button class="an-tab" data-tab="usage" onclick="analyticsShowTab('usage')">
+          <i class="ph ph-trend-up"></i> Usage
+        </button>
       </div>
 
       <div id="analytics-content" style="padding:var(--space-5);max-width:780px">
@@ -2980,6 +2983,14 @@ async function analyticsLoad() {
     if (!res.ok) throw new Error('HTTP ' + res.status + ' — is the service key set?');
     const rows = await res.json();
 
+    // ── 1b. Fetch analytics_events (last 30 days) ───────────────
+    const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const evRes = await fetch(
+      `${SB.URL}/rest/v1/analytics_events?created_at=gte.${since30d}&order=created_at.desc&limit=5000`,
+      { headers: SB._headers() }
+    );
+    const usageEvents = evRes.ok ? await evRes.json() : [];
+
     // ── 2. Compute search gap tallies ───────────────────────────
     const drugRows = rows.filter(r => r.app_version !== 'condition-search');
     const condRows = rows.filter(r => r.app_version === 'condition-search');
@@ -2998,7 +3009,7 @@ async function analyticsLoad() {
 
     _analyticsCache = {
       drugEntries, condEntries, drugRows, condRows,
-      health, rows, loadedAt: new Date(),
+      health, rows, usageEvents, loadedAt: new Date(),
     };
 
     document.getElementById('btn-export-csv')?.style.setProperty('display', '');
@@ -3075,6 +3086,7 @@ function _analyticsRenderCurrentTab() {
   if (_analyticsTab === 'health')   _analyticsRenderHealth(c.health);
   if (_analyticsTab === 'gaps')     _analyticsRenderGaps(c.drugEntries, c.condEntries, c.drugRows.length, c.condRows.length, c.rows.length);
   if (_analyticsTab === 'coverage') _analyticsRenderCoverage(c.health);
+  if (_analyticsTab === 'usage')    _analyticsRenderUsage(c.usageEvents || []);
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -3446,6 +3458,125 @@ function _analyticsRenderCoverage(h) {
           </div>
           <div class="health-bar-pct" style="color:var(--color-brand)">${count}</div>
         </div>`).join('')}
+    </div>`;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 4: USAGE  (analytics_events — last 30 days)
+// ─────────────────────────────────────────────────────────────────
+function _analyticsRenderUsage(events) {
+  const container = document.getElementById('analytics-content');
+
+  if (!events.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <i class="ph ph-trend-up" style="font-size:32px;color:var(--color-text-tertiary)"></i>
+        <p style="color:var(--color-text-tertiary);margin-top:8px;font-size:13px">
+          No usage events in the last 30 days.<br>
+          Make sure the <code>analytics_events</code> table exists and RLS allows anon reads.
+        </p>
+      </div>`;
+    return;
+  }
+
+  const byType = (type) => events.filter(e => e.event_type === type);
+  const condViews    = byType('condition_view');
+  const condSearches = byType('condition_search');
+  const drugViews    = byType('drug_view');
+  const drugSearches = byType('drug_search');
+
+  function topN(arr, key, n = 8) {
+    const counts = {};
+    arr.forEach(e => { const k = e[key] || '—'; counts[k] = (counts[k] || 0) + 1; });
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, n);
+  }
+  function topSpecialties(arr, n = 8) {
+    const counts = {};
+    arr.forEach(e => { const k = e.specialty || 'Unknown'; counts[k] = (counts[k] || 0) + 1; });
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, n);
+  }
+
+  function sparkBar(arr) {
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      days.push(d.toISOString().slice(0, 10));
+    }
+    const counts = {};
+    arr.forEach(e => { const day = (e.created_at || '').slice(0, 10); counts[day] = (counts[day] || 0) + 1; });
+    const vals = days.map(d => counts[d] || 0);
+    const max  = Math.max(...vals, 1);
+    const bars = vals.map((v, i) => {
+      const h = Math.max(Math.round((v / max) * 28), v > 0 ? 3 : 1);
+      return `<div title="${days[i]}: ${v}" style="width:9px;height:${h}px;border-radius:2px 2px 0 0;background:${i===6?'var(--color-brand)':'var(--color-brand-light)'};align-self:flex-end;flex-shrink:0"></div>`;
+    }).join('');
+    return `<div style="display:flex;align-items:flex-end;gap:3px;height:30px;margin-top:6px">${bars}</div>`;
+  }
+
+  function statCard(icon, label, count, color) {
+    return `<div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:14px 16px;display:flex;align-items:center;gap:12px;min-width:0">
+      <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:${color}22;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <i class="ph ${icon}" style="font-size:18px;color:${color}"></i>
+      </div>
+      <div style="min-width:0">
+        <div style="font-size:var(--text-xl-size);font-weight:800;color:var(--color-text-primary);line-height:1.1">${count.toLocaleString()}</div>
+        <div style="font-size:var(--text-xs-size);color:var(--color-text-tertiary);margin-top:2px;white-space:nowrap">${label}</div>
+      </div>
+    </div>`;
+  }
+
+  function topList(entries, emptyMsg) {
+    if (!entries.length) return `<div style="color:var(--color-text-tertiary);font-size:13px;padding:12px 0">${emptyMsg}</div>`;
+    const maxVal = entries[0][1];
+    return entries.map(([name, count], i) => {
+      const pct = Math.round((count / maxVal) * 100);
+      return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--color-border)">
+        <div style="width:18px;text-align:right;font-size:11px;font-weight:700;color:var(--color-text-tertiary);flex-shrink:0">${i + 1}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:var(--color-text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(name)}">${esc(name)}</div>
+          <div style="height:4px;background:var(--color-surface-2);border-radius:2px;margin-top:4px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:var(--color-brand);border-radius:2px"></div>
+          </div>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--color-brand);flex-shrink:0">${count}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function section(title, icon, color, sparkArr, listHtml) {
+    return `<div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px 18px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <i class="ph ${icon}" style="font-size:16px;color:${color}"></i>
+          <span style="font-size:var(--text-sm-size);font-weight:700;color:var(--color-text-primary)">${title}</span>
+        </div>
+        ${sparkBar(sparkArr)}
+      </div>
+      ${listHtml}
+    </div>`;
+  }
+
+  const topCondViewed   = topN(condViews,    'entity_name');
+  const topCondSearched = topN(condSearches, 'query');
+  const topDrugViewed   = topN(drugViews,    'entity_name');
+  const topDrugSearched = topN(drugSearches, 'query');
+  const topSpecs        = topSpecialties(condViews);
+  const ts = _analyticsCache.loadedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  container.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:18px">
+      ${statCard('ph-file-text',            'Condition views',    condViews.length,    'var(--color-brand)')}
+      ${statCard('ph-magnifying-glass',     'Condition searches', condSearches.length, 'var(--color-info)')}
+      ${statCard('ph-pill',                 'Drug views',         drugViews.length,    'var(--color-safe)')}
+      ${statCard('ph-magnifying-glass-plus','Drug searches',      drugSearches.length, 'var(--color-caution)')}
+    </div>
+    ${section('Top Viewed Conditions',   'ph-file-text',             'var(--color-brand)',      condViews,    topList(topCondViewed,   'No condition view events yet'))}
+    ${section('Top Searched Conditions', 'ph-magnifying-glass',      'var(--color-info)',       condSearches, topList(topCondSearched, 'No condition search events yet'))}
+    ${section('Top Viewed Drugs',        'ph-pill',                  'var(--color-safe)',       drugViews,    topList(topDrugViewed,   'No drug view events yet'))}
+    ${section('Top Searched Drugs',      'ph-magnifying-glass-plus', 'var(--color-caution)',    drugSearches, topList(topDrugSearched, 'No drug search events yet'))}
+    ${section('Most Visited Specialties','ph-stethoscope',           'var(--color-brand-dark)', condViews,    topList(topSpecs,        'No specialty data yet'))}
+    <div style="font-size:11px;color:var(--color-text-tertiary);text-align:right;margin-top:4px">
+      Last 30 days &middot; ${events.length.toLocaleString()} events &middot; loaded at ${ts}
     </div>`;
 }
 
