@@ -1631,6 +1631,8 @@ const _GATE_HASH = btoa('rxadmin2025');
 (function() {
   if (sessionStorage.getItem('rxadmin_gate') === _GATE_HASH) {
     document.getElementById('pwd-gate').style.display = 'none';
+    // Gate already passed in this session — boot immediately
+    window.addEventListener('DOMContentLoaded', () => boot());
     return;
   }
   window.addEventListener('DOMContentLoaded', () => {
@@ -1647,6 +1649,7 @@ function _checkGatePassword() {
     gate.style.opacity = '0';
     gate.style.transition = 'opacity .3s ease';
     setTimeout(() => gate.remove(), 320);
+    boot();
   } else {
     error.textContent = 'Incorrect password';
     input.style.borderColor = '#EF4444';
@@ -6314,7 +6317,7 @@ async function specDelete(id, name) {
 
 
 
-boot();
+
 
 /* ══════════════════════════════════════════════════════════════
    PHASE D — DRUG LIBRARY
