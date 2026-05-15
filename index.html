@@ -7878,6 +7878,15 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 /* ── END PHASE 13 CSS ──────────────────────────────────── */
 
 </style>
+
+<!-- ── Phase 21: Google Analytics 4 ─────────────────────────── -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-B9NF65FT9Y"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-B9NF65FT9Y');
+</script>
 </head>
 <body>
 
@@ -11691,6 +11700,14 @@ function _updateCvTabStripTop() {
 
 async function openConditionViewer(conditionId) {
   _cvCurrentConditionId = conditionId;
+  // ── Phase 21: track condition open ───────────────────────────────────
+  const _trackCond = _CONDITIONS.find(c => c.id === conditionId);
+  if (_trackCond) {
+    _trackEvent('Condition Viewed', {
+      condition: _trackCond.name || conditionId,
+      specialty: _trackCond.specialty || 'Unknown',
+    });
+  }
   _cvAdultData = null;
   _cvPaedsData = null;
   _cvCurrentAge = 'adult';
@@ -13886,6 +13903,8 @@ async function renderLib() {
         ${suggestions ? `<div style="background:var(--color-caution-light);border:1px solid rgba(217,119,6,.3);border-radius:10px;padding:10px 14px;font-size:13px;text-align:left"><span style="font-weight:800;color:var(--color-caution)">Did you mean?</span><br/><span style="line-height:2">${suggestions}</span></div>` : ''}
       </div>`;
     } else {
+      // ── Phase 21: log zero-result search ──────────────────────────────
+      if (q.length > 2) _trackEvent('Search Zero Results', { query: q });
       cont.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No results</div><div class="empty-body">No brand, generic, group or clinical match for "<strong>${esc(q)}</strong>"</div></div>`;
     }
     return;
@@ -14374,6 +14393,14 @@ async function openDrugViewer(id) {
   if (!id) { openDrugEditor(null); return; }
   await ensureSearchIndex(); // Phase 05: ensure drug → condition links resolve correctly
   _dvCurrentId = id;
+  // ── Phase 21: track drug open ─────────────────────────────────────────
+  const _trackDrug = _LIB ? _LIB.find(d => d.id === id) : null;
+  if (_trackDrug) {
+    _trackEvent('Drug Viewed', {
+      drug: _trackDrug.name || id,
+      group: _trackDrug.group || _trackDrug.type || 'Unknown',
+    });
+  }
   const [drug, allProds, allLib] = await Promise.all([
     DB.get('library', id),
     DB.getAll('products'),
@@ -15917,6 +15944,19 @@ async function _checkIdbHealth() {
   }
 }
 /* ══ END PHASE 02 HELPER ════════════════════════════════════════ */
+
+// ── Phase 21: Analytics helper ───────────────────────────────────────────────
+// Wraps gtag() safely — no-ops if GA4 hasn't loaded (offline, adblocker).
+// Never throws. Analytics must never affect app behaviour.
+function _trackEvent(name, props) {
+  try {
+    if (typeof gtag === 'function') {
+      gtag('event', name, props || {});
+    }
+  } catch(e) {
+    // Silently swallow
+  }
+}
 
 async function init() {
   performance.mark('init-start');
