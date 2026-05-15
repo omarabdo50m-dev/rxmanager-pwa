@@ -10181,13 +10181,12 @@ async function renderFavourites() {
   const condList   = document.getElementById('favDiseasesList');
   const condCount  = document.getElementById('favDiseasesCount');
   if (condList) {
-    const condItems = favConditionIds
-      .map(id => {
-        const cond = _CONDITIONS.find(c => c.id === id);
-        if (!cond) return null; // condition unpublished or deleted — skip it
-        return { id, name: cond.name, spec: cond.specialty || '' };
-      })
-      .filter(Boolean); // remove nulls (unpublished/deleted conditions)
+    const condItems = favConditionIds.map(id => {
+      const cond = _CONDITIONS.find(c => c.id === id);
+      const name = cond?.name || id;
+      const spec = cond?.specialty || '';
+      return { id, name, spec };
+    });
     if (condCount) condCount.textContent = condItems.length;
     if (!condItems.length) {
       condList.innerHTML = `<div class="fav-empty">
@@ -11149,11 +11148,13 @@ function _resolveRpcItem(item) {
   const formula = product.formula  || '';
   const conc    = product.conc     || '';
 
-  // Resolve alternatives (same shape, recursive)
+  // Resolve alternatives — each alt from the RPC is a full {_type, drug, product, generic}
+  // object, so we resolve recursively. Flat legacy shapes are handled as fallback.
   const resolvedAlts = (pd.alternatives || []).map(alt => {
-    // Alternatives inside the RPC payload come pre-attached as minimal objects
-    // with the same fields as a prescription_drugs row. We use the generic lookup
-    // from the parent item since alternatives share the same condition context.
+    if (!alt) return null;
+    if (alt.drug || alt.product || alt.generic) {
+      return _resolveRpcItem(alt);
+    }
     return {
       ...alt,
       _type:            'drug',
@@ -11165,7 +11166,7 @@ function _resolveRpcItem(item) {
       resolvedSubgroup: alt.subgroup      || alt.resolvedSubgroup || '',
       alternatives: [],
     };
-  });
+  }).filter(Boolean);
 
   return {
     ...pd,
