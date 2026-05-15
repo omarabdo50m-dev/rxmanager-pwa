@@ -3118,10 +3118,13 @@ function _analyticsRenderHealth(h) {
     const more = hidden.length;
     const uid = 'il_' + (++_issueListId);
     function row(item) {
+      // Build the onclick — each edit function needs its panel navigated to first
+      const navMap = { condEdit: 'conditions', drugEdit: 'drugs', prescriptionEdit: 'prescriptions' };
+      const nav = navFn && navMap[navFn] ? "navTo('" + navMap[navFn] + "');" : '';
       return '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid var(--color-border)">'
         + '<i class="ph ph-warning" style="color:var(--color-caution);font-size:11px;flex-shrink:0"></i>'
         + '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">' + esc(item.name || item.iteration_label || item.id) + '</span>'
-        + (navFn ? '<button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:10px" onclick="' + navFn + '(\'' + item.id + '\')">Edit</button>' : '')
+        + (navFn ? '<button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:10px" onclick="' + nav + navFn + '(\'' + item.id + '\')">Edit</button>' : '')
         + '</div>';
     }
     let html = '<div style="font-size:12px;color:var(--color-text-secondary);margin-top:4px">'
