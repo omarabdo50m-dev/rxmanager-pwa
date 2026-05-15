@@ -11431,18 +11431,22 @@ function renderMain() {
     // 3. Online but no conditions published yet → admin guidance
     let emptyHtml;
     if (q) {
-      // ── Phase 22: log zero-result condition search ───────────────────
+      // ── Phase 22: log zero-result condition search (debounced 500ms) ────
+      // Prevents keystroke spam — "gastri","gastrit","gastritis" → 1 log entry
       if (q.length > 2) {
-        _trackEvent('Condition Search Zero Results', { query: q });
-        fetch(SB.URL + '/rest/v1/failed_searches', {
-          method: 'POST',
-          headers: {
-            'apikey':        SB.ANON_KEY,
-            'Authorization': 'Bearer ' + SB.ANON_KEY,
-            'Content-Type':  'application/json',
-          },
-          body: JSON.stringify({ query: q, app_version: 'condition-search' }),
-        }).catch(() => {});
+        clearTimeout(_condFailedLogTimer);
+        _condFailedLogTimer = setTimeout(() => {
+          _trackEvent('Condition Search Zero Results', { query: q });
+          fetch(SB.URL + '/rest/v1/failed_searches', {
+            method: 'POST',
+            headers: {
+              'apikey':        SB.ANON_KEY,
+              'Authorization': 'Bearer ' + SB.ANON_KEY,
+              'Content-Type':  'application/json',
+            },
+            body: JSON.stringify({ query: q, app_version: 'condition-search' }),
+          }).catch(() => {});
+        }, 500);
       }
       emptyHtml = `<div class="empty-state">
         <div class="empty-icon"><i class="ph ph-magnifying-glass"></i></div>
@@ -13838,6 +13842,11 @@ function setLibCat(c) {
 
 // 250ms debounced wrapper for lib search — avoids hitting DB on every keystroke
 let _libSearchTimer;
+// ── Phase 22 fix: debounce timers for failed-search logging ──────────────────
+// The UI renders on every keystroke (fast), but we only log once the user
+// stops typing for 500ms — so "gastritis" logs once, not g/ga/gas/gast/…
+let _condFailedLogTimer = null;
+let _libFailedLogTimer  = null;
 function debouncedRenderLib() {
   clearTimeout(_libSearchTimer);
   _libSearchTimer = setTimeout(renderLib, 250);
@@ -13916,19 +13925,22 @@ async function renderLib() {
         ${suggestions ? `<div style="background:var(--color-caution-light);border:1px solid rgba(217,119,6,.3);border-radius:10px;padding:10px 14px;font-size:13px;text-align:left"><span style="font-weight:800;color:var(--color-caution)">Did you mean?</span><br/><span style="line-height:2">${suggestions}</span></div>` : ''}
       </div>`;
     } else {
-      // ── Phase 21: GA4 event ───────────────────────────────────────────
-      if (q.length > 2) _trackEvent('Search Zero Results', { query: q });
-      // ── Phase 22: log to Supabase failed_searches table ───────────────
+      // ── Phase 21 + 22: log zero-result drug search (debounced 500ms) ───
+      // Prevents keystroke spam — "gastri","gastrit","gastritis" → 1 log entry
       if (q.length > 2) {
-        fetch(SB.URL + '/rest/v1/failed_searches', {
-          method: 'POST',
-          headers: {
-            'apikey':        SB.ANON_KEY,
-            'Authorization': 'Bearer ' + SB.ANON_KEY,
-            'Content-Type':  'application/json',
-          },
-          body: JSON.stringify({ query: q }),
-        }).catch(() => {}); // fire-and-forget — never blocks UI
+        clearTimeout(_libFailedLogTimer);
+        _libFailedLogTimer = setTimeout(() => {
+          _trackEvent('Search Zero Results', { query: q });
+          fetch(SB.URL + '/rest/v1/failed_searches', {
+            method: 'POST',
+            headers: {
+              'apikey':        SB.ANON_KEY,
+              'Authorization': 'Bearer ' + SB.ANON_KEY,
+              'Content-Type':  'application/json',
+            },
+            body: JSON.stringify({ query: q }),
+          }).catch(() => {}); // fire-and-forget — never blocks UI
+        }, 500);
       }
       cont.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No results</div><div class="empty-body">No brand, generic, group or clinical match for "<strong>${esc(q)}</strong>"</div></div>`;
     }
