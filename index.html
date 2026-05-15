@@ -12405,16 +12405,23 @@ function renderConditionViewer(data) {
       Clinical Images
     </div>
     <div class="cv-gallery-strip" id="cvGalleryStrip">
-      ${_galleryImages.map((img, i) => `
+      ${_galleryImages.map((img, i) => {
+        // Only apply Supabase image transform params to Supabase storage URLs.
+        // External URLs (e.g. Google, Wikipedia) must be used as-is — appending
+        // ?width=...&resize=cover breaks them entirely.
+        const thumbSrc = img.url && img.url.includes('/storage/v1/object/public/')
+          ? img.url + '?width=240&height=180&resize=cover'
+          : img.url;
+        return `
         <div class="cv-gallery-thumb" onclick="cvGalleryView(${i})">
           <img
-            src="${esc(img.url + '?width=240&height=180&resize=cover')}"
+            src="${esc(thumbSrc)}"
             alt="${esc(img.caption || 'Clinical image ' + (i + 1))}"
             loading="lazy"
           />
           ${img.caption ? `<div class="cv-gallery-caption">${esc(img.caption)}</div>` : ''}
-        </div>
-      `).join('')}
+        </div>`;
+      }).join('')}
     </div>
   </div>`;
   }
