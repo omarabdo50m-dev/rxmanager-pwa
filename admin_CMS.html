@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<!-- RxAdmin v2.3 | cache-bust: force fresh load via ?v= query param -->
+<!-- RxAdmin v2.4 | cache-bust: force fresh load via ?v= query param -->
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <script>
-// ── Cache-bust: if no ?v= param (or wrong version), redirect to ?v=2.3
+// ── Cache-bust: if no ?v= param (or wrong version), redirect to ?v=2.4
 // so the browser always fetches the latest file instead of a stale cache.
 (function() {
-  var CURRENT = '2.3';
+  var CURRENT = '2.4';
   var params = new URLSearchParams(window.location.search);
   if (params.get('v') !== CURRENT) {
     params.set('v', CURRENT);
@@ -1701,7 +1701,7 @@ function _checkGatePassword() {
       <div class="header-brand-icon"><i class="ph-fill ph-pill"></i></div>
       RxAdmin
       <span class="header-brand-sub">CMS</span>
-      <span style="font-size:var(--text-xs-size);font-weight:700;color:var(--color-text-tertiary);background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-full);padding:1px 7px;margin-left:var(--space-1)">v1.7</span>
+      <span style="font-size:var(--text-xs-size);font-weight:700;color:var(--color-text-tertiary);background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-full);padding:1px 7px;margin-left:var(--space-1)">v2.4</span>
     </div>
     <div class="header-actions">
       <div class="header-status">
@@ -4584,7 +4584,11 @@ async function condPhotosSave() {
   if (!_condEditId) return;
   const sorted = _condImages.map((img, i) => ({ ...img, sort_order: i }));
   _condImages = sorted;
-  await autoSave('conditions', _condEditId, 'images', JSON.stringify(sorted));
+  // Send as a native array — the column is jsonb, NOT text.
+  // Wrapping in JSON.stringify() causes double-encoding: the DB stores a
+  // JSON string instead of a JSON array, so the app reads typeof=string
+  // and Array.isArray() fails → photos never render in the app.
+  await autoSave('conditions', _condEditId, 'images', sorted);
 }
 
 // Render the photo list from _condImages
