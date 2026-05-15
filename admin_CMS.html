@@ -1,9 +1,21 @@
 <!DOCTYPE html>
-<!-- RxAdmin v2.2 | D4: New Drug (INSERT+open edit), Delete Drug (typed confirm + cascade products), navTo drugs fix -->
+<!-- RxAdmin v2.3 | cache-bust: force fresh load via ?v= query param -->
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<script>
+// ── Cache-bust: if no ?v= param (or wrong version), redirect to ?v=2.3
+// so the browser always fetches the latest file instead of a stale cache.
+(function() {
+  var CURRENT = '2.3';
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('v') !== CURRENT) {
+    params.set('v', CURRENT);
+    window.location.replace(window.location.pathname + '?' + params.toString());
+  }
+})();
+</script>
 <title>RxAdmin v1.7 — CMS</title>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet"/>
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js"></script>
