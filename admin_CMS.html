@@ -3245,7 +3245,7 @@ function _analyticsRenderHealth(h) {
           Prescriptions missing Source
           <span class="badge ${h.rxMissingSource.length ? 'badge-red' : 'badge-green'}" style="margin-left:auto">${h.rxMissingSource.length}</span>
         </div>
-        ${issueList(h.rxMissingSource, 'prescription', null)}
+        ${issueList(h.rxMissingSource, 'prescription', 'prescriptionEdit')}
         <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:6px">Required before publishing per Phase 17</div>
       </div>
 
@@ -3256,7 +3256,7 @@ function _analyticsRenderHealth(h) {
           Prescriptions missing Reviewer
           <span class="badge ${h.rxMissingReviewer.length ? 'badge-red' : 'badge-green'}" style="margin-left:auto">${h.rxMissingReviewer.length}</span>
         </div>
-        ${issueList(h.rxMissingReviewer, 'prescription', null)}
+        ${issueList(h.rxMissingReviewer, 'prescription', 'prescriptionEdit')}
         <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:6px">Required before publishing per Phase 20</div>
       </div>
 
