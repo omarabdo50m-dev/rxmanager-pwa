@@ -2832,7 +2832,6 @@ function _checkGatePassword() {
    RXADMIN — PHASE A: SUPABASE BOOTSTRAP + SHARED UTILITIES
    ══════════════════════════════════════════════════════════════ */
 
-/* ── SUPABASE CONFIG ─────────────────────────────────────────── */
 /* ── IMAGE COMPRESSION ───────────────────────────────────────────────────────
    Resizes to max 1920px on the longest side, outputs JPEG at 0.85 quality.
    Runs entirely in the browser — no server round-trip before upload.          */
@@ -2865,7 +2864,8 @@ function compressImage(file) {
   });
 }
 
-
+/* ── SUPABASE CONFIG ─────────────────────────────────────────── */
+const SB = {
   URL:      'https://rihqsaxfgzsmsgqdutcs.supabase.co',
   ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpaHFzYXhmZ3pzbXNncWR1dGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5OTI3ODQsImV4cCI6MjA5MzU2ODc4NH0.NscGszMVaqNvJx6X8N-0RMZsGFrBxyYxJWlI4M1e8-s',
 
