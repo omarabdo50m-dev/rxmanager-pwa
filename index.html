@@ -11503,18 +11503,12 @@ function renderMain() {
     // 3. Online but no conditions published yet → admin guidance
     let emptyHtml;
     if (q) {
-      // ── Phase 22: log zero-result condition search ───────────────────
+      // ── Phase 22: log zero-result condition search (debounced) ───────
+      // Only log after user pauses typing — avoids partial-keystroke spam
+      // e.g. "g","ga","gas","gast","gastr","gastri","gastrit" → just "gastritis"
       if (q.length > 2) {
         _trackEvent('Condition Search Zero Results', { query: q });
-        fetch(SB.URL + '/rest/v1/failed_searches', {
-          method: 'POST',
-          headers: {
-            'apikey':        SB.ANON_KEY,
-            'Authorization': 'Bearer ' + SB.ANON_KEY,
-            'Content-Type':  'application/json',
-          },
-          body: JSON.stringify({ query: q, app_version: 'condition-search' }),
-        }).catch(() => {});
+        _scheduleCondFailedLog(q);
       }
       emptyHtml = `<div class="empty-state">
         <div class="empty-icon"><i class="ph ph-magnifying-glass"></i></div>
@@ -13922,6 +13916,41 @@ function debouncedRenderPicker() {
   _pickerSearchTimer = setTimeout(renderPicker, 150);
 }
 
+// 500ms debounced failed-search loggers — fire only after user pauses typing.
+// The render functions run immediately on every keystroke (snappy UI);
+// these only write to Supabase once the query has settled.
+let _condFailedLogTimer;
+function _scheduleCondFailedLog(q) {
+  clearTimeout(_condFailedLogTimer);
+  _condFailedLogTimer = setTimeout(() => {
+    fetch(SB.URL + '/rest/v1/failed_searches', {
+      method: 'POST',
+      headers: {
+        'apikey':        SB.ANON_KEY,
+        'Authorization': 'Bearer ' + SB.ANON_KEY,
+        'Content-Type':  'application/json',
+      },
+      body: JSON.stringify({ query: q, app_version: 'condition-search' }),
+    }).catch(() => {});
+  }, 500);
+}
+
+let _libFailedLogTimer;
+function _scheduleLibFailedLog(q) {
+  clearTimeout(_libFailedLogTimer);
+  _libFailedLogTimer = setTimeout(() => {
+    fetch(SB.URL + '/rest/v1/failed_searches', {
+      method: 'POST',
+      headers: {
+        'apikey':        SB.ANON_KEY,
+        'Authorization': 'Bearer ' + SB.ANON_KEY,
+        'Content-Type':  'application/json',
+      },
+      body: JSON.stringify({ query: q }),
+    }).catch(() => {});
+  }, 500);
+}
+
 async function renderLib() {
   renderLibCats();
   const q = (document.getElementById('libSearch')?.value || '').toLowerCase().trim();
@@ -13990,18 +14019,10 @@ async function renderLib() {
     } else {
       // ── Phase 21: GA4 event ───────────────────────────────────────────
       if (q.length > 2) _trackEvent('Search Zero Results', { query: q });
-      // ── Phase 22: log to Supabase failed_searches table ───────────────
-      if (q.length > 2) {
-        fetch(SB.URL + '/rest/v1/failed_searches', {
-          method: 'POST',
-          headers: {
-            'apikey':        SB.ANON_KEY,
-            'Authorization': 'Bearer ' + SB.ANON_KEY,
-            'Content-Type':  'application/json',
-          },
-          body: JSON.stringify({ query: q }),
-        }).catch(() => {}); // fire-and-forget — never blocks UI
-      }
+      // ── Phase 22: log to Supabase failed_searches table (debounced) ──
+      // Separate debounce timer from the render so UI stays instant but
+      // only one clean query (not every partial keystroke) gets recorded.
+      if (q.length > 2) _scheduleLibFailedLog(q);
       cont.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No results</div><div class="empty-body">No brand, generic, group or clinical match for "<strong>${esc(q)}</strong>"</div></div>`;
     }
     return;
