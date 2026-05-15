@@ -10839,6 +10839,13 @@ async function _rxReadCache(conditionId) {
 // ── Phase 1: Cache Staleness Gate (async version for Phase 6B) ──────────────
 const RX_CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
+// ── Session-level rx_cache invalidation ──────────────────────────────────────
+// Set to Date.now() by checkContentVersion() whenever a conditions_ts change is
+// detected and fresh data is fetched. Any IDB rx_cache entry written BEFORE this
+// timestamp is treated as stale regardless of TTL, forcing a network re-fetch.
+// Resets to 0 on every app launch (session-scoped — no persistence needed).
+let _rxCacheInvalidatedAt = 0;
+
 // Returns true if the IDB payload for conditionId is fresh enough to skip a
 // network fetch. Must be awaited — IDB read is always async.
 async function _rxCacheIsFresh(conditionId) {
@@ -10997,6 +11004,7 @@ async function checkContentVersion() {
           _condNetworkStatus = 'online';
           _setOfflineIndicator(false);
           localStorage.setItem(VERSION_KEY_CONDITIONS, remoteCondV);
+          _rxCacheInvalidatedAt = Date.now(); // invalidate TTL gate for this session
           console.log('checkContentVersion: bulk fetch complete — rx_cache warmed for', _CONDITIONS.length, 'conditions');
           // Re-render home screen so any name/specialty changes show immediately
           renderMain();
@@ -11009,6 +11017,7 @@ async function checkContentVersion() {
           await _condRevalidate();
           if (_condNetworkStatus === 'online') {
             localStorage.setItem(VERSION_KEY_CONDITIONS, remoteCondV);
+            _rxCacheInvalidatedAt = Date.now(); // invalidate TTL gate for this session
           }
         }
       } else {
@@ -11018,6 +11027,7 @@ async function checkContentVersion() {
         await _condRevalidate();
         if (_condNetworkStatus === 'online') {
           localStorage.setItem(VERSION_KEY_CONDITIONS, remoteCondV);
+          _rxCacheInvalidatedAt = Date.now(); // invalidate TTL gate for this session
         }
       }
     }
@@ -11732,7 +11742,13 @@ async function openConditionViewer(conditionId) {
   // Evaluate freshness from the single IDB read (no second round-trip)
   const _cacheTs    = _rxCached?.ts || 0;
   const _cacheAge   = Date.now() - _cacheTs;
-  const _cacheIsFresh = !!_rxCached && _cacheAge < RX_CACHE_TTL_MS;
+  // A cache entry is fresh only if:
+  //   1. It exists and is within TTL, AND
+  //   2. It was written AFTER the last content-version invalidation this session.
+  //      (_rxCacheInvalidatedAt = 0 on cold start → condition 2 always passes)
+  const _cacheIsFresh = !!_rxCached &&
+    _cacheAge < RX_CACHE_TTL_MS &&
+    _cacheTs > _rxCacheInvalidatedAt;
 
   // Resolve the in-memory condition row (always present for published conditions)
   const _condRow = _CONDITIONS.find(c => c.id === conditionId);
