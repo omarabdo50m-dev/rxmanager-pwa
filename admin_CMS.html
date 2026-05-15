@@ -1483,6 +1483,99 @@ input[dir=rtl], textarea[dir=rtl] {
   border-radius: var(--radius-full);
   background: var(--color-danger);
 }
+
+/* ── Condition photos grid (CMS) ──────────────────────────────── */
+.cond-photo-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.cond-photo-item:last-child { border-bottom: none; }
+.cond-photo-thumb {
+  width: 80px;
+  height: 60px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+}
+.cond-photo-thumb-err {
+  width: 80px;
+  height: 60px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-tertiary);
+  font-size: 22px;
+}
+.cond-photo-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.cond-photo-url-label {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cond-photo-caption-input {
+  font-size: var(--text-sm-size);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
+  font-family: var(--font);
+  width: 100%;
+  box-sizing: border-box;
+}
+.cond-photo-caption-input:focus {
+  outline: none;
+  border-color: var(--color-brand);
+}
+.cond-photo-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  width: fit-content;
+}
+.cond-photo-type-badge.upload {
+  background: var(--color-brand-light);
+  color: var(--color-brand);
+}
+.cond-photo-type-badge.url {
+  background: var(--color-surface-2);
+  color: var(--color-text-tertiary);
+  border: 1px solid var(--color-border);
+}
+.cond-photo-actions {
+  display: flex;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+.cond-photos-empty {
+  padding: var(--space-6);
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: var(--text-sm-size);
+}
 </style>
 </head>
 <body>
@@ -1892,6 +1985,51 @@ function _checkGatePassword() {
             </button>
           </div>
         </div>
+
+        </div>
+
+        <!-- PHOTOS SUB-SECTION -->
+        <div class="card" style="max-width:var(--admin-panel-max);margin-top:var(--space-4);padding:0;overflow:hidden" id="cond-photos-card">
+          <div class="collapsible-header open" onclick="toggleCollapsible(this)">
+            <h3><i class="ph ph-images"></i> Clinical Photos</h3>
+            <i class="ph ph-caret-right caret" style="transform:rotate(90deg)"></i>
+          </div>
+          <div class="collapsible-body open" id="cond-photos-body">
+
+            <!-- Add controls -->
+            <div style="display:flex;gap:var(--space-3);padding:var(--space-4) var(--space-5) var(--space-3);flex-wrap:wrap;align-items:flex-end;border-bottom:1px solid var(--color-border)">
+
+              <!-- Upload from device -->
+              <div style="flex:1;min-width:160px">
+                <div class="form-label" style="margin-bottom:var(--space-2)">Upload from device</div>
+                <label class="btn btn-ghost btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+                  <i class="ph ph-upload-simple"></i> Choose image
+                  <input type="file" accept="image/*" multiple style="display:none"
+                    onchange="condPhotosHandleUpload(this)"/>
+                </label>
+                <div id="cond-photos-upload-status" style="font-size:11px;color:var(--color-text-tertiary);margin-top:6px;min-height:16px"></div>
+              </div>
+
+              <!-- Paste URL -->
+              <div style="flex:2;min-width:220px">
+                <div class="form-label" style="margin-bottom:var(--space-2)">Or paste image URL</div>
+                <div style="display:flex;gap:var(--space-2)">
+                  <input type="url" id="cond-photo-url-input"
+                    placeholder="https://…/image.jpg"
+                    style="flex:1"
+                    onkeydown="if(event.key==='Enter')condPhotosAddUrl()"/>
+                  <button class="btn btn-ghost btn-sm" onclick="condPhotosAddUrl()">
+                    <i class="ph ph-plus"></i> Add
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Photo list -->
+            <div id="cond-photos-grid" style="padding:var(--space-2) var(--space-5) var(--space-4)"></div>
+
+          </div>
+        </div><!-- /photos card -->
 
       </div><!-- /cond-edit-view -->
     </div><!-- /panel-conditions -->
@@ -2680,7 +2818,39 @@ function _checkGatePassword() {
    ══════════════════════════════════════════════════════════════ */
 
 /* ── SUPABASE CONFIG ─────────────────────────────────────────── */
-const SB = {
+/* ── IMAGE COMPRESSION ───────────────────────────────────────────────────────
+   Resizes to max 1920px on the longest side, outputs JPEG at 0.85 quality.
+   Runs entirely in the browser — no server round-trip before upload.          */
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = e => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        const MAX = 1920;
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width >= height) { height = Math.round(height * MAX / width); width = MAX; }
+          else                  { width  = Math.round(width  * MAX / height); height = MAX; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width  = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        canvas.toBlob(blob => {
+          if (!blob) return reject(new Error('Compression failed'));
+          resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }));
+        }, 'image/jpeg', 0.85);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+
   URL:      'https://rihqsaxfgzsmsgqdutcs.supabase.co',
   ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpaHFzYXhmZ3pzbXNncWR1dGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5OTI3ODQsImV4cCI6MjA5MzU2ODc4NH0.NscGszMVaqNvJx6X8N-0RMZsGFrBxyYxJWlI4M1e8-s',
 
@@ -2810,6 +2980,53 @@ const SB = {
     if (!r.ok) throw new Error(`SB fetchOne ${table}#${id}: HTTP ${r.status}`);
     const rows = await r.json();
     return rows[0] ?? null;
+  },
+
+  // ── STORAGE: Upload a compressed image file, return public URL + storagePath ──
+  async uploadImage(conditionId, file) {
+    if (!this.SERVICE_KEY) {
+      this._writeHeaders(); // triggers the no-key banner
+      throw new Error('No service key');
+    }
+    const ext   = file.type === 'image/webp' ? 'webp'
+                : file.type === 'image/png'  ? 'png' : 'jpg';
+    const imgId = 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    const path  = `${conditionId}/${imgId}.${ext}`;
+    const uploadUrl = `${this.URL}/storage/v1/object/condition-images/${path}`;
+    const r = await fetch(uploadUrl, {
+      method:  'POST',
+      headers: {
+        'apikey':        this.SERVICE_KEY,
+        'Authorization': 'Bearer ' + this.SERVICE_KEY,
+        'Content-Type':  file.type,
+        'x-upsert':      'false',
+      },
+      body: file,
+    });
+    if (!r.ok) {
+      const txt = await r.text().catch(() => String(r.status));
+      throw new Error('Storage upload failed: ' + txt);
+    }
+    const publicUrl = `${this.URL}/storage/v1/object/public/condition-images/${path}`;
+    return { id: imgId, publicUrl, storagePath: `condition-images/${path}` };
+  },
+
+  // ── STORAGE: Delete a file by its full storagePath ───────────────────────────
+  async deleteImage(storagePath) {
+    if (!this.SERVICE_KEY) throw new Error('No service key');
+    const url = `${this.URL}/storage/v1/object/${storagePath}`;
+    const r = await fetch(url, {
+      method:  'DELETE',
+      headers: {
+        'apikey':        this.SERVICE_KEY,
+        'Authorization': 'Bearer ' + this.SERVICE_KEY,
+      },
+    });
+    if (!r.ok) {
+      const txt = await r.text().catch(() => String(r.status));
+      throw new Error('Storage delete failed: ' + txt);
+    }
+    return true;
   },
 };
 
@@ -4034,6 +4251,7 @@ document.addEventListener('DOMContentLoaded', updateKeyIndicator);
    ══════════════════════════════════════════════════════════════ */
 
 let _condEditId   = null;   // currently-editing condition id
+let _condImages   = [];     // images array for the currently-editing condition
 let _condFiltered = [];     // current filtered list
 
 /* ── LIST VIEW ───────────────────────────────────────────────── */
@@ -4207,6 +4425,9 @@ async function condEdit(id) {
   // Prescriptions sub-section
   condLoadPrescriptions(id);
 
+  // Photos sub-section
+  condPhotosLoad(c);
+
   // Scroll to top
   document.getElementById('app-main').scrollTop = 0;
 }
@@ -4331,6 +4552,179 @@ async function condLinkSibling(sibId) {
 async function condUnlinkSibling() {
   await condSave('sibling_id', null);
   condRenderSibling(null);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CONDITION PHOTOS
+   ══════════════════════════════════════════════════════════════ */
+
+// Load images from condition object into _condImages and render
+function condPhotosLoad(condition) {
+  try {
+    _condImages = Array.isArray(condition.images) ? condition.images.map(img => ({ ...img })) : [];
+  } catch { _condImages = []; }
+  condPhotosRender();
+}
+
+// Persist _condImages back to the conditions row
+async function condPhotosSave() {
+  if (!_condEditId) return;
+  const sorted = _condImages.map((img, i) => ({ ...img, sort_order: i }));
+  _condImages = sorted;
+  await autoSave('conditions', _condEditId, 'images', JSON.stringify(sorted));
+}
+
+// Render the photo list from _condImages
+function condPhotosRender() {
+  const grid = document.getElementById('cond-photos-grid');
+  if (!grid) return;
+  if (!_condImages.length) {
+    grid.innerHTML = `<div class="cond-photos-empty">
+      <i class="ph ph-images" style="font-size:32px;display:block;margin-bottom:8px;opacity:.4"></i>
+      No photos yet — upload a file or paste a URL above.
+    </div>`;
+    return;
+  }
+  grid.innerHTML = _condImages.map((img, i) => `
+    <div class="cond-photo-item" data-idx="${i}">
+      <img class="cond-photo-thumb"
+        src="${esc(img.url || '')}"
+        alt=""
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+      /><div class="cond-photo-thumb-err" style="display:none"><i class="ph ph-image-broken"></i></div>
+      <div class="cond-photo-meta">
+        <div style="display:flex;align-items:center;gap:var(--space-2)">
+          <span class="cond-photo-type-badge ${esc(img.type || 'url')}">
+            <i class="ph ${img.type === 'upload' ? 'ph-cloud-arrow-up' : 'ph-link'}"></i>
+            ${img.type === 'upload' ? 'Uploaded' : 'URL'}
+          </span>
+          <span class="cond-photo-url-label" title="${esc(img.url || '')}">${esc(img.url || '')}</span>
+        </div>
+        <input class="cond-photo-caption-input"
+          value="${esc(img.caption || '')}"
+          placeholder="Caption (optional — shown under photo in app)"
+          onblur="condPhotosUpdateCaption(${i}, this.value)"
+        />
+      </div>
+      <div class="cond-photo-actions">
+        <button class="btn btn-ghost btn-sm" title="Move up"
+          onclick="condPhotosMoveUp(${i})" ${i === 0 ? 'disabled' : ''}>
+          <i class="ph ph-arrow-up"></i>
+        </button>
+        <button class="btn btn-ghost btn-sm" title="Move down"
+          onclick="condPhotosMoveDown(${i})" ${i === _condImages.length - 1 ? 'disabled' : ''}>
+          <i class="ph ph-arrow-down"></i>
+        </button>
+        <button class="btn btn-danger btn-sm" title="Delete photo"
+          onclick="condPhotosDelete(${i})">
+          <i class="ph ph-trash"></i>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Handle device file upload: compress → upload to Storage → insert → save
+async function condPhotosHandleUpload(input) {
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
+  const status = document.getElementById('cond-photos-upload-status');
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    try {
+      status.textContent = `Compressing ${i + 1} of ${files.length}…`;
+      const compressed = await compressImage(file);
+      status.textContent = `Uploading ${i + 1} of ${files.length}…`;
+      const { id, publicUrl, storagePath } = await SB.uploadImage(_condEditId, compressed);
+      _condImages.push({
+        id,
+        url:         publicUrl,
+        storagePath: storagePath,
+        caption:     '',
+        sort_order:  _condImages.length,
+        type:        'upload',
+        is_published: true,
+      });
+      condPhotosRender();
+      await condPhotosSave();
+    } catch (e) {
+      toast('Upload failed: ' + e.message, 'error', 6000);
+    }
+  }
+  status.textContent = files.length > 1 ? `${files.length} photos added.` : 'Photo added.';
+  setTimeout(() => { status.textContent = ''; }, 3000);
+  input.value = '';
+}
+
+// Handle URL paste → add entry → save
+async function condPhotosAddUrl() {
+  const input = document.getElementById('cond-photo-url-input');
+  const url   = (input?.value || '').trim();
+  if (!url) { toast('Please enter a URL', 'error'); return; }
+  if (!url.startsWith('http')) { toast('URL must start with http', 'error'); return; }
+  const id = 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+  _condImages.push({
+    id,
+    url,
+    storagePath:  '',
+    caption:      '',
+    sort_order:   _condImages.length,
+    type:         'url',
+    is_published: true,
+  });
+  input.value = '';
+  condPhotosRender();
+  await condPhotosSave();
+  toast('Photo URL added', 'success');
+}
+
+// Update caption for image at index i on blur
+async function condPhotosUpdateCaption(i, value) {
+  if (!_condImages[i]) return;
+  _condImages[i].caption = value.trim();
+  await condPhotosSave();
+}
+
+// Move image up one position
+async function condPhotosMoveUp(i) {
+  if (i === 0) return;
+  [_condImages[i - 1], _condImages[i]] = [_condImages[i], _condImages[i - 1]];
+  condPhotosRender();
+  await condPhotosSave();
+}
+
+// Move image down one position
+async function condPhotosMoveDown(i) {
+  if (i >= _condImages.length - 1) return;
+  [_condImages[i], _condImages[i + 1]] = [_condImages[i + 1], _condImages[i]];
+  condPhotosRender();
+  await condPhotosSave();
+}
+
+// Delete image: remove from Storage if type=upload, then remove from array + save
+async function condPhotosDelete(i) {
+  const img = _condImages[i];
+  if (!img) return;
+  const ok = await showConfirm({
+    title:    'Delete photo?',
+    message:  'This will permanently remove the image. This cannot be undone.',
+    okLabel:  'Delete',
+    okClass:  'btn-danger',
+  });
+  if (!ok) return;
+  if (img.type === 'upload' && img.storagePath) {
+    try {
+      await SB.deleteImage(img.storagePath);
+    } catch (e) {
+      // Log but don't block — still remove from DB
+      console.warn('[condPhotosDelete] Storage delete warning:', e.message);
+      toast('Storage warning: ' + e.message + ' — removed from record anyway.', 'error', 5000);
+    }
+  }
+  _condImages.splice(i, 1);
+  condPhotosRender();
+  await condPhotosSave();
+  toast('Photo deleted', 'success');
 }
 
 /* ── IMAGE PREVIEW ───────────────────────────────────────────── */
@@ -4479,6 +4873,7 @@ async function condDelete() {
 /* ── BACK TO LIST ────────────────────────────────────────────── */
 function condBackToList() {
   _condEditId = null;
+  _condImages = [];
   document.getElementById('cond-edit-view').style.display = 'none';
   document.getElementById('cond-list-view').style.display  = '';
   condFilterList();

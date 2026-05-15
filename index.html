@@ -676,15 +676,6 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .cv-hdr-specialty-tag {
   border-color: rgba(0,0,0,.10);
 }
 
-/* ── 26. CV ADD PHOTO BUTTON — white on white ── */
-/* .cv-photos-add-label uses background:var(--color-bg) +
-   color:var(--color-text-inverse). In light mode the bg becomes
-   pale grey and the text becomes white — both invisible.
-   Override to a brand-colored button style. */
-[data-theme="light"] .cv-photos-add-label {
-  background: var(--color-brand);
-  color: #ffffff;
-}
 
 /* ── 27. LIB SELECT BAR — white text/buttons on light bg ── */
 /* .lib-select-bar uses background:var(--color-bg). In light mode
@@ -777,8 +768,6 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .cv-hdr-specialty-tag {
   html:not([data-theme="dark"]) .cv-scr-title { color: var(--color-text-primary); }
   /* Fix 25b — CV specialty pill */
   html:not([data-theme="dark"]) .cv-hdr-specialty-tag { color: var(--color-text-tertiary); background: rgba(0,0,0,.04); border-color: rgba(0,0,0,.07); }
-  /* Fix 26 — CV add photo button */
-  html:not([data-theme="dark"]) .cv-photos-add-label { background: var(--color-brand); color: #ffffff; }
   /* Fix 27 — lib select bar */
   html:not([data-theme="dark"]) .lib-select-bar { background: #1a2e42; }
   html:not([data-theme="dark"]) .lib-cancel-select-btn { background: rgba(255,255,255,.15); color: #E8EFF8; }
@@ -846,7 +835,7 @@ body { background: var(--color-bg); color: var(--color-text-primary); }
 }
 
 /* Info block, setting rows, fav items */
-.info-block, .dv-section, .cv-card, .cv-notes-card, .cv-photos-section,
+.info-block, .dv-section, .cv-card, .cv-notes-card,
 .fav-section, .s13a-card, .lib-drug-card, .drug-view-card,
 .drug-block, .overview-notes-block, .pk-cell, .ped-dose-block,
 .my-notes-block, .dv-collapsible, .cv-collapsible {
@@ -7030,73 +7019,66 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   word-break:break-word;
 }
 
-/* ── Photos section — Phase 10: clean grid ────────────────────── */
-.cv-photos-section {
-  margin:var(--space-3) var(--space-4) 0;
-  padding:var(--space-4);
-  background:var(--color-surface);
-  border:1px solid var(--color-border);
-  border-radius:var(--radius-md);
+
+/* ── Admin-managed gallery strip — Phase X ──────────────── */
+.cv-gallery-section {
+  margin-bottom: var(--space-3);
 }
-.cv-photos-header {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom:var(--space-3);
+.cv-gallery-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: 0 var(--space-4) var(--space-2);
 }
-.cv-photos-title {
-  display:flex;
-  align-items:center;
-  gap:var(--space-2);
-  font-size:var(--text-xs-size);
-  font-weight:800;
-  color:var(--color-text-tertiary);
-  text-transform:uppercase;
-  letter-spacing:.07em;
+.cv-gallery-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 0 var(--space-4) var(--space-3);
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
-.cv-photos-add-label {
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
-  padding:5px 12px;
-  background:var(--color-bg);
-  color:var(--color-text-inverse);
-  border-radius:var(--radius-sm);
-  font-size:var(--text-xs-size);
-  font-weight:700;
-  cursor:pointer;
-  font-family:var(--font);
-  transition:opacity .15s;
+.cv-gallery-strip::-webkit-scrollbar { display: none; }
+.cv-gallery-thumb {
+  flex-shrink: 0;
+  width: 120px;
+  height: 90px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  scroll-snap-align: start;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  transition: transform .15s, box-shadow .15s;
 }
-.cv-photos-add-label:active { opacity:.75; }
-.cv-photos-grid-inner {
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:var(--space-2);
+.cv-gallery-thumb:active { transform: scale(.96); }
+.cv-gallery-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
-.cv-photo-thumb {
-  aspect-ratio:1;
-  border-radius:var(--radius-sm);
-  overflow:hidden;
-  position:relative;
-  cursor:pointer;
-  background:var(--color-surface-2);
-  border:1px solid var(--color-border);
-}
-.cv-photo-thumb img {
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:block;
-  transition:transform .2s;
-}
-.cv-photo-thumb:active img { transform:scale(.96); }
-.cv-photos-empty {
-  font-size:var(--text-sm-size);
-  color:var(--color-text-tertiary);
-  font-style:italic;
-  padding:var(--space-2) 0 var(--space-3);
-  line-height:var(--text-sm-height);
+.cv-gallery-caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,.65));
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 12px 6px 5px;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Patient instructions */
@@ -7647,18 +7629,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   font-size:var(--text-sm-size); color:var(--color-text-tertiary);
   font-style:italic; padding:var(--space-2) 0;
 }
-/* Bottom-sheet photos grid — distinct from inline .cv-photos-grid-inner */
-.cv-photos-grid {
-  display:grid; grid-template-columns:repeat(3,1fr);
-  gap:var(--space-2); margin-bottom:var(--space-3);
-}
-/* Bottom-sheet photo thumb — distinct from inline .cv-photo-thumb */
-.cv-photos-grid .cv-photo-thumb {
-  aspect-ratio:1; border-radius:var(--radius-sm);
-  overflow:hidden; background:var(--color-surface-2);
-  border:1px solid var(--color-border);
-}
-.cv-photos-grid .cv-photo-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+
 .cv-photo-add-label {
   display:flex; align-items:center; justify-content:center;
   gap:var(--space-2); width:100%; padding:var(--space-3);
@@ -8116,19 +8087,6 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   </div>
 </div>
 
-<!-- CONDITION VIEWER — PHOTOS BOTTOM SHEET -->
-<div class="cv-sheet-overlay" id="cvPhotosSheet" onclick="cvCloseSheetOnOverlay(event,'cvPhotosSheet')">
-  <div class="cv-bottom-sheet">
-    <div class="cv-sheet-handle"></div>
-    <div class="cv-sheet-title">📷 Photos</div>
-    <div class="cv-photos-grid" id="cvPhotosGrid"></div>
-    <div id="cvPhotosEmpty" style="font-size:13px;color:var(--faint);font-style:italic;padding:8px 0 14px">No photos added yet — add ECGs, X-rays, or clinical images.</div>
-    <label class="cv-photo-add-label">
-      + Add Photo
-      <input type="file" accept="image/*" multiple style="display:none" onchange="cvHandlePhotoAdd(this)"/>
-    </label>
-  </div>
-</div>
 
 
 <!-- LIGHTBOX -->
@@ -8137,7 +8095,6 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
     <span class="lightbox-counter" id="lightboxCounter"></span>
     <div class="lightbox-toolbar-actions">
       <button class="lb-btn" id="lbDownloadBtn" onclick="lightboxDownload()" title="Download">⬇</button>
-      <button class="lb-btn" onclick="lightboxDelete()" title="Delete">🗑</button>
       <button class="lb-btn" onclick="closeLightbox()" title="Close"><i class="ph ph-x" style="font-size:16px"></i></button>
     </div>
   </div>
@@ -11750,7 +11707,6 @@ let _cvPaedsData = null;   // { condition, prescriptions } or null
 let _cvCurrentAge = 'adult';
 let _cvActiveTab = 'rx';   // 'rx' | 'clinical'
 let _cvNotesEditing = false;
-let _cvPhotos = [];
 // Phase 1: true when the current viewer was rendered from a fresh local cache
 // (no network call fired). Reset to false on every new openConditionViewer().
 let _cvDataFromCache = false;
@@ -12437,6 +12393,32 @@ function renderConditionViewer(data) {
     </div>`;
   }
 
+  // ── Admin-managed gallery strip — between Patient Instructions and My Notes ──
+  const _galleryImages = Array.isArray(condition.images)
+    ? condition.images.filter(img => img.is_published)
+    : [];
+  if (_galleryImages.length) {
+    rxHtml += `
+  <div class="cv-gallery-section">
+    <div class="cv-gallery-label">
+      <i class="ph ph-images" style="font-size:12px"></i>
+      Clinical Images
+    </div>
+    <div class="cv-gallery-strip" id="cvGalleryStrip">
+      ${_galleryImages.map((img, i) => `
+        <div class="cv-gallery-thumb" onclick="cvGalleryView(${i})">
+          <img
+            src="${esc(img.url + '?width=240&height=180&resize=cover')}"
+            alt="${esc(img.caption || 'Clinical image ' + (i + 1))}"
+            loading="lazy"
+          />
+          ${img.caption ? `<div class="cv-gallery-caption">${esc(img.caption)}</div>` : ''}
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+  }
+
   // ── My Notes — Phase 10: white card, dashed border ────────────────────
   rxHtml += `<div class="cv-section-lbl" style="margin-top:var(--space-2)">
     <i class="ph ph-note-pencil" style="font-size:12px"></i>
@@ -12460,26 +12442,6 @@ function renderConditionViewer(data) {
         placeholder="Clinical pearls, local protocol differences, personal observations…"
         style="width:100%;padding:10px 12px;border:1.5px solid var(--color-brand);border-radius:var(--radius-sm);font-size:14px;font-family:var(--font);outline:none;resize:vertical;min-height:100px;line-height:1.7;background:var(--color-surface);color:var(--color-text-primary);transition:.18s"></textarea>
     </div>
-  </div>
-
-  <div class="cv-section-lbl" style="margin-top:var(--space-2)">
-    <i class="ph ph-camera" style="font-size:12px"></i>
-    Photos
-  </div>
-  <div class="cv-photos-section">
-    <div class="cv-photos-header">
-      <div class="cv-photos-title">
-        <i class="ph ph-images" style="font-size:13px"></i>
-        Clinical images
-      </div>
-      <label class="cv-photos-add-label">
-        <i class="ph ph-plus" style="font-size:11px"></i>
-        Add Photo
-        <input type="file" accept="image/*" multiple style="display:none" onchange="cvHandlePhotoAdd(this)"/>
-      </label>
-    </div>
-    <div class="cv-photos-grid-inner" id="cvInlinePhotosGrid"></div>
-    <div id="cvInlinePhotosEmpty" class="cv-photos-empty">No photos yet — add ECGs, X-rays, or clinical images.</div>
   </div>`;
 
   // ── Phase 18: Disclaimer footer ─────────────────────────────────────
@@ -13264,16 +13226,11 @@ function _updateCvFavStar() {
 // ── Notes & Photos — localStorage per conditionId ────────────────────────────
 function _cvLoadLocalData(conditionId) {
   const notesKey = 'rxmgr_cond_notes_' + conditionId;
-  const photosKey = 'rxmgr_cond_photos_' + conditionId;
   const notesVal = localStorage.getItem(notesKey) || '';
   // Inline cards (rendered into cvBody by renderConditionViewer)
   // These may not exist yet if cvBody hasn't been injected — _cvRefreshInlineNotes
   // is called again after render via setCondAge/fetchConditionData.
   _cvRefreshInlineNotes(notesVal);
-  try {
-    _cvPhotos = JSON.parse(localStorage.getItem(photosKey) || '[]');
-  } catch { _cvPhotos = []; }
-  _cvRenderPhotos();
 }
 
 // Update the inline notes card in the Rx tab body
@@ -13331,44 +13288,69 @@ function cvToggleInlineNotesEdit() {
   }
 }
 
-function cvHandlePhotoAdd(input) {
-  const photosKey = 'rxmgr_cond_photos_' + _cvCurrentConditionId;
-  Array.from(input.files).forEach(f => {
-    const r = new FileReader();
-    r.onload = e => {
-      _cvPhotos.push(e.target.result);
-      localStorage.setItem(photosKey, JSON.stringify(_cvPhotos));
-      _cvRenderPhotos();
-    };
-    r.readAsDataURL(f);
-  });
-  input.value = '';
+
+/* ── LIGHTBOX — full-screen image viewer ──────────────────────────────── */
+let _lbPhotos = [];
+let _lbIdx    = 0;
+let _lbCtx    = 'cv';
+
+function openLightbox(idx, readonly = false) {
+  _lbIdx = idx || 0;
+  const overlay = document.getElementById('lightboxOverlay');
+  if (!overlay) return;
+  overlay.classList.add('open');
+  _lbRender();
 }
 
-function _cvRenderPhotos() {
-  // Inline grid in Rx tab — Phase 10 classes
-  const grid  = document.getElementById('cvInlinePhotosGrid');
-  const empty = document.getElementById('cvInlinePhotosEmpty');
-  if (!grid) return;
-  if (!_cvPhotos.length) {
-    if (empty) empty.style.display = 'block';
-    grid.innerHTML = '';
-    return;
-  }
-  if (empty) empty.style.display = 'none';
-  grid.innerHTML = _cvPhotos.map((src, i) =>
-    `<div class="cv-photo-thumb" onclick="cvViewPhoto(${i})"><img src="${src}" alt="Photo ${i+1}"/></div>`
-  ).join('');
+function closeLightbox() {
+  document.getElementById('lightboxOverlay')?.classList.remove('open');
 }
 
-function cvViewPhoto(idx) {
-  // Simple full-screen preview using the existing lightbox
-  const photos = _cvPhotos;
-  if (!photos[idx]) return;
-  // Reuse lightbox infrastructure
-  _lbPhotos = photos;
+function _lbRender() {
+  const img     = document.getElementById('lightboxImg');
+  const counter = document.getElementById('lightboxCounter');
+  const prev    = document.getElementById('lbPrev');
+  const next    = document.getElementById('lbNext');
+  if (!img) return;
+  const src = _lbPhotos[_lbIdx];
+  img.src = typeof src === 'string' ? src : '';
+  if (counter) counter.textContent = _lbPhotos.length > 1 ? `${_lbIdx + 1} / ${_lbPhotos.length}` : '';
+  if (prev) prev.style.display = _lbIdx > 0 ? '' : 'none';
+  if (next) next.style.display = _lbIdx < _lbPhotos.length - 1 ? '' : 'none';
+}
+
+function lightboxNav(dir) {
+  const next = _lbIdx + dir;
+  if (next < 0 || next >= _lbPhotos.length) return;
+  _lbIdx = next;
+  _lbRender();
+}
+
+function lightboxDownload() {
+  const src = _lbPhotos[_lbIdx];
+  if (!src) return;
+  const a = document.createElement('a');
+  a.href = src;
+  a.download = 'clinical-image-' + (_lbIdx + 1) + '.jpg';
+  a.target = '_blank';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+// Open the lightbox for admin-managed gallery images (readonly — no delete)
+function cvGalleryView(idx) {
+  const condition = (_cvAdultData?.condition) || (_cvPaedsData?.condition) || null;
+  if (!condition) return;
+  const images = Array.isArray(condition.images)
+    ? condition.images.filter(img => img.is_published)
+    : [];
+  if (!images[idx]) return;
+  // Map to URL strings the lightbox expects (full-size, no transform params)
+  _lbPhotos = images.map(img => img.url);
   _lbCtx = 'cv';
-  openLightbox(idx);
+  openLightbox(idx, true);  // readonly = true
 }
 
 // ── Compatibility shim: old openViewer → new openConditionViewer ─────────────
@@ -16175,6 +16157,18 @@ async function init() {
   // Must run before _migrateLibraryCacheToIDB() in case that function also
   // tries to iterate localStorage. Fast no-op when no legacy keys exist.
   _cleanupLegacyRxCacheKeys();
+
+  // ── One-time cleanup: remove old user-uploaded photo blobs from localStorage ─
+  // These are base64 strings that can be 2–5 MB each — free up space immediately.
+  (function cleanupOldPhotoKeys() {
+    const toDelete = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('rxmgr_cond_photos_')) toDelete.push(key);
+    }
+    toDelete.forEach(k => localStorage.removeItem(k));
+    if (toDelete.length) console.log(`[cleanup] Removed ${toDelete.length} old photo keys from localStorage`);
+  })();
 
   // ── Phase 6A/B: Migrate library blobs from localStorage → IndexedDB (one-time, silent)
   // Also promotes old localStorage rx cache entries to IDB and removes them.
