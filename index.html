@@ -10181,12 +10181,13 @@ async function renderFavourites() {
   const condList   = document.getElementById('favDiseasesList');
   const condCount  = document.getElementById('favDiseasesCount');
   if (condList) {
-    const condItems = favConditionIds.map(id => {
-      const cond = _CONDITIONS.find(c => c.id === id);
-      const name = cond?.name || id;
-      const spec = cond?.specialty || '';
-      return { id, name, spec };
-    });
+    const condItems = favConditionIds
+      .map(id => {
+        const cond = _CONDITIONS.find(c => c.id === id);
+        if (!cond) return null; // condition unpublished or deleted — skip it
+        return { id, name: cond.name, spec: cond.specialty || '' };
+      })
+      .filter(Boolean); // remove nulls (unpublished/deleted conditions)
     if (condCount) condCount.textContent = condItems.length;
     if (!condItems.length) {
       condList.innerHTML = `<div class="fav-empty">
