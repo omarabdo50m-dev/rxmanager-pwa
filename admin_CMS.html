@@ -1368,6 +1368,121 @@ input[dir=rtl], textarea[dir=rtl] {
   border-top: 1px solid var(--color-border);
   background: var(--color-surface-2);
 }
+
+/* ── ANALYTICS TABS ─────────────────────────────────────── */
+.an-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px var(--space-4);
+  font-size: var(--text-sm-size);
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: color .15s, border-color .15s;
+  white-space: nowrap;
+}
+.an-tab:hover { color: var(--color-text-primary); }
+.an-tab.active { color: var(--color-brand); border-bottom-color: var(--color-brand); }
+.an-tab i { font-size: 14px; }
+
+/* ── HEALTH METER BARS ──────────────────────────────────── */
+.health-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+}
+.health-bar-label {
+  font-size: var(--text-xs-size);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  min-width: 160px;
+  flex-shrink: 0;
+}
+.health-bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--color-surface-2);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+.health-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width .6s cubic-bezier(.4,0,.2,1);
+}
+.health-bar-pct {
+  font-size: var(--text-xs-size);
+  font-weight: 700;
+  min-width: 36px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── SCORE RING ─────────────────────────────────────────── */
+.score-ring-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+.score-ring-num {
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1;
+}
+.score-ring-label {
+  font-size: var(--text-xs-size);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--color-text-tertiary);
+}
+
+/* ── GAP ROW ────────────────────────────────────────────── */
+.gap-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.gap-row:last-child { border-bottom: none; }
+.gap-row-rank {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--color-text-tertiary);
+  min-width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.gap-row-query {
+  flex: 1;
+  font-size: var(--text-sm-size);
+  color: var(--color-text-primary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gap-row-bar {
+  width: 80px;
+  height: 6px;
+  background: var(--color-surface-2);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.gap-row-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--color-danger);
+}
 </style>
 </head>
 <body>
@@ -2406,6 +2521,14 @@ function _checkGatePassword() {
       <div class="panel-header">
         <div class="panel-title"><i class="ph ph-chart-bar"></i> Analytics</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:6px">
+            <label style="font-size:var(--text-xs-size);color:var(--color-text-tertiary);font-weight:600;white-space:nowrap">Failed searches:</label>
+            <select id="analytics-limit" style="font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);color:var(--color-text-primary);font-family:var(--font)">
+              <option value="200">Last 200</option>
+              <option value="500">Last 500</option>
+              <option value="1000">Last 1000</option>
+            </select>
+          </div>
           <button class="btn btn-ghost btn-sm" onclick="analyticsLoad()">
             <i class="ph ph-arrows-clockwise"></i> Refresh
           </button>
@@ -2417,7 +2540,21 @@ function _checkGatePassword() {
           </button>
         </div>
       </div>
-      <div id="analytics-content" style="padding:var(--space-4);max-width:680px">
+
+      <!-- TAB BAR -->
+      <div id="analytics-tabs" style="display:none;border-bottom:1px solid var(--color-border);padding:0 var(--space-6);display:flex;gap:0">
+        <button class="an-tab active" data-tab="health" onclick="analyticsShowTab('health')">
+          <i class="ph ph-heartbeat"></i> Content Health
+        </button>
+        <button class="an-tab" data-tab="gaps" onclick="analyticsShowTab('gaps')">
+          <i class="ph ph-magnifying-glass"></i> Search Gaps
+        </button>
+        <button class="an-tab" data-tab="coverage" onclick="analyticsShowTab('coverage')">
+          <i class="ph ph-chart-pie-slice"></i> Coverage
+        </button>
+      </div>
+
+      <div id="analytics-content" style="padding:var(--space-5);max-width:780px">
         <div class="empty-state">
           <i class="ph ph-chart-bar" style="font-size:32px;color:var(--color-text-tertiary)"></i>
           <p style="color:var(--color-text-tertiary);margin-top:8px">Click Refresh to load data</p>
@@ -2798,133 +2935,526 @@ function closeConfirm() {
 let _currentSection = 'home';
 
 /* ── ANALYTICS ───────────────────────────────────────────────── */
-// ── Analytics: exported data store (populated by analyticsLoad) ──────────────
-let _analyticsCache = null;
+/* ══════════════════════════════════════════════════════════════
+   PHASE 24 — ANALYTICS DASHBOARD
+   Three tabs: Content Health · Search Gaps · Coverage
+   ══════════════════════════════════════════════════════════════ */
 
+let _analyticsCache = null;
+let _analyticsTab   = 'health';
+
+// ── Tab switcher ────────────────────────────────────────────────
+function analyticsShowTab(tab) {
+  _analyticsTab = tab;
+  document.querySelectorAll('.an-tab').forEach(el => {
+    el.classList.toggle('active', el.dataset.tab === tab);
+  });
+  if (!_analyticsCache) return;
+  _analyticsRenderCurrentTab();
+}
+
+// ── Main loader ─────────────────────────────────────────────────
 async function analyticsLoad() {
   const container = document.getElementById('analytics-content');
+  const tabBar    = document.getElementById('analytics-tabs');
   if (!container) return;
 
-  document.getElementById('btn-export-csv')?.style.setProperty('display','none');
-  document.getElementById('btn-export-prompt')?.style.setProperty('display','none');
+  document.getElementById('btn-export-csv')?.style.setProperty('display', 'none');
+  document.getElementById('btn-export-prompt')?.style.setProperty('display', 'none');
+  if (tabBar) tabBar.style.display = 'none';
 
-  container.innerHTML = `<div style="color:var(--color-text-tertiary);padding:var(--space-4);text-align:center">
-    <i class="ph ph-spinner" style="animation:spin 1s linear infinite;font-size:24px"></i>
-    <p style="margin-top:8px;font-size:13px">Loading…</p>
-  </div>`;
+  container.innerHTML = `
+    <div style="color:var(--color-text-tertiary);padding:var(--space-6);text-align:center">
+      <i class="ph ph-spinner" style="animation:spin 1s linear infinite;font-size:28px"></i>
+      <p style="margin-top:10px;font-size:13px">Loading analytics…</p>
+    </div>`;
+
+  const limit = document.getElementById('analytics-limit')?.value || '200';
 
   try {
+    // ── 1. Fetch failed searches ────────────────────────────────
     const res = await fetch(
-      SB.URL + '/rest/v1/failed_searches?order=created_at.desc&limit=500',
+      `${SB.URL}/rest/v1/failed_searches?order=created_at.desc&limit=${limit}`,
       { headers: SB._headers() }
     );
     if (!res.ok) throw new Error('HTTP ' + res.status + ' — is the service key set?');
     const rows = await res.json();
 
-    if (!rows.length) {
-      container.innerHTML = `<div class="empty-state">
-        <i class="ph ph-magnifying-glass" style="font-size:32px;color:var(--color-text-tertiary)"></i>
-        <p style="color:var(--color-text-tertiary);margin-top:8px">No failed searches logged yet</p>
-      </div>`;
-      return;
-    }
-
+    // ── 2. Compute search gap tallies ───────────────────────────
     const drugRows = rows.filter(r => r.app_version !== 'condition-search');
     const condRows = rows.filter(r => r.app_version === 'condition-search');
 
-    function tally(arr, topN = 25) {
+    function tally(arr, topN = 30) {
       const counts = {};
       arr.forEach(r => { counts[r.query] = (counts[r.query] || 0) + 1; });
-      return Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0, topN);
+      return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, topN);
     }
 
     const drugEntries = tally(drugRows);
     const condEntries = tally(condRows);
-    const totalDrug   = drugRows.length;
-    const totalCond   = condRows.length;
 
-    _analyticsCache = { drugEntries, condEntries, drugRows, condRows, loadedAt: new Date() };
+    // ── 3. Content health metrics (from in-memory stores) ───────
+    const health = _analyticsComputeHealth();
 
-    document.getElementById('btn-export-csv')?.style.setProperty('display','');
-    document.getElementById('btn-export-prompt')?.style.setProperty('display','');
+    _analyticsCache = {
+      drugEntries, condEntries, drugRows, condRows,
+      health, rows, loadedAt: new Date(),
+    };
 
-    function renderCard(title, icon, entries, total, emptyMsg) {
-      return `
-        <div class="card" style="margin-bottom:var(--space-4)">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-            <i class="${icon}" style="font-size:16px;color:var(--color-brand)"></i>
-            <h3 style="font-size:14px;font-weight:700;margin:0">${title}</h3>
-            <span style="font-size:11px;color:var(--color-text-tertiary);margin-left:auto">${total} total misses</span>
-          </div>
-          ${entries.length
-            ? entries.map(([q,n]) => `
-                <div style="display:flex;justify-content:space-between;align-items:center;
-                  padding:7px 0;border-bottom:1px solid var(--color-border)">
-                  <span style="font-size:13px;color:var(--color-text-primary)">${esc(q)}</span>
-                  <span class="badge badge-red" style="flex-shrink:0;margin-left:8px">${n}×</span>
-                </div>`).join('')
-            : `<p style="font-size:13px;color:var(--color-text-tertiary)">${emptyMsg}</p>`}
-        </div>`;
-    }
+    document.getElementById('btn-export-csv')?.style.setProperty('display', '');
+    document.getElementById('btn-export-prompt')?.style.setProperty('display', '');
+    if (tabBar) tabBar.style.display = 'flex';
 
-    const promptPreview = _buildAiPrompt(drugEntries, condEntries, totalDrug, totalCond);
-    const promptCardHtml = `
-      <div class="card" style="margin-bottom:var(--space-4);border:1.5px dashed var(--color-brand);background:var(--color-surface-2)">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-          <i class="ph ph-robot" style="font-size:16px;color:var(--color-brand)"></i>
-          <h3 style="font-size:14px;font-weight:700;margin:0;color:var(--color-brand)">Ready-to-paste AI Prompt</h3>
-        </div>
-        <p style="font-size:12px;color:var(--color-text-secondary);margin-bottom:10px;line-height:1.6">
-          Copy this and paste into Claude, ChatGPT, or any AI to get instant content gap recommendations.
-        </p>
-        <div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:8px;
-          padding:10px 12px;font-size:11px;font-family:monospace;color:var(--color-text-secondary);
-          max-height:120px;overflow:hidden;line-height:1.5;white-space:pre-wrap;word-break:break-word">
-${promptPreview.slice(0, 400)}…</div>
-        <button class="btn btn-primary" style="margin-top:10px;width:100%" onclick="analyticsExportPrompt()">
-          <i class="ph ph-copy"></i> Copy Full AI Prompt
-        </button>
-      </div>`;
-
-    container.innerHTML = `
-      <p style="font-size:12px;color:var(--color-text-tertiary);margin-bottom:var(--space-4)">
-        Top missed searches from the last ${rows.length} logged misses.
-        These are content gaps — add them to improve coverage.
-        Use <strong>CSV</strong> to open in Excel/Sheets, or <strong>AI Prompt</strong> to get instant recommendations.
-      </p>
-      ${promptCardHtml}
-      ${renderCard('Drug Library — Zero Results', 'ph ph-pill', drugEntries, totalDrug, 'No drug search misses yet')}
-      ${renderCard('Condition Search — Zero Results', 'ph ph-stethoscope', condEntries, totalCond, 'No condition search misses yet')}`;
+    _analyticsRenderCurrentTab();
 
   } catch(e) {
-    container.innerHTML = `<div class="empty-state">
-      <i class="ph ph-warning" style="font-size:32px;color:var(--color-danger)"></i>
-      <p style="color:var(--color-danger);margin-top:8px;font-size:13px">${esc(e.message)}</p>
-      <p style="color:var(--color-text-tertiary);font-size:12px;margin-top:4px">Set the service key (🔑) and try again</p>
-    </div>`;
+    container.innerHTML = `
+      <div class="empty-state">
+        <i class="ph ph-warning" style="font-size:32px;color:var(--color-danger)"></i>
+        <p style="color:var(--color-danger);margin-top:8px;font-size:13px">${esc(e.message)}</p>
+        <p style="color:var(--color-text-tertiary);font-size:12px;margin-top:4px">
+          Set the service key (🔑) and try again
+        </p>
+      </div>`;
   }
 }
 
+// ── Compute content health from in-memory stores ─────────────────
+function _analyticsComputeHealth() {
+  const totalConds  = _CONDITIONS.length;
+  const pubConds    = _CONDITIONS.filter(c => c.is_published).length;
+  const totalDrugs  = _DRUGS.length;
+  const pubDrugs    = _DRUGS.filter(d => d.is_published).length;
+  const totalProds  = _PRODUCTS.length;
+  const pubProds    = _PRODUCTS.filter(p => p.is_published).length;
+  const totalRx     = _PRESCRIPTIONS.length;
+  const pubRx       = _PRESCRIPTIONS.filter(p => p.is_published).length;
+
+  const condIdsWithRx = new Set(_PRESCRIPTIONS.map(p => p.condition_id));
+  const condsNoRx     = _CONDITIONS.filter(c => !condIdsWithRx.has(c.id));
+  const condsMissingOverview = _CONDITIONS.filter(c => !c.overview?.trim());
+  const drugIdsWithProds = new Set(_PRODUCTS.map(p => p.drug_id));
+  const drugsNoProds     = _DRUGS.filter(d => !drugIdsWithProds.has(d.id));
+  const drugsMissingMoa  = _DRUGS.filter(d => !d.moa?.trim());
+  const rxMissingSource   = _PRESCRIPTIONS.filter(p => !p.source?.trim());
+  const rxMissingReviewer = _PRESCRIPTIONS.filter(p => !p.reviewed_by?.trim());
+
+  const condsBySpec = {};
+  _CONDITIONS.forEach(c => {
+    const k = c.specialty || '__none__';
+    condsBySpec[k] = (condsBySpec[k] || 0) + 1;
+  });
+
+  const specBreakdown = Object.entries(condsBySpec)
+    .filter(([k]) => k !== '__none__')
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10);
+
+  const score = Math.round(
+    (pubConds  / Math.max(totalConds, 1))  * 25 +
+    (pubDrugs  / Math.max(totalDrugs, 1))  * 20 +
+    (pubRx     / Math.max(totalRx, 1))     * 25 +
+    ((totalConds - condsNoRx.length)    / Math.max(totalConds, 1)) * 15 +
+    ((totalDrugs - drugsNoProds.length) / Math.max(totalDrugs, 1)) * 15
+  );
+
+  return {
+    totalConds, pubConds, totalDrugs, pubDrugs,
+    totalProds, pubProds, totalRx, pubRx,
+    condsNoRx, condsMissingOverview,
+    drugsNoProds, drugsMissingMoa,
+    rxMissingSource, rxMissingReviewer,
+    specBreakdown, score, condsBySpec,
+  };
+}
+
+// ── Route to current tab ─────────────────────────────────────────
+function _analyticsRenderCurrentTab() {
+  const c = _analyticsCache;
+  if (!c) return;
+  if (_analyticsTab === 'health')   _analyticsRenderHealth(c.health);
+  if (_analyticsTab === 'gaps')     _analyticsRenderGaps(c.drugEntries, c.condEntries, c.drugRows.length, c.condRows.length, c.rows.length);
+  if (_analyticsTab === 'coverage') _analyticsRenderCoverage(c.health);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 1: CONTENT HEALTH
+// ─────────────────────────────────────────────────────────────────
+function _analyticsRenderHealth(h) {
+  const container = document.getElementById('analytics-content');
+
+  function pct(n, d) { return d === 0 ? 0 : Math.round((n / d) * 100); }
+  function bar(n, d, color) {
+    const p = pct(n, d);
+    const c = p >= 80 ? 'var(--color-safe)' : p >= 50 ? 'var(--color-caution)' : 'var(--color-danger)';
+    return `
+      <div class="health-bar-wrap">
+        <div class="health-bar-label">${n.toLocaleString()} / ${d.toLocaleString()}</div>
+        <div class="health-bar-track">
+          <div class="health-bar-fill" style="width:${p}%;background:${color || c}"></div>
+        </div>
+        <div class="health-bar-pct" style="color:${color || c}">${p}%</div>
+      </div>`;
+  }
+
+  function issueList(items, singularLabel, navFn) {
+    if (!items.length) return `<div style="font-size:12px;color:var(--color-safe);padding:4px 0">✓ None — all clear</div>`;
+    const shown = items.slice(0, 5);
+    const more  = items.length - shown.length;
+    return `
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-top:4px">
+        ${shown.map(item => `
+          <div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid var(--color-border)">
+            <i class="ph ph-warning" style="color:var(--color-caution);font-size:11px;flex-shrink:0"></i>
+            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${esc(item.name || item.iteration_label || item.id)}</span>
+            ${navFn ? `<button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:10px" onclick="${navFn}('${item.id}')">Edit</button>` : ''}
+          </div>`).join('')}
+        ${more > 0 ? `<div style="color:var(--color-text-tertiary);padding:4px 0;font-size:11px">…and ${more} more ${singularLabel}${more !== 1 ? 's' : ''}</div>` : ''}
+      </div>`;
+  }
+
+  const scoreColor = h.score >= 80 ? 'var(--color-safe)' : h.score >= 50 ? 'var(--color-caution)' : 'var(--color-danger)';
+  const scoreGrade = h.score >= 90 ? 'Excellent' : h.score >= 75 ? 'Good' : h.score >= 50 ? 'Fair' : 'Needs Work';
+
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;gap:var(--space-6);margin-bottom:var(--space-5);
+      padding:var(--space-5);background:var(--color-surface);border:1px solid var(--color-border);
+      border-radius:var(--radius-md)">
+      <div class="score-ring-wrap">
+        <svg width="80" height="80" viewBox="0 0 80 80">
+          <circle cx="40" cy="40" r="34" fill="none" stroke="var(--color-border)" stroke-width="8"/>
+          <circle cx="40" cy="40" r="34" fill="none" stroke="${scoreColor}" stroke-width="8"
+            stroke-dasharray="${2 * Math.PI * 34}"
+            stroke-dashoffset="${2 * Math.PI * 34 * (1 - h.score / 100)}"
+            stroke-linecap="round"
+            transform="rotate(-90 40 40)"
+            style="transition:stroke-dashoffset .8s ease"/>
+          <text x="40" y="44" text-anchor="middle" font-size="18" font-weight="800"
+            fill="${scoreColor}" font-family="'Source Sans 3',sans-serif">${h.score}</text>
+        </svg>
+        <div class="score-ring-label" style="color:${scoreColor}">${scoreGrade}</div>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:16px;font-weight:700;color:var(--color-text-primary);margin-bottom:4px">
+          Content Health Score
+        </div>
+        <div style="font-size:12px;color:var(--color-text-secondary);line-height:1.7">
+          Based on publish rates, coverage gaps, and metadata completeness
+          across ${h.totalConds} conditions · ${h.totalDrugs} drugs · ${h.totalRx} prescriptions.
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+          ${h.condsNoRx.length       ? `<span class="badge badge-amber"><i class="ph ph-warning"></i> ${h.condsNoRx.length} conditions without prescriptions</span>` : ''}
+          ${h.drugsNoProds.length    ? `<span class="badge badge-amber"><i class="ph ph-warning"></i> ${h.drugsNoProds.length} drugs without products</span>` : ''}
+          ${h.rxMissingSource.length ? `<span class="badge badge-red"><i class="ph ph-warning"></i> ${h.rxMissingSource.length} prescriptions missing source</span>` : ''}
+          ${h.condsNoRx.length === 0 && h.drugsNoProds.length === 0 && h.rxMissingSource.length === 0
+            ? `<span class="badge badge-green"><i class="ph ph-check"></i> No critical issues</span>` : ''}
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:var(--space-4)">
+      <div style="font-size:13px;font-weight:700;color:var(--color-text-secondary);
+        margin-bottom:var(--space-3);display:flex;align-items:center;gap:6px">
+        <i class="ph ph-toggle-right" style="color:var(--color-brand)"></i> Publish Rates
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Conditions</div>
+      ${bar(h.pubConds, h.totalConds)}
+      <div style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.07em;margin-top:12px;margin-bottom:4px">Drugs</div>
+      ${bar(h.pubDrugs, h.totalDrugs)}
+      <div style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.07em;margin-top:12px;margin-bottom:4px">Products</div>
+      ${bar(h.pubProds, h.totalProds)}
+      <div style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.07em;margin-top:12px;margin-bottom:4px">Prescriptions</div>
+      ${bar(h.pubRx, h.totalRx)}
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);margin-bottom:var(--space-4)">
+
+      <div class="card">
+        <div style="font-size:13px;font-weight:700;color:var(--color-text-secondary);
+          margin-bottom:var(--space-3);display:flex;align-items:center;gap:6px">
+          <i class="ph ph-stethoscope" style="color:var(--color-brand)"></i>
+          Conditions without Prescriptions
+          <span class="badge ${h.condsNoRx.length ? 'badge-amber' : 'badge-green'}" style="margin-left:auto">${h.condsNoRx.length}</span>
+        </div>
+        ${issueList(h.condsNoRx, 'condition', 'condEdit')}
+      </div>
+
+      <div class="card">
+        <div style="font-size:13px;font-weight:700;color:var(--color-text-secondary);
+          margin-bottom:var(--space-3);display:flex;align-items:center;gap:6px">
+          <i class="ph ph-article" style="color:var(--color-brand)"></i>
+          Conditions missing Overview
+          <span class="badge ${h.condsMissingOverview.length ? 'badge-amber' : 'badge-green'}" style="margin-left:auto">${h.condsMissingOverview.length}</span>
+        </div>
+        ${issueList(h.condsMissingOverview, 'condition', 'condEdit')}
+      </div>
+
+      <div class="card">
+        <div style="font-size:13px;font-weight:700;color:var(--color-text-secondary);
+          margin-bottom:var(--space-3);display:flex;align-items:center;gap:6px">
+          <i class="ph ph-pill" style="color:var(--color-brand)"></i>
+          Drugs without Products
+          <span class="badge ${h.drugsNoProds.length ? 'badge-amber' : 'badge-green'}" style="margin-left:auto">${h.drugsNoProds.length}</span>
+        </div>
+        ${issueList(h.drugsNoProds, 'drug', 'drugEdit')}
+      </div>
+
+      <div class="card">
+        <div style="font-size:13px;font-weight:700;color:var(--color-text-secondary);
+          margin-bottom:var(--space-3);display:flex;align-items:center;gap:6px">
+          <i class="ph ph-flask" style="color:var(--color-brand)"></i>
+          Drugs missing MOA
+          <span class="badge ${h.drugsMissingMoa.length ? 'badge-grey' : 'badge-green'}" style="margin-left:auto">${h.drugsMissingMoa.length}</span>
+        </div>
+        ${issueList(h.drugsMissingMoa, 'drug', 'drugEdit')}
+      </div>
+
+      <div class="card">
+        <div style="font-size:13px;font-weight:700;color:var(--color-text-secondary);
+          margin-bottom:var(--space-3);display:flex;align-items:center;gap:6px">
+          <i class="ph ph-notepad" style="color:var(--color-brand)"></i>
+          Prescriptions missing Source
+          <span class="badge ${h.rxMissingSource.length ? 'badge-red' : 'badge-green'}" style="margin-left:auto">${h.rxMissingSource.length}</span>
+        </div>
+        ${issueList(h.rxMissingSource, 'prescription', null)}
+        <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:6px">Required before publishing per Phase 17</div>
+      </div>
+
+      <div class="card">
+        <div style="font-size:13px;font-weight:700;color:var(--color-text-secondary);
+          margin-bottom:var(--space-3);display:flex;align-items:center;gap:6px">
+          <i class="ph ph-user-check" style="color:var(--color-brand)"></i>
+          Prescriptions missing Reviewer
+          <span class="badge ${h.rxMissingReviewer.length ? 'badge-red' : 'badge-green'}" style="margin-left:auto">${h.rxMissingReviewer.length}</span>
+        </div>
+        ${issueList(h.rxMissingReviewer, 'prescription', null)}
+        <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:6px">Required before publishing per Phase 20</div>
+      </div>
+
+    </div>
+    <div style="font-size:11px;color:var(--color-text-tertiary);padding-bottom:var(--space-4)">
+      Health computed from in-memory data. Reload the page to refresh store counts.
+    </div>`;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 2: SEARCH GAPS
+// ─────────────────────────────────────────────────────────────────
+function _analyticsRenderGaps(drugEntries, condEntries, totalDrug, totalCond, totalAll) {
+  const container = document.getElementById('analytics-content');
+
+  function gapCard(title, icon, entries, total) {
+    const maxCount = entries[0]?.[1] || 1;
+    return `
+      <div class="card" style="margin-bottom:var(--space-4)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:var(--space-3);flex-wrap:wrap">
+          <i class="${icon}" style="font-size:16px;color:var(--color-brand)"></i>
+          <h3 style="font-size:14px;font-weight:700;margin:0">${title}</h3>
+          <span style="font-size:11px;color:var(--color-text-tertiary);margin-left:auto">
+            ${total.toLocaleString()} total zero-result events
+          </span>
+        </div>
+        ${entries.length
+          ? entries.map(([q, n], i) => `
+              <div class="gap-row">
+                <div class="gap-row-rank">#${i + 1}</div>
+                <div class="gap-row-query" title="${esc(q)}">${esc(q)}</div>
+                <div class="gap-row-bar">
+                  <div class="gap-row-bar-fill" style="width:${Math.round((n / maxCount) * 100)}%"></div>
+                </div>
+                <span class="badge badge-red" style="flex-shrink:0;min-width:32px;text-align:center">${n}×</span>
+              </div>`).join('')
+          : `<div style="font-size:13px;color:var(--color-text-tertiary);padding:var(--space-3) 0">No zero-result searches logged yet.</div>`}
+      </div>`;
+  }
+
+  const now   = Date.now();
+  const dayMs = 86400000;
+  const days  = 14;
+  const byDay = {};
+  _analyticsCache?.rows?.forEach(r => {
+    const d = Math.floor((now - new Date(r.created_at).getTime()) / dayMs);
+    if (d < days) byDay[d] = (byDay[d] || 0) + 1;
+  });
+  const maxDay = Math.max(...Object.values(byDay), 1);
+  const sparkHtml = Array.from({ length: days }, (_, i) => {
+    const dIdx = days - 1 - i;
+    const cnt  = byDay[dIdx] || 0;
+    const h    = Math.max(4, Math.round((cnt / maxDay) * 40));
+    return `<div title="${cnt} searches ${dIdx === 0 ? 'today' : dIdx + 'd ago'}"
+      style="width:14px;height:${h}px;background:var(--color-danger);
+        border-radius:2px 2px 0 0;opacity:${cnt ? 1 : 0.2};
+        flex-shrink:0;align-self:flex-end;cursor:default"></div>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="card" style="margin-bottom:var(--space-4)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:var(--space-3)">
+        <i class="ph ph-trend-up" style="color:var(--color-brand);font-size:16px"></i>
+        <h3 style="font-size:14px;font-weight:700;margin:0">Zero-Result Searches — Last 14 Days</h3>
+        <span style="font-size:11px;color:var(--color-text-tertiary);margin-left:auto">
+          ${totalAll.toLocaleString()} total in this load
+        </span>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:3px;height:48px;padding-top:4px">
+        ${sparkHtml}
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;
+        color:var(--color-text-tertiary);margin-top:4px">
+        <span>14 days ago</span><span>today</span>
+      </div>
+    </div>
+
+    ${gapCard('Drug Library — Zero Results', 'ph ph-pill', drugEntries, totalDrug)}
+    ${gapCard('Condition Search — Zero Results', 'ph ph-stethoscope', condEntries, totalCond)}
+
+    <div class="card" style="border:1.5px dashed var(--color-brand);background:var(--color-surface-2)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <i class="ph ph-robot" style="font-size:16px;color:var(--color-brand)"></i>
+        <h3 style="font-size:14px;font-weight:700;margin:0;color:var(--color-brand)">
+          Ready-to-paste AI Prompt
+        </h3>
+      </div>
+      <p style="font-size:12px;color:var(--color-text-secondary);margin-bottom:10px;line-height:1.6">
+        Copy this into Claude to get instant content gap recommendations —
+        grouped, prioritised, and formatted for Egyptian clinical context.
+      </p>
+      <button class="btn btn-primary" style="width:100%" onclick="analyticsExportPrompt()">
+        <i class="ph ph-copy"></i> Copy Full AI Prompt to Clipboard
+      </button>
+    </div>`;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TAB 3: COVERAGE
+// ─────────────────────────────────────────────────────────────────
+function _analyticsRenderCoverage(h) {
+  const container = document.getElementById('analytics-content');
+
+  const specRows = h.specBreakdown.map(([name, count]) => {
+    const spec     = _SPECIALTIES.find(s => s.name === name);
+    const color    = spec?.color || '#64748b';
+    const icon     = spec?.icon  || 'ph-stethoscope';
+    const rxCount  = _PRESCRIPTIONS.filter(p => {
+      const cond = _COND_MAP[p.condition_id];
+      return cond && cond.specialty === name;
+    }).length;
+    const pubCount = _CONDITIONS.filter(c => c.specialty === name && c.is_published).length;
+    const pct      = Math.round((pubCount / Math.max(count, 1)) * 100);
+    return { name, count, rxCount, pubCount, pct, color, icon };
+  });
+
+  const noSpec = _CONDITIONS.filter(c => !c.specialty).length;
+
+  const drugGroups = {};
+  _DRUGS.forEach(d => { drugGroups[d.group_name || '__none__'] = (drugGroups[d.group_name || '__none__'] || 0) + 1; });
+  const topGroups = Object.entries(drugGroups)
+    .filter(([k]) => k !== '__none__')
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8);
+  const maxGroup = topGroups[0]?.[1] || 1;
+
+  container.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-3);margin-bottom:var(--space-4)">
+      ${[
+        { label:'Specialties', val:_SPECIALTIES.length, icon:'ph-tag',         color:'var(--color-brand)'   },
+        { label:'Conditions',  val:h.totalConds,        icon:'ph-stethoscope', color:'var(--color-safe)'    },
+        { label:'Drugs',       val:h.totalDrugs,        icon:'ph-pill',        color:'var(--color-info)'    },
+        { label:'Products',    val:h.totalProds,        icon:'ph-package',     color:'var(--color-caution)' },
+      ].map(s => `
+        <div class="card" style="text-align:center;padding:var(--space-4)">
+          <i class="ph ${s.icon}" style="font-size:20px;color:${s.color};display:block;margin-bottom:6px"></i>
+          <div style="font-size:24px;font-weight:800;color:var(--color-text-primary)">${s.val}</div>
+          <div style="font-size:10px;font-weight:700;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.07em;margin-top:2px">${s.label}</div>
+        </div>`).join('')}
+    </div>
+
+    <div class="card" style="margin-bottom:var(--space-4);padding:0;overflow:hidden">
+      <div style="padding:var(--space-4) var(--space-5);border-bottom:1px solid var(--color-border);
+        display:flex;align-items:center;gap:8px">
+        <i class="ph ph-list-checks" style="color:var(--color-brand);font-size:16px"></i>
+        <h3 style="font-size:14px;font-weight:700;margin:0">Coverage by Specialty</h3>
+        ${noSpec > 0 ? `<span class="badge badge-amber" style="margin-left:auto">${noSpec} conditions unassigned</span>` : ''}
+      </div>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Specialty</th>
+            <th style="text-align:center">Conditions</th>
+            <th style="text-align:center">Published</th>
+            <th style="text-align:center">Prescriptions</th>
+            <th>Publish Rate</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${specRows.map(s => `
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="width:8px;height:8px;border-radius:50%;background:${s.color};flex-shrink:0;display:inline-block"></span>
+                  <i class="ph ${s.icon}" style="color:${s.color};font-size:13px"></i>
+                  <span style="font-weight:600">${esc(s.name)}</span>
+                </div>
+              </td>
+              <td style="text-align:center">${s.count}</td>
+              <td style="text-align:center">${s.pubCount}</td>
+              <td style="text-align:center">${s.rxCount}</td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="flex:1;height:6px;background:var(--color-surface-2);border-radius:3px;overflow:hidden">
+                    <div style="height:100%;width:${s.pct}%;border-radius:3px;
+                      background:${s.pct >= 80 ? 'var(--color-safe)' : s.pct >= 50 ? 'var(--color-caution)' : 'var(--color-danger)'}"></div>
+                  </div>
+                  <span style="font-size:11px;font-weight:700;
+                    color:${s.pct >= 80 ? 'var(--color-safe)' : s.pct >= 50 ? 'var(--color-caution)' : 'var(--color-danger)'}">${s.pct}%</span>
+                </div>
+              </td>
+            </tr>`).join('')}
+          ${specRows.length === 0 ? `<tr><td colspan="5"><div class="empty-state" style="padding:var(--space-6)"><i class="ph ph-tag"></i><p>No specialties configured.</p></div></td></tr>` : ''}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card" style="margin-bottom:var(--space-4)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:var(--space-3)">
+        <i class="ph ph-pill" style="color:var(--color-brand);font-size:16px"></i>
+        <h3 style="font-size:14px;font-weight:700;margin:0">Top Drug Groups</h3>
+        ${drugGroups['__none__'] ? `<span class="badge badge-grey" style="margin-left:auto">${drugGroups['__none__']} ungrouped</span>` : ''}
+      </div>
+      ${topGroups.map(([name, count]) => `
+        <div class="health-bar-wrap">
+          <div class="health-bar-label" title="${esc(name)}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(name)}</div>
+          <div class="health-bar-track">
+            <div class="health-bar-fill" style="width:${Math.round((count / maxGroup) * 100)}%;background:var(--color-brand)"></div>
+          </div>
+          <div class="health-bar-pct" style="color:var(--color-brand)">${count}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+// ── Exports ──────────────────────────────────────────────────────
 function analyticsExportCSV() {
   if (!_analyticsCache) { toast('Load data first', 'error'); return; }
   const { drugEntries, condEntries } = _analyticsCache;
   const lines = [
     'Type,Query,Count',
-    ...drugEntries.map(([q,n]) => `drug,"${q.replace(/"/g,'""')}",${n}`),
-    ...condEntries.map(([q,n]) => `condition,"${q.replace(/"/g,'""')}",${n}`),
+    ...drugEntries.map(([q, n]) => `drug,"${q.replace(/"/g, '""')}",${n}`),
+    ...condEntries.map(([q, n]) => `condition,"${q.replace(/"/g, '""')}",${n}`),
   ];
   const blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
-  a.href = url; a.download = `rxmanager-failed-searches-${new Date().toISOString().slice(0,10)}.csv`;
-  a.click(); URL.revokeObjectURL(url);
+  a.href = url;
+  a.download = `rxmanager-failed-searches-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
   toast('CSV downloaded');
 }
 
 function _buildAiPrompt(drugEntries, condEntries, totalDrug, totalCond) {
-  const drugList = drugEntries.map(([q,n], i) => `  ${i+1}. "${q}" — searched ${n}× with no result`).join('\n');
-  const condList = condEntries.map(([q,n], i) => `  ${i+1}. "${q}" — searched ${n}× with no result`).join('\n');
-  const date     = new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+  const drugList = drugEntries.map(([q, n], i) => `  ${i + 1}. "${q}" — searched ${n}× with no result`).join('\n');
+  const condList = condEntries.map(([q, n], i) => `  ${i + 1}. "${q}" — searched ${n}× with no result`).join('\n');
+  const date     = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   return `You are a medical content advisor for RxManager Pro — a clinical decision support app for junior doctors and medical interns in Egypt. The app contains a drug library and a prescription library organised by condition/diagnosis.
 
 The data below comes from real doctor searches that returned ZERO results in the app. These represent genuine content gaps — things doctors are looking for but can't find.
@@ -2960,7 +3490,7 @@ async function analyticsExportPrompt() {
   const prompt = _buildAiPrompt(drugEntries, condEntries, drugRows.length, condRows.length);
   try {
     await navigator.clipboard.writeText(prompt);
-    toast('AI prompt copied to clipboard — paste into Claude or ChatGPT');
+    toast('AI prompt copied to clipboard — paste into Claude or ChatGPT', 'success', 4000);
   } catch(e) {
     const win = window.open('', '_blank', 'width=700,height=500');
     win.document.write(`<html><head><title>AI Prompt — RxManager Analytics</title></head>
@@ -2974,7 +3504,7 @@ async function analyticsExportPrompt() {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
+
 // PHASE 23 — CRASH LOGS PANEL
 // ══════════════════════════════════════════════════════════════════════════════
 
