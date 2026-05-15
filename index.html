@@ -12376,6 +12376,22 @@ function renderConditionViewer(data) {
     <div id="cvInlinePhotosEmpty" class="cv-photos-empty">No photos yet — add ECGs, X-rays, or clinical images.</div>
   </div>`;
 
+  // ── Phase 18: Disclaimer footer ─────────────────────────────────────
+  rxHtml += `
+  <div style="margin:var(--space-4) var(--space-4) 0;
+    padding:var(--space-3) var(--space-4);
+    background:var(--color-surface-2);
+    border:1px solid var(--color-border);
+    border-radius:var(--radius-md)">
+    <div style="display:flex;align-items:flex-start;gap:8px">
+      <i class="ph ph-info" style="font-size:13px;color:var(--color-text-tertiary);flex-shrink:0;margin-top:2px"></i>
+      <p style="font-size:11px;line-height:1.6;color:var(--color-text-tertiary);margin:0">
+        Clinical reference only. Verify doses before prescribing.
+        Individual patient factors apply.
+      </p>
+    </div>
+  </div>`;
+
   rxHtml += '<div class="cv-bottom-spacer"></div>';
 
   // ── Build Clinical Tab content — Phase 11 redesign ───────────────────
