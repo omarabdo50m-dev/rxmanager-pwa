@@ -15,8 +15,8 @@
 // The activate handler will delete the old cache automatically.
 // ═══════════════════════════════════════════════════════════════
 
-const SHELL_VERSION = 'v5';
-const CACHE_NAME = 'rxmanager-shell-v5';
+const SHELL_VERSION = 'v6';
+const CACHE_NAME = 'rxmanager-shell-v6';
 const PRECACHE_URLS = [
   '/rxmanager-pwa/',
   '/rxmanager-pwa/index.html',
@@ -51,18 +51,11 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('[SW] Caching app shell');
-        // Use fetch with cache:'no-store' so the install always gets the
-        // live file, not a stale HTTP-cached copy. cache.add() would use
-        // the HTTP cache and could store an outdated index.html.
         return Promise.allSettled(
           SHELL_URLS.map(url =>
-            fetch(url, { cache: 'no-store' })
-              .then(res => {
-                if (res.ok) return cache.put(url, res);
-              })
-              .catch(err =>
-                console.warn('[SW] Could not cache', url, err)
-              )
+            cache.add(url).catch(err =>
+              console.warn('[SW] Could not cache', url, err)
+            )
           )
         );
       })
@@ -138,41 +131,10 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // ── 3. APP SHELL — split strategy ────────────────────────────
-  //
-  // HTML navigate requests → NETWORK-FIRST with cache fallback.
-  //   The browser always tries to fetch a fresh index.html when online.
-  //   This ensures the latest JS (including checkContentVersion fixes)
-  //   is always loaded on mobile PWA where a hard-refresh is impossible.
-  //   On failure (offline) → falls back to the cached shell.
-  //
-  // Sub-resources (images, icons, manifest) → CACHE-FIRST as before.
-  //   These never change between app versions and don't need freshness.
-
-  if (event.request.mode === 'navigate') {
-    // HTML navigate: network-first, bypassing the HTTP cache entirely.
-    // Without cache:'no-store', fetch() inside a SW can still return a
-    // browser HTTP-cached copy — defeating the whole point.
-    event.respondWith(
-      fetch(event.request, { cache: 'no-store' })
-        .then(response => {
-          // Store fresh copy in SW cache for offline fallback
-          if (response.ok && response.type === 'basic') {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
-          }
-          return response;
-        })
-        .catch(() => {
-          // Offline — serve SW-cached shell
-          return caches.match(event.request)
-            .then(cached => cached || caches.match('/rxmanager-pwa/index.html'));
-        })
-    );
-    return;
-  }
-
-  // Sub-resources — cache-first, network fallback (unchanged)
+  // ── 3. APP SHELL — cache-first, network fallback ──────────────
+  // Serves the HTML file instantly from cache on every load.
+  // If not cached yet (first visit), fetches from network and caches.
+  // If both fail (offline, never visited) — returns the cached shell.
   event.respondWith(
     caches.match(event.request)
       .then(cached => {
@@ -190,7 +152,9 @@ self.addEventListener('fetch', event => {
             return response;
           })
           .catch(() => {
-            // Sub-resource failed offline — fail silently
+            if (event.request.mode === 'navigate') {
+              return caches.match('/rxmanager-pwa/index.html');
+            }
           });
       })
   );
