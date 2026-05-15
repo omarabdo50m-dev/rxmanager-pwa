@@ -11707,6 +11707,9 @@ function renderMain() {
     </div>`;
   })() : '';
 
+  // ── Analytics: log successful condition search (debounced) ────────
+  if (q && q.length > 2) _scheduleCondSearchLog(q);
+
   container.innerHTML = filterBarHtml + list.map(c => {
     // Use live specialty record (color + icon) — falls back to hardcoded map then grey
     const _liveSpec  = _SPECIALTIES_CACHE.find(s => s.name === c.specialty);
@@ -11785,6 +11788,13 @@ async function openConditionViewer(conditionId) {
     _trackEvent('Condition Viewed', {
       condition: _trackCond.name || conditionId,
       specialty: _trackCond.specialty || 'Unknown',
+    });
+    // ── Analytics: log condition_view to Supabase ─────────────────────
+    _logAnalyticsEvent({
+      event_type: 'condition_view',
+      entity_id:  conditionId,
+      entity_name: _trackCond.name || conditionId,
+      specialty:  _trackCond.specialty || null,
     });
   }
   _cvAdultData = null;
@@ -13951,6 +13961,26 @@ function _scheduleLibFailedLog(q) {
   }, 500);
 }
 
+// ── Debounced successful-search loggers ──────────────────────────────────
+// Only fire when results exist (not zero-result paths above).
+// 600ms debounce: long enough to skip mid-word keystrokes, short enough to
+// capture the query the user actually meant to search for.
+let _condSearchLogTimer;
+function _scheduleCondSearchLog(q) {
+  clearTimeout(_condSearchLogTimer);
+  _condSearchLogTimer = setTimeout(() => {
+    _logAnalyticsEvent({ event_type: 'condition_search', query: q });
+  }, 600);
+}
+
+let _libSearchLogTimer2;
+function _scheduleLibSearchLog(q) {
+  clearTimeout(_libSearchLogTimer2);
+  _libSearchLogTimer2 = setTimeout(() => {
+    _logAnalyticsEvent({ event_type: 'drug_search', query: q });
+  }, 600);
+}
+
 async function renderLib() {
   renderLibCats();
   const q = (document.getElementById('libSearch')?.value || '').toLowerCase().trim();
@@ -14207,10 +14237,11 @@ async function renderLib() {
     }).join('');
   }
 
+  // ── Analytics: log successful drug search (debounced) ────────────
+  if (q && q.length > 2) _scheduleLibSearchLog(q);
+
   cont.innerHTML = html;
 }
-
-// Shared generic card renderer (used in no-search mode)
 // Phase 7: locked card component — 3px left stripe, name + group label, ph-caret-right.
 // Brand list removed from card; brands shown only in drug viewer.
 function libGenericCard(d, allProducts, _unused) {
@@ -14517,6 +14548,13 @@ async function openDrugViewer(id) {
     _trackEvent('Drug Viewed', {
       drug: _trackDrug.name || id,
       group: _trackDrug.group || _trackDrug.type || 'Unknown',
+    });
+    // ── Analytics: log drug_view to Supabase ──────────────────────────
+    _logAnalyticsEvent({
+      event_type:  'drug_view',
+      entity_id:   id,
+      entity_name: _trackDrug.name || id,
+      specialty:   _trackDrug.group || _trackDrug.type || null,
     });
   }
   const [drug, allProds, allLib] = await Promise.all([
@@ -16073,6 +16111,31 @@ function _trackEvent(name, props) {
     }
   } catch(e) {
     // Silently swallow
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ANALYTICS EVENT LOGGER — logs to analytics_events Supabase table
+// event_type: 'condition_view' | 'condition_search' | 'drug_view' | 'drug_search'
+// entity_id / entity_name: the condition/drug id and display name
+// specialty: specialty name for conditions, drug group for drugs
+// query: populated for search events only
+// Fire-and-forget — never throws, never blocks the UI.
+// ═══════════════════════════════════════════════════════════════════
+function _logAnalyticsEvent({ event_type, entity_id = null, entity_name = null, specialty = null, query = null }) {
+  try {
+    fetch(SB.URL + '/rest/v1/analytics_events', {
+      method: 'POST',
+      headers: {
+        'apikey':        SB.ANON_KEY,
+        'Authorization': 'Bearer ' + SB.ANON_KEY,
+        'Content-Type':  'application/json',
+        'Prefer':        'return=minimal',
+      },
+      body: JSON.stringify({ event_type, entity_id, entity_name, specialty, query }),
+    }).catch(() => {});
+  } catch(e) {
+    // Silently swallow — analytics must never affect app behaviour
   }
 }
 
