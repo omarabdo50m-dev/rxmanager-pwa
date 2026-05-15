@@ -9080,15 +9080,22 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
    Catches unhandled JS errors and promise rejections before init()
    runs. Shows a branded crash banner instead of a frozen/blank screen.
    ──────────────────────────────────────────────────────────────── */
+// ── Phase 23: app boot timestamp (used to compute session_age_s) ─────────────
+const _APP_START_TS = Date.now();
+
 window.addEventListener('unhandledrejection', event => {
   console.error('Unhandled promise rejection:', event.reason);
-  _showCrashBanner(event.reason?.message || 'Unknown async error');
+  const msg   = event.reason?.message || 'Unknown async error';
+  const stack = event.reason?.stack   || null;
+  _showCrashBanner(msg);
+  _logCrash({ message: msg, stack, errorType: 'unhandledrejection' });
   event.preventDefault();
 });
 
 window.onerror = function(msg, src, line, col, err) {
   console.error('Global error:', msg, src, line);
   _showCrashBanner(msg);
+  _logCrash({ message: msg, source: src, line, col, stack: err?.stack || null, errorType: 'onerror' });
   return true; // suppress default browser error
 };
 
@@ -9112,7 +9119,72 @@ function _showCrashBanner(msg) {
     </div>`;
   document.body.prepend(banner);
 }
-/* ══ END PHASE 01 ═══════════════════════════════════════════════ */
+
+// ── Phase 23: _logCrash — fire-and-forget POST to Supabase crash_logs ────────
+// Captures rich context (screen, data counts, device, PWA, offline state).
+// Never blocks the UI — all errors inside are silently swallowed.
+// Deduplication: same message within 10s = skip (avoids log spam from loops).
+let _lastCrashMsg = null;
+let _lastCrashTs  = 0;
+
+function _logCrash({ message, source = null, line = null, col = null, stack = null, errorType = 'onerror' }) {
+  try {
+    // Deduplicate: identical message within 10 seconds → skip
+    const now = Date.now();
+    if (message === _lastCrashMsg && now - _lastCrashTs < 10000) return;
+    _lastCrashMsg = message;
+    _lastCrashTs  = now;
+
+    // Don't log noise from browser extensions or cross-origin scripts
+    if (message === 'Script error.' || message === 'Script error') return;
+
+    // Gather app context — all guarded, never throws
+    const openScreen = (() => {
+      try {
+        const s = document.querySelector('.screen.open, [id$="Scr"].open');
+        return s?.id || 'home';
+      } catch(e) { return 'unknown'; }
+    })();
+
+    const payload = {
+      message:      String(message).slice(0, 500),   // cap at 500 chars
+      source:       source ? String(source).slice(0, 300) : null,
+      line:         line   || null,
+      col:          col    || null,
+      stack:        stack  ? String(stack).slice(0, 2000) : null,
+      error_type:   errorType,
+      app_version:  'v101',
+      screen:       openScreen,
+      conditions_n: (typeof _CONDITIONS !== 'undefined') ? _CONDITIONS.length : null,
+      drugs_n:      (typeof _LIB        !== 'undefined') ? _LIB.length        : null,
+      user_agent:   navigator.userAgent.slice(0, 300),
+      is_pwa:       window.matchMedia('(display-mode: standalone)').matches,
+      is_offline:   !navigator.onLine,
+      session_age_s: Math.round((now - _APP_START_TS) / 1000),
+    };
+
+    // Use sendBeacon when available (survives page unload), fall back to fetch
+    const url     = 'https://rihqsaxfgzsmsgqdutcs.supabase.co/rest/v1/crash_logs';
+    const headers = {
+      'apikey':        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpaHFzYXhmZ3pzbXNncWR1dGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5OTI3ODQsImV4cCI6MjA5MzU2ODc4NH0.NscGszMVaqNvJx6X8N-0RMZsGFrBxyYxJWlI4M1e8-s',
+      'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpaHFzYXhmZ3pzbXNncWR1dGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5OTI3ODQsImV4cCI6MjA5MzU2ODc4NH0.NscGszMVaqNvJx6X8N-0RMZsGFrBxyYxJWlI4M1e8-s',
+      'Content-Type':  'application/json',
+    };
+    const body = JSON.stringify(payload);
+
+    if (navigator.sendBeacon) {
+      // sendBeacon: survives tab close, no response needed
+      const blob = new Blob([body], { type: 'application/json' });
+      // sendBeacon can't set custom headers — fall through to fetch for Supabase auth
+    }
+    // fetch: fire-and-forget
+    fetch(url, { method: 'POST', headers, body, keepalive: true }).catch(() => {});
+
+  } catch(e) {
+    // _logCrash must never itself throw — absolute safety net
+  }
+}
+/* ══ END PHASE 01 + 23 ══════════════════════════════════════════ */
 
 /* ══ BLOCK 2 CANONICAL COMPONENT UTILITIES ══════════════════
    ccToggle(hdrEl) — generic collapsible toggle for .cc-collapsible
@@ -11431,22 +11503,18 @@ function renderMain() {
     // 3. Online but no conditions published yet → admin guidance
     let emptyHtml;
     if (q) {
-      // ── Phase 22: log zero-result condition search (debounced 500ms) ────
-      // Prevents keystroke spam — "gastri","gastrit","gastritis" → 1 log entry
+      // ── Phase 22: log zero-result condition search ───────────────────
       if (q.length > 2) {
-        clearTimeout(_condFailedLogTimer);
-        _condFailedLogTimer = setTimeout(() => {
-          _trackEvent('Condition Search Zero Results', { query: q });
-          fetch(SB.URL + '/rest/v1/failed_searches', {
-            method: 'POST',
-            headers: {
-              'apikey':        SB.ANON_KEY,
-              'Authorization': 'Bearer ' + SB.ANON_KEY,
-              'Content-Type':  'application/json',
-            },
-            body: JSON.stringify({ query: q, app_version: 'condition-search' }),
-          }).catch(() => {});
-        }, 500);
+        _trackEvent('Condition Search Zero Results', { query: q });
+        fetch(SB.URL + '/rest/v1/failed_searches', {
+          method: 'POST',
+          headers: {
+            'apikey':        SB.ANON_KEY,
+            'Authorization': 'Bearer ' + SB.ANON_KEY,
+            'Content-Type':  'application/json',
+          },
+          body: JSON.stringify({ query: q, app_version: 'condition-search' }),
+        }).catch(() => {});
       }
       emptyHtml = `<div class="empty-state">
         <div class="empty-icon"><i class="ph ph-magnifying-glass"></i></div>
@@ -13842,11 +13910,6 @@ function setLibCat(c) {
 
 // 250ms debounced wrapper for lib search — avoids hitting DB on every keystroke
 let _libSearchTimer;
-// ── Phase 22 fix: debounce timers for failed-search logging ──────────────────
-// The UI renders on every keystroke (fast), but we only log once the user
-// stops typing for 500ms — so "gastritis" logs once, not g/ga/gas/gast/…
-let _condFailedLogTimer = null;
-let _libFailedLogTimer  = null;
 function debouncedRenderLib() {
   clearTimeout(_libSearchTimer);
   _libSearchTimer = setTimeout(renderLib, 250);
@@ -13925,22 +13988,19 @@ async function renderLib() {
         ${suggestions ? `<div style="background:var(--color-caution-light);border:1px solid rgba(217,119,6,.3);border-radius:10px;padding:10px 14px;font-size:13px;text-align:left"><span style="font-weight:800;color:var(--color-caution)">Did you mean?</span><br/><span style="line-height:2">${suggestions}</span></div>` : ''}
       </div>`;
     } else {
-      // ── Phase 21 + 22: log zero-result drug search (debounced 500ms) ───
-      // Prevents keystroke spam — "gastri","gastrit","gastritis" → 1 log entry
+      // ── Phase 21: GA4 event ───────────────────────────────────────────
+      if (q.length > 2) _trackEvent('Search Zero Results', { query: q });
+      // ── Phase 22: log to Supabase failed_searches table ───────────────
       if (q.length > 2) {
-        clearTimeout(_libFailedLogTimer);
-        _libFailedLogTimer = setTimeout(() => {
-          _trackEvent('Search Zero Results', { query: q });
-          fetch(SB.URL + '/rest/v1/failed_searches', {
-            method: 'POST',
-            headers: {
-              'apikey':        SB.ANON_KEY,
-              'Authorization': 'Bearer ' + SB.ANON_KEY,
-              'Content-Type':  'application/json',
-            },
-            body: JSON.stringify({ query: q }),
-          }).catch(() => {}); // fire-and-forget — never blocks UI
-        }, 500);
+        fetch(SB.URL + '/rest/v1/failed_searches', {
+          method: 'POST',
+          headers: {
+            'apikey':        SB.ANON_KEY,
+            'Authorization': 'Bearer ' + SB.ANON_KEY,
+            'Content-Type':  'application/json',
+          },
+          body: JSON.stringify({ query: q }),
+        }).catch(() => {}); // fire-and-forget — never blocks UI
       }
       cont.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No results</div><div class="empty-body">No brand, generic, group or clinical match for "<strong>${esc(q)}</strong>"</div></div>`;
     }
