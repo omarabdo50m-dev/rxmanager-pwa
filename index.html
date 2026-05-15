@@ -16094,6 +16094,12 @@ async function init() {
   document.getElementById('load-scr').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
   document.getElementById('bnav').style.display = 'flex';
+
+  // ── Phase 16 — Medical Disclaimer ─────────────────────────────────────────
+  // Shown once on first install before the user interacts with any content.
+  // Called here (after the app is visible but before the user can tap anything)
+  // so the disclaimer overlays the already-rendered home screen, not a blank page.
+  _checkDisclaimer();
   // Fix 2: FAB permanently hidden — no in-app condition editor exists.
   // #mainFab stays in DOM but is never shown.
   performance.mark('first-paint');
@@ -18316,6 +18322,137 @@ function _dismissInstallCard(permanent) {
 // ═══════════════════════════════════════════════════════════
 // END PHASE 13
 // ═══════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════
+// PHASE 16 — Medical Disclaimer Screen
+// ═══════════════════════════════════════════════════════════
+// Shown ONCE on first install. User must tap "I understand"
+// before the app content is visible. Acceptance stored in
+// localStorage so it is never shown again on the same device.
+// ═══════════════════════════════════════════════════════════
+
+const DISCLAIMER_KEY = 'rxmgr_disclaimer_v1';
+
+function _checkDisclaimer() {
+  // Already accepted on this device — skip immediately
+  if (localStorage.getItem(DISCLAIMER_KEY)) return;
+  _showDisclaimerScreen();
+}
+
+function _showDisclaimerScreen() {
+  const overlay = document.createElement('div');
+  overlay.id = 'disclaimer-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', 'Medical Disclaimer');
+  overlay.style.cssText = [
+    'position:fixed',
+    'inset:0',
+    'z-index:99998',
+    'background:var(--color-bg)',
+    'display:flex',
+    'flex-direction:column',
+    'align-items:center',
+    'justify-content:flex-end',
+    'padding-bottom:max(env(safe-area-inset-bottom,16px),16px)',
+    'overflow-y:auto',
+    '-webkit-overflow-scrolling:touch',
+  ].join(';');
+
+  overlay.innerHTML = `
+    <div style="max-width:480px;width:100%;padding:24px 24px 8px;display:flex;flex-direction:column;align-items:center">
+
+      <!-- Icon -->
+      <div style="width:60px;height:60px;border-radius:16px;
+        background:var(--color-caution-light);
+        border:1.5px solid rgba(245,158,11,.3);
+        display:flex;align-items:center;justify-content:center;
+        font-size:28px;margin:0 auto var(--space-5);
+        flex-shrink:0;color:var(--color-caution)">
+        <i class="ph ph-warning" aria-hidden="true"></i>
+      </div>
+
+      <!-- Title -->
+      <h2 style="font-size:20px;font-weight:800;text-align:center;
+        color:var(--color-text-primary);margin:0 0 12px;
+        font-family:var(--font);letter-spacing:-.3px;line-height:1.2">
+        Clinical Decision Support Tool
+      </h2>
+
+      <!-- Lead paragraph -->
+      <p style="font-size:14px;line-height:1.75;color:var(--color-text-secondary);
+        text-align:center;margin:0 0 16px;font-family:var(--font)">
+        RxManager provides prescription templates based on Egyptian clinical guidelines.
+        It is a <strong style="color:var(--color-text-primary)">reference aid only</strong> —
+        not a substitute for clinical judgment.
+      </p>
+
+      <!-- Bullet list -->
+      <div style="width:100%;background:var(--color-surface);
+        border:1px solid var(--color-border);border-radius:var(--radius-md);
+        padding:var(--space-4);margin-bottom:16px;box-shadow:var(--shadow-sm)">
+        ${[
+          'Always verify doses against current guidelines',
+          'Consider each patient\'s individual clinical factors',
+          'Drug availability and pricing may vary over time',
+          'The publisher accepts no liability for clinical decisions made using this app',
+        ].map(item => `
+          <div style="display:flex;align-items:flex-start;gap:10px;
+            padding:6px 0;border-bottom:1px solid var(--color-border)">
+            <i class="ph ph-check-circle" style="font-size:15px;color:var(--color-brand);
+              flex-shrink:0;margin-top:2px" aria-hidden="true"></i>
+            <span style="font-size:13px;line-height:1.65;color:var(--color-text-secondary);
+              font-family:var(--font)">${item}</span>
+          </div>`).join('').replace(/border-bottom:1px solid var\(--color-border\)(?=[^}]*<\/div>\s*$)/m,
+          'border-bottom:none')}
+      </div>
+
+      <!-- Professional confirmation -->
+      <p style="font-size:12px;text-align:center;color:var(--color-text-tertiary);
+        margin:0 0 20px;line-height:1.65;font-family:var(--font)">
+        By continuing, you confirm you are a licensed healthcare professional
+        using this app to <em>support</em> — not replace — your clinical expertise.
+      </p>
+
+      <!-- CTA button -->
+      <button
+        id="disclaimer-accept-btn"
+        onclick="_acceptDisclaimer()"
+        style="width:100%;padding:14px;background:var(--color-brand);color:#ffffff;
+          border:none;border-radius:var(--radius-full);font-size:15px;font-weight:700;
+          cursor:pointer;font-family:var(--font);letter-spacing:.01em;
+          transition:opacity .15s,transform .10s;
+          -webkit-tap-highlight-color:transparent"
+        ontouchstart="this.style.opacity='.85';this.style.transform='scale(.98)'"
+        ontouchend="this.style.opacity='1';this.style.transform='scale(1)'">
+        I Understand — Continue
+      </button>
+
+      <!-- Version watermark -->
+      <p style="font-size:10px;color:var(--color-text-tertiary);margin:12px 0 0;
+        text-align:center;font-family:var(--font)">
+        RxManager Pro · v101
+      </p>
+
+    </div>`;
+
+  document.body.appendChild(overlay);
+
+  // Trap focus on the accept button for accessibility
+  setTimeout(() => {
+    document.getElementById('disclaimer-accept-btn')?.focus();
+  }, 80);
+}
+
+function _acceptDisclaimer() {
+  try { localStorage.setItem(DISCLAIMER_KEY, '1'); } catch(e) {}
+  const overlay = document.getElementById('disclaimer-overlay');
+  if (!overlay) return;
+  // Fade out smoothly
+  overlay.style.transition = 'opacity 250ms ease';
+  overlay.style.opacity = '0';
+  setTimeout(() => overlay.remove(), 260);
+}
 
 init().catch(console.error);
 
