@@ -15,8 +15,8 @@
 // The activate handler will delete the old cache automatically.
 // ═══════════════════════════════════════════════════════════════
 
-const SHELL_VERSION = 'v2';
-const CACHE_NAME = 'rxmanager-v1';
+const SHELL_VERSION = 'v3';
+const CACHE_NAME = 'rxmanager-shell-v3';
 const PRECACHE_URLS = [
   '/rxmanager-pwa/',
   '/rxmanager-pwa/index.html',
@@ -28,12 +28,11 @@ const CDN_CACHE     = 'rxmanager-cdn-v1';
 // These are the only files that need to load for the app to start.
 // Supabase data is intentionally NOT here — it's always live.
 const SHELL_URLS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  // Icons (pre-cache the most critical sizes)
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
+  '/rxmanager-pwa/',
+  '/rxmanager-pwa/index.html',
+  '/rxmanager-pwa/manifest.json',
+  '/rxmanager-pwa/icons/icon-192.png',
+  '/rxmanager-pwa/icons/icon-512.png',
 ];
 
 // CDN hostnames to apply stale-while-revalidate to
@@ -162,7 +161,7 @@ self.addEventListener('fetch', event => {
           .catch(() => {
             // Network failed and no cache — navigate requests get the app shell
             if (event.request.mode === 'navigate') {
-              return caches.match('/index.html');
+              return caches.match('/rxmanager-pwa/index.html');
             }
             // For sub-resources (images, etc.) — just fail silently
           });
