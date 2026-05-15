@@ -3145,7 +3145,61 @@ function _analyticsRenderHealth(h) {
     return html;
   }
 
-  const scoreColor = h.score >= 80 ? 'var(--color-safe)' : h.score >= 50 ? 'var(--color-caution)' : 'var(--color-danger)';
+  // ── healthSection: collapsible section with publish bar(s) + issue cards ──
+  function healthSection(uid, icon, title, bars, issues) {
+    // Section-level score: average of all bar percentages
+    const sectionPct = Math.round(bars.reduce((s, b) => s + (b.d === 0 ? 100 : Math.round(b.n / b.d * 100)), 0) / bars.length);
+    const sectionColor = sectionPct >= 80 ? 'var(--color-safe)' : sectionPct >= 50 ? 'var(--color-caution)' : 'var(--color-danger)';
+    const totalIssues = issues.reduce((s, g) => s + g.items.length, 0);
+
+    const barsHtml = bars.map(b => {
+      const p = b.d === 0 ? 100 : Math.round(b.n / b.d * 100);
+      const c = p >= 80 ? 'var(--color-safe)' : p >= 50 ? 'var(--color-caution)' : 'var(--color-danger)';
+      return '<div style="margin-bottom:8px">'
+        + '<div style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px">' + b.label + '</div>'
+        + '<div class="health-bar-wrap">'
+        + '<div class="health-bar-label">' + b.n.toLocaleString() + ' / ' + b.d.toLocaleString() + '</div>'
+        + '<div class="health-bar-track"><div class="health-bar-fill" style="width:' + p + '%;background:' + c + '"></div></div>'
+        + '<div class="health-bar-pct" style="color:' + c + '">' + p + '%</div>'
+        + '</div></div>';
+    }).join('');
+
+    const issueCardsHtml = issues.map(g => {
+      return '<div class="card" style="margin-bottom:10px">'
+        + '<div style="font-size:13px;font-weight:700;color:var(--color-text-secondary);margin-bottom:var(--space-3);display:flex;align-items:center;gap:6px">'
+        + '<i class="ph ' + g.icon + '" style="color:var(--color-brand)"></i>'
+        + g.title
+        + '<span class="badge ' + g.badge + '" style="margin-left:auto">' + g.items.length + '</span>'
+        + '</div>'
+        + issueList(g.items, g.label, g.fn)
+        + (g.note ? '<div style="font-size:11px;color:var(--color-text-tertiary);margin-top:6px">' + g.note + '</div>' : '')
+        + '</div>';
+    }).join('');
+
+    return '<div style="border:1px solid var(--color-border);border-radius:var(--radius-md);margin-bottom:14px;overflow:hidden">'
+      // ── Header row (always visible, click to toggle) ──
+      + '<div onclick="(function(){'
+      +   'var b=document.getElementById(\'' + uid + '_body\');'
+      +   'var a=document.getElementById(\'' + uid + '_arr\');'
+      +   'var open=b.style.display!==\'none\';'
+      +   'b.style.display=open?\'none\':\'block\';'
+      +   'a.style.transform=open?\'rotate(-90deg)\':\'rotate(0deg)\';'
+      + '})()" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--color-surface);cursor:pointer;user-select:none">'
+      + '<i class="ph ' + icon + '" style="font-size:16px;color:' + sectionColor + ';flex-shrink:0"></i>'
+      + '<span style="font-size:14px;font-weight:700;color:var(--color-text-primary);flex:1">' + title + '</span>'
+      + (totalIssues > 0 ? '<span class="badge badge-amber" style="flex-shrink:0">' + totalIssues + ' issue' + (totalIssues !== 1 ? 's' : '') + '</span>' : '<span class="badge badge-green" style="flex-shrink:0">All clear</span>')
+      + '<span style="font-size:18px;font-weight:800;color:' + sectionColor + ';flex-shrink:0;min-width:38px;text-align:right">' + sectionPct + '%</span>'
+      + '<i id="' + uid + '_arr" class="ph ph-caret-down" style="font-size:14px;color:var(--color-text-tertiary);transition:transform .2s;flex-shrink:0"></i>'
+      + '</div>'
+      // ── Body (collapsible) ──
+      + '<div id="' + uid + '_body" style="padding:14px 16px;border-top:1px solid var(--color-border);background:var(--color-bg)">'
+      + barsHtml
+      + '<div style="margin-top:12px">' + issueCardsHtml + '</div>'
+      + '</div>'
+      + '</div>';
+  }
+
+    const scoreColor = h.score >= 80 ? 'var(--color-safe)' : h.score >= 50 ? 'var(--color-caution)' : 'var(--color-danger)';
   const scoreGrade = h.score >= 90 ? 'Excellent' : h.score >= 75 ? 'Good' : h.score >= 50 ? 'Fair' : 'Needs Work';
 
   container.innerHTML = `
@@ -3184,86 +3238,28 @@ function _analyticsRenderHealth(h) {
       </div>
     </div>
 
-    <div class="card" style="margin-bottom:var(--space-4)">
-      <div style="font-size:13px;font-weight:700;color:var(--color-text-secondary);
-        margin-bottom:var(--space-3);display:flex;align-items:center;gap:6px">
-        <i class="ph ph-toggle-right" style="color:var(--color-brand)"></i> Publish Rates
-      </div>
-      <div style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Conditions</div>
-      ${bar(h.pubConds, h.totalConds)}
-      <div style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.07em;margin-top:12px;margin-bottom:4px">Drugs</div>
-      ${bar(h.pubDrugs, h.totalDrugs)}
-      <div style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.07em;margin-top:12px;margin-bottom:4px">Products</div>
-      ${bar(h.pubProds, h.totalProds)}
-      <div style="font-size:11px;font-weight:700;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.07em;margin-top:12px;margin-bottom:4px">Prescriptions</div>
-      ${bar(h.pubRx, h.totalRx)}
-    </div>
+    ${healthSection('ch_cond', 'ph-stethoscope', 'Conditions Health', [
+        { label: 'Published', n: h.pubConds, d: h.totalConds },
+      ], [
+        { title: 'Without Prescriptions', badge: h.condsNoRx.length ? 'badge-amber' : 'badge-green',            icon: 'ph-stethoscope', items: h.condsNoRx,            fn: 'condEdit', label: 'condition' },
+        { title: 'Missing Overview',      badge: h.condsMissingOverview.length ? 'badge-amber' : 'badge-green', icon: 'ph-article',     items: h.condsMissingOverview, fn: 'condEdit', label: 'condition' },
+      ])}
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);margin-bottom:var(--space-4)">
+    ${healthSection('ch_drug', 'ph-pill', 'Drugs Health', [
+        { label: 'Generics published', n: h.pubDrugs, d: h.totalDrugs },
+        { label: 'Products published', n: h.pubProds, d: h.totalProds },
+      ], [
+        { title: 'Without Products', badge: h.drugsNoProds.length    ? 'badge-amber' : 'badge-green', icon: 'ph-pill',  items: h.drugsNoProds,   fn: 'drugEdit', label: 'drug' },
+        { title: 'Missing MOA',      badge: h.drugsMissingMoa.length ? 'badge-grey'  : 'badge-green', icon: 'ph-flask', items: h.drugsMissingMoa, fn: 'drugEdit', label: 'drug' },
+      ])}
 
-      <div class="card">
-        <div style="font-size:13px;font-weight:700;color:var(--color-text-secondary);
-          margin-bottom:var(--space-3);display:flex;align-items:center;gap:6px">
-          <i class="ph ph-stethoscope" style="color:var(--color-brand)"></i>
-          Conditions without Prescriptions
-          <span class="badge ${h.condsNoRx.length ? 'badge-amber' : 'badge-green'}" style="margin-left:auto">${h.condsNoRx.length}</span>
-        </div>
-        ${issueList(h.condsNoRx, 'condition', 'condEdit')}
-      </div>
+    ${healthSection('ch_rx', 'ph-notepad', 'Prescriptions Health', [
+        { label: 'Published', n: h.pubRx, d: h.totalRx },
+      ], [
+        { title: 'Missing Source',   badge: h.rxMissingSource.length   ? 'badge-red' : 'badge-green', icon: 'ph-notepad',    items: h.rxMissingSource,   fn: 'prescriptionEdit', label: 'prescription', note: 'Required before publishing per Phase 17' },
+        { title: 'Missing Reviewer', badge: h.rxMissingReviewer.length ? 'badge-red' : 'badge-green', icon: 'ph-user-check', items: h.rxMissingReviewer, fn: 'prescriptionEdit', label: 'prescription', note: 'Required before publishing per Phase 20' },
+      ])}
 
-      <div class="card">
-        <div style="font-size:13px;font-weight:700;color:var(--color-text-secondary);
-          margin-bottom:var(--space-3);display:flex;align-items:center;gap:6px">
-          <i class="ph ph-article" style="color:var(--color-brand)"></i>
-          Conditions missing Overview
-          <span class="badge ${h.condsMissingOverview.length ? 'badge-amber' : 'badge-green'}" style="margin-left:auto">${h.condsMissingOverview.length}</span>
-        </div>
-        ${issueList(h.condsMissingOverview, 'condition', 'condEdit')}
-      </div>
-
-      <div class="card">
-        <div style="font-size:13px;font-weight:700;color:var(--color-text-secondary);
-          margin-bottom:var(--space-3);display:flex;align-items:center;gap:6px">
-          <i class="ph ph-pill" style="color:var(--color-brand)"></i>
-          Drugs without Products
-          <span class="badge ${h.drugsNoProds.length ? 'badge-amber' : 'badge-green'}" style="margin-left:auto">${h.drugsNoProds.length}</span>
-        </div>
-        ${issueList(h.drugsNoProds, 'drug', 'drugEdit')}
-      </div>
-
-      <div class="card">
-        <div style="font-size:13px;font-weight:700;color:var(--color-text-secondary);
-          margin-bottom:var(--space-3);display:flex;align-items:center;gap:6px">
-          <i class="ph ph-flask" style="color:var(--color-brand)"></i>
-          Drugs missing MOA
-          <span class="badge ${h.drugsMissingMoa.length ? 'badge-grey' : 'badge-green'}" style="margin-left:auto">${h.drugsMissingMoa.length}</span>
-        </div>
-        ${issueList(h.drugsMissingMoa, 'drug', 'drugEdit')}
-      </div>
-
-      <div class="card">
-        <div style="font-size:13px;font-weight:700;color:var(--color-text-secondary);
-          margin-bottom:var(--space-3);display:flex;align-items:center;gap:6px">
-          <i class="ph ph-notepad" style="color:var(--color-brand)"></i>
-          Prescriptions missing Source
-          <span class="badge ${h.rxMissingSource.length ? 'badge-red' : 'badge-green'}" style="margin-left:auto">${h.rxMissingSource.length}</span>
-        </div>
-        ${issueList(h.rxMissingSource, 'prescription', 'prescriptionEdit')}
-        <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:6px">Required before publishing per Phase 17</div>
-      </div>
-
-      <div class="card">
-        <div style="font-size:13px;font-weight:700;color:var(--color-text-secondary);
-          margin-bottom:var(--space-3);display:flex;align-items:center;gap:6px">
-          <i class="ph ph-user-check" style="color:var(--color-brand)"></i>
-          Prescriptions missing Reviewer
-          <span class="badge ${h.rxMissingReviewer.length ? 'badge-red' : 'badge-green'}" style="margin-left:auto">${h.rxMissingReviewer.length}</span>
-        </div>
-        ${issueList(h.rxMissingReviewer, 'prescription', 'prescriptionEdit')}
-        <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:6px">Required before publishing per Phase 20</div>
-      </div>
-
-    </div>
     <div style="font-size:11px;color:var(--color-text-tertiary);padding-bottom:var(--space-4)">
       Health computed from in-memory data. Reload the page to refresh store counts.
     </div>`;
