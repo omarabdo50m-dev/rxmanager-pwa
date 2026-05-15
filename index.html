@@ -10945,6 +10945,7 @@ async function loadConditions() {
 // If either changed → background-fetch only the stale data.
 // Network failure is silent: the UI stays on cached data, offline indicator shows.
 async function checkContentVersion() {
+  if (typeof _lastVersionCheckAt !== 'undefined') _lastVersionCheckAt = Date.now();
   try {
     const res = await fetch(
       SB.URL + '/rest/v1/rpc/get_content_version',
@@ -16159,6 +16160,26 @@ async function init() {
   //   will still fire to check the library version.
   // Silent on network failure — app stays on cached data.
   setTimeout(() => checkContentVersion().catch(() => {}), 0);
+
+  // ── Mobile PWA foreground resume — re-check content version ──────────────
+  // On mobile, users switch apps rather than reload. Without this, the version
+  // check only ever runs once (on cold start) and stale cached prescriptions
+  // are shown for the entire session even if CMS was updated while backgrounded.
+  //
+  // visibilitychange fires when the user returns to the PWA from another app,
+  // from the home screen, or after locking/unlocking the device.
+  // A 300ms delay lets the network interface re-establish before the fetch fires.
+  //
+  // Guard: skip if the app was just hidden (document.hidden = true).
+  // Guard: skip if last check was < 30s ago (avoids double-firing on fast switches).
+  let _lastVersionCheckAt = Date.now();
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) return; // app going to background — nothing to do
+    const msSinceLastCheck = Date.now() - _lastVersionCheckAt;
+    if (msSinceLastCheck < 30_000) return; // too soon — skip
+    _lastVersionCheckAt = Date.now();
+    setTimeout(() => checkContentVersion().catch(() => {}), 300);
+  });
 
   // Phase 4: background prefetch for recently-viewed conditions.
   // Fires 1.5 s after UI reveal so the version check and first render

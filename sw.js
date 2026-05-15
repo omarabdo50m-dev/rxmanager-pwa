@@ -15,8 +15,8 @@
 // The activate handler will delete the old cache automatically.
 // ═══════════════════════════════════════════════════════════════
 
-const SHELL_VERSION = 'v3';
-const CACHE_NAME = 'rxmanager-shell-v3';
+const SHELL_VERSION = 'v4';
+const CACHE_NAME = 'rxmanager-shell-v4';
 const PRECACHE_URLS = [
   '/rxmanager-pwa/',
   '/rxmanager-pwa/index.html',
@@ -133,21 +133,45 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // ── 3. APP SHELL — cache-first, network fallback ──────────────
-  // Serves the HTML file instantly from cache on every load.
-  // If not cached yet (first visit), fetches from network and caches.
-  // If both fail (offline, never visited) — returns a minimal offline page.
+  // ── 3. APP SHELL — split strategy ────────────────────────────
+  //
+  // HTML navigate requests → NETWORK-FIRST with cache fallback.
+  //   The browser always tries to fetch a fresh index.html when online.
+  //   This ensures the latest JS (including checkContentVersion fixes)
+  //   is always loaded on mobile PWA where a hard-refresh is impossible.
+  //   On failure (offline) → falls back to the cached shell.
+  //
+  // Sub-resources (images, icons, manifest) → CACHE-FIRST as before.
+  //   These never change between app versions and don't need freshness.
+
+  if (event.request.mode === 'navigate') {
+    // HTML navigate: network-first so mobile PWA always gets latest index.html
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // Cache the fresh response for offline fallback
+          if (response.ok && response.type === 'basic') {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => {
+          // Offline — serve cached shell
+          return caches.match(event.request)
+            .then(cached => cached || caches.match('/rxmanager-pwa/index.html'));
+        })
+    );
+    return;
+  }
+
+  // Sub-resources — cache-first, network fallback (unchanged)
   event.respondWith(
     caches.match(event.request)
       .then(cached => {
-        if (cached) {
-          return cached;
-        }
-
-        // Not in cache — fetch from network and cache for next time
+        if (cached) return cached;
         return fetch(event.request)
           .then(response => {
-            // Only cache successful, non-opaque responses from our own origin
             if (
               response.ok &&
               response.type === 'basic' &&
@@ -159,11 +183,7 @@ self.addEventListener('fetch', event => {
             return response;
           })
           .catch(() => {
-            // Network failed and no cache — navigate requests get the app shell
-            if (event.request.mode === 'navigate') {
-              return caches.match('/rxmanager-pwa/index.html');
-            }
-            // For sub-resources (images, etc.) — just fail silently
+            // Sub-resource failed offline — fail silently
           });
       })
   );
