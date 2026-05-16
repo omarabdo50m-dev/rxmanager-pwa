@@ -156,13 +156,13 @@
   --font-ar: 'IBM Plex Sans Arabic', 'Source Sans 3', system-ui, sans-serif;
   --mono:    'Courier New', 'Courier', monospace;
 
-  --text-xs-size:      11px; --text-xs-height:      1.4;
-  --text-sm-size:      13px; --text-sm-height:      1.5;
-  --text-base-size:    15px; --text-base-height:    1.6;
-  --text-md-size:      17px; --text-md-height:      1.5;
-  --text-lg-size:      20px; --text-lg-height:      1.4;
-  --text-xl-size:      24px; --text-xl-height:      1.3;
-  --text-display-size: 28px; --text-display-height: 1.2;
+  --text-xs-size:      11px; --text-xs-height:      1.4;   /* labels, badges, metadata */
+  --text-sm-size:      13px; --text-sm-height:      1.55;  /* secondary body, captions */
+  --text-base-size:    15px; --text-base-height:    1.65;  /* primary body text */
+  --text-md-size:      17px; --text-md-height:      1.5;   /* list titles, card names */
+  --text-lg-size:      19px; --text-lg-height:      1.4;   /* drug brand names in viewer */
+  --text-xl-size:      22px; --text-xl-height:      1.3;   /* condition viewer title */
+  --text-display-size: 26px; --text-display-height: 1.2;   /* hero / screen titles */
 
 
   /* ── CHIP ACTIVE STATE TOKENS — v75 ────────────────────────
@@ -3040,7 +3040,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .scr-hdr{background:var(--color-bg);color: var(--color-text-inverse);padding:var(--header-top-pad) 15px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;box-shadow:0 4px 12px rgba(15,23,42,.3);flex-shrink:0}
 .back-btn{background:none;border:none;color:rgba(255,255,255,.8);font-size:22px;cursor:pointer;padding:2px 4px;line-height:1;transition:.15s}
 .back-btn:active{color: var(--color-text-inverse)}
-.scr-title{font-size:16px;font-weight:800;flex:1;color: var(--color-text-inverse);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scr-title{font-size:var(--text-md-size);font-weight:800;flex:1;color: var(--color-text-inverse);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .scr-action-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;color: var(--color-text-inverse);padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;transition:.15s}
 .scr-action-btn:active{background:rgba(255,255,255,.22)}
 .scr-action-btn.danger{background:rgba(190,18,60,.25);border-color:rgba(190,18,60,.4)}
@@ -6150,19 +6150,17 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .cv-hdr-specialty-tag {
 
 /* ── Title — row 3, larger bold, max 2 lines ── */
 .cv-scr-title {
-  font-size: 20px;
+  font-size: var(--text-xl-size);   /* 22px — clearly above drug brand 19px */
   font-weight: 800;
   color: var(--color-text-inverse);
   letter-spacing: -.4px;
   font-family: var(--font);
   line-height: 1.22;
-  /* Clamp to 2 lines — prevents dynamic height growth */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   word-break: break-word;
-  /* Title stretches full width of its row */
   width: 100%;
 }
 
@@ -6600,7 +6598,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 
 /* Overview */
 .cv-overview-card { padding: var(--space-3) var(--space-4); }
-.cv-overview-text { font-size: var(--text-sm-size); line-height: 1.75; color: var(--color-text-secondary); }
+.cv-overview-text { font-size: var(--text-base-size); line-height: 1.75; color: var(--color-text-secondary); }
 
 /* .cv-pp-card and its sub-rules removed in Session 4.4 — superseded by .cv-pp-card-p11 */
 
@@ -6816,10 +6814,10 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   opacity: 0.65;
 }
 
-/* Brand name — prominent */
+/* Brand name — prominent but clearly below condition title */
 .cv-rx-brand-name {
-  font-size:var(--text-lg-size);
-  font-weight:700;
+  font-size:var(--text-lg-size);    /* 19px — was 20px (same as title) */
+  font-weight:700;                  /* 700 vs title's 800 — another differentiation axis */
   color:var(--color-text-primary);
   line-height:var(--text-lg-height);
   letter-spacing:-.2px;
@@ -6872,25 +6870,25 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 
 /* Dose display — language-aware, Phase 10 */
 .cv-dose-en {
-  font-size:var(--text-base-size);
-  font-weight:600;
+  font-size:var(--text-base-size);  /* 15px — correct */
+  font-weight:500;                  /* was 600 — too close to brand name weight */
   color:var(--color-text-primary);
   direction:ltr;
   text-align:left;
   margin-top:var(--space-1);
-  line-height:1.8;
+  line-height:1.7;
   display:none;
   font-family:var(--font);
 }
 .cv-dose-ar {
   font-family:'IBM Plex Sans Arabic','IBM Plex Sans',system-ui,sans-serif;
   font-size:var(--text-base-size);
-  font-weight:600;
+  font-weight:500;                  /* was 600 */
   color:var(--color-text-primary);
   direction:rtl;
   text-align:right;
   margin-top:var(--space-1);
-  line-height:1.8;
+  line-height:1.7;
   display:none;
 }
 /* Language visibility — controlled by condViewerScr class */
@@ -7280,15 +7278,17 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 }
 .cv-pi-text-ar {
   font-family:var(--font-ar);
-  font-size:var(--text-base-size);
-  line-height:2;
+  font-size:var(--text-sm-size);    /* 13px — was text-base (15px), too large vs other body text */
+  font-weight:400;                  /* regular — was implicitly bold from inheritance */
+  line-height:1.85;                 /* was 2 — slightly tighter, still comfortable for Arabic */
   color:var(--color-text-secondary);
   direction:rtl;
   text-align:right;
   display:none;
 }
 .cv-pi-text-en {
-  font-size:var(--text-sm-size);
+  font-size:var(--text-sm-size);    /* 13px — matches ar variant */
+  font-weight:400;
   line-height:var(--text-base-height);
   color:var(--color-text-secondary);
   display:none;
@@ -7330,7 +7330,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 }
 .cv-coll-hdr:active { background: var(--color-bg); }
 .cv-coll-hdr-ico { font-size: var(--text-base-size); flex-shrink: 0; }
-.cv-coll-hdr-title { font-size: var(--text-xs-size); font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-primary); flex: 1; }
+.cv-coll-hdr-title { font-size: var(--text-sm-size); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-primary); flex: 1; }
 .cv-coll-hdr-arrow { font-size: var(--text-xs-size); color: var(--color-text-tertiary); transition: transform .22s; flex-shrink: 0; }
 .cv-coll-hdr-arrow.open { transform: rotate(90deg); }
 .cv-coll-body { overflow: hidden; max-height: 0; opacity: 0; transition: max-height .3s ease, opacity .2s; }
@@ -7617,7 +7617,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   margin-bottom: var(--space-2);
 }
 .cv-depth-body-p11 {
-  font-size: var(--text-sm-size);
+  font-size: var(--text-base-size);  /* was text-sm-size — body reading blocks need 15px */
   line-height: 1.75;
   color: var(--color-text-secondary);
   white-space: pre-wrap;
