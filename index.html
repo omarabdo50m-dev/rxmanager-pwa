@@ -3039,8 +3039,13 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .screen.open{display:flex}
 @keyframes slide-in{from{transform:translateX(6%);opacity:.5}to{transform:none;opacity:1}}
 /* Peer nav screens — sit alongside home, no z-index stack, no slide-in */
-#libScr,#favsScr{position:fixed;inset:0;z-index:10;background:var(--color-bg);display:none;flex-direction:column;max-width:480px;margin:0 auto;animation:none;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#libScr,#favsScr{position:fixed;inset:0;z-index:10;background:var(--color-bg);display:none;flex-direction:column;max-width:480px;margin:0 auto;animation:none;overflow:hidden}
 #libScr.peer-open,#favsScr.peer-open{display:flex}
+#libScr .lib-scroll-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#favsScr .favs-scroll-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.lib-fixed-header{background:var(--color-bg);flex-shrink:0;z-index:20}
+.lib-fixed-header .search-bar-wrap{padding:6px 20px 12px}
+.lib-fixed-header .search-inp{animation:none}
 .scr-hdr{background:var(--color-bg);color: var(--color-text-inverse);padding:var(--header-top-pad) 15px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;box-shadow:0 4px 12px rgba(15,23,42,.3);flex-shrink:0}
 .back-btn{background:none;border:none;color:rgba(255,255,255,.8);font-size:22px;cursor:pointer;padding:2px 4px;line-height:1;transition:.15s}
 .back-btn:active{color: var(--color-text-inverse)}
@@ -8369,59 +8374,64 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 
 <!-- LIBRARY -->
 <div id="libScr">
-  <div class="cc-screen-header">
-    <span class="cc-screen-header__title" id="libScrTitle" style="font-size:var(--text-lg-size);font-weight:800;letter-spacing:-.3px">Drug Library</span>
-    <button class="cc-screen-header__back" id="libMenuBtn" onclick="openLibMenu()" title="More options" aria-label="More options">
-      <i class="ph ph-dots-three-outline" style="font-size:18px"></i>
-    </button>
-  </div>
-  <!-- ── Search + Filter bar — same structure as home screen search ── -->
-  <div class="lib-search-row" style="padding:var(--space-2) var(--space-4) var(--space-3)">
-    <div class="search-wrap" style="flex:1">
-      <span class="search-ico"><i class="ph ph-magnifying-glass"></i></span>
-      <input class="search-inp" type="text" id="libSearch" placeholder="Search drugs, class, use…" oninput="debouncedRenderLib()" dir="auto" autocomplete="off"/>
-      <div class="search-right">
-        <button class="search-clear" id="libSearchClearBtn" onclick="document.getElementById('libSearch').value='';debouncedRenderLib()" aria-label="Clear search" style="display:none"><i class="ph ph-x" style="font-size:13px;font-weight:700"></i></button>
-        <button class="search-filter-btn" id="libFilterBtn" onclick="openLibFilterSheet()" aria-label="Filter drugs" title="Filter">
-          <i class="ph ph-faders"></i>
-          <span class="lib-filter-badge" id="libFilterBadge"></span>
-        </button>
+  <!-- ── Fixed header zone: title row + home-style search pill ── -->
+  <div class="lib-fixed-header">
+    <div class="cc-screen-header">
+      <span class="cc-screen-header__title" id="libScrTitle" style="font-size:var(--text-lg-size);font-weight:800;letter-spacing:-.3px">Drug Library</span>
+      <button class="cc-screen-header__back" id="libMenuBtn" onclick="openLibMenu()" title="More options" aria-label="More options">
+        <i class="ph ph-dots-three-outline" style="font-size:18px"></i>
+      </button>
+    </div>
+    <!-- Search pill — same markup & classes as home screen -->
+    <div class="search-bar-wrap">
+      <div class="search-wrap">
+        <span class="search-ico"><i class="ph ph-magnifying-glass"></i></span>
+        <input class="search-inp" type="text" id="libSearch" placeholder="Search drugs, class, use…" oninput="debouncedRenderLib()" dir="auto" autocomplete="off"/>
+        <div class="search-right">
+          <button class="search-clear" id="libSearchClearBtn" onclick="document.getElementById('libSearch').value='';debouncedRenderLib()" aria-label="Clear search" style="display:none"><i class="ph ph-x" style="font-size:13px;font-weight:700"></i></button>
+          <button class="search-filter-btn" id="libFilterBtn" onclick="openLibFilterSheet()" aria-label="Filter drugs" title="Filter">
+            <i class="ph ph-faders"></i>
+            <span class="lib-filter-badge" id="libFilterBadge"></span>
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-
-  <!-- Active filter summary strip (shown when any filter is active) -->
-  <div class="lib-filter-active-strip" id="libFilterStrip">
-    <i class="ph ph-funnel" style="font-size:12px;color:var(--color-brand);flex-shrink:0"></i>
-    <span class="lib-filter-active-text" id="libFilterStripText"></span>
-    <button class="lib-filter-active-clear" onclick="libClearAllFilters()">
-      <i class="ph ph-x" style="font-size:10px;vertical-align:-1px;margin-right:2px"></i>Clear all
-    </button>
-  </div>
-
-  <!-- Hidden elements kept for JS compat (route/formula/safety panels) -->
-  <div id="libFormulaPanel" style="display:none">
-    <div style="padding:5px 10px 6px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <span style="font-size:9px;font-weight:800;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.06em" id="libFormulaPanelTitle">Formulas</span>
-        <button class="formula-filter-clear" onclick="libClearFormulas()"><i class="ph ph-x" style="font-size:10px;vertical-align:0;margin-right:2px"></i>Clear</button>
-      </div>
-      <div class="formula-chips-grid" id="libFormulaChips"></div>
+    <!-- Active filter summary strip -->
+    <div class="lib-filter-active-strip" id="libFilterStrip">
+      <i class="ph ph-funnel" style="font-size:12px;color:var(--color-brand);flex-shrink:0"></i>
+      <span class="lib-filter-active-text" id="libFilterStripText"></span>
+      <button class="lib-filter-active-clear" onclick="libClearAllFilters()">
+        <i class="ph ph-x" style="font-size:10px;vertical-align:-1px;margin-right:2px"></i>Clear all
+      </button>
     </div>
-  </div>
-  <div id="libSafetyPanel" style="display:none"></div>
-  <!-- Hidden route pill elements for JS compat -->
-  <div style="display:none" aria-hidden="true">
-    <button id="lrp_All"></button>
-    <button id="lrp_Oral"></button>
-    <button id="lrp_Injectable"></button>
-    <button id="lrp_Topical"></button>
-    <button id="lrp_Inhaled"></button>
-    <button id="lrp_Other"></button>
-    <button id="lrp_Safety"></button>
-    <span id="libFilterSummary"><span id="libFilterSummaryText"></span></span>
-  </div>
-  <div class="lib-items" id="libItems" style="padding-bottom:80px"></div>
+  </div><!-- /.lib-fixed-header -->
+
+  <!-- ── Scrollable content body ── -->
+  <div class="lib-scroll-body">
+    <!-- Hidden elements kept for JS compat -->
+    <div id="libFormulaPanel" style="display:none">
+      <div style="padding:5px 10px 6px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:9px;font-weight:800;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.06em" id="libFormulaPanelTitle">Formulas</span>
+          <button class="formula-filter-clear" onclick="libClearFormulas()"><i class="ph ph-x" style="font-size:10px;vertical-align:0;margin-right:2px"></i>Clear</button>
+        </div>
+        <div class="formula-chips-grid" id="libFormulaChips"></div>
+      </div>
+    </div>
+    <div id="libSafetyPanel" style="display:none"></div>
+    <div style="display:none" aria-hidden="true">
+      <button id="lrp_All"></button>
+      <button id="lrp_Oral"></button>
+      <button id="lrp_Injectable"></button>
+      <button id="lrp_Topical"></button>
+      <button id="lrp_Inhaled"></button>
+      <button id="lrp_Other"></button>
+      <button id="lrp_Safety"></button>
+      <span id="libFilterSummary"><span id="libFilterSummaryText"></span></span>
+    </div>
+    <div class="lib-items" id="libItems" style="padding-bottom:80px"></div>
+  </div><!-- /.lib-scroll-body -->
+
   <!-- Selection action bar — slides up from bottom -->
   <div class="lib-select-bar" id="libSelectBar">
     <div class="lib-select-count" id="libSelectCount">0 selected<span>Tap drugs to select</span></div>
@@ -8877,7 +8887,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   </div>
 
   <!-- Scrollable body -->
-  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:var(--space-3) var(--space-3) 80px">
+  <div class="favs-scroll-body" style="padding:var(--space-3) var(--space-3) 80px">
 
     <!-- Favourite Prescriptions section -->
     <div class="fav-section">
