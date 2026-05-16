@@ -1006,20 +1006,39 @@ body { background: var(--color-bg); color: var(--color-text-primary); }
    The prefers-reduced-motion block above collapses this to 0.001ms
    for users who have chosen to minimise motion.
    ─────────────────────────────────────────────────────────────────── */
-html.theme-transitioning *,
-html.theme-transitioning *::before,
-html.theme-transitioning *::after {
+html.theme-transitioning {
+  --_theme-t: 220ms ease-in-out;
+}
+html.theme-transitioning body,
+html.theme-transitioning #app,
+html.theme-transitioning .gradient-shell,
+html.theme-transitioning .hero-zone,
+html.theme-transitioning .hdr,
+html.theme-transitioning .lib-fixed-header,
+html.theme-transitioning .bnav,
+html.theme-transitioning .cc-screen-header,
+html.theme-transitioning .search-inp,
+html.theme-transitioning .search-wrap,
+html.theme-transitioning .rv-chip-name,
+html.theme-transitioning .rv-label,
+html.theme-transitioning .hdr-app-name,
+html.theme-transitioning .hdr-theme-btn,
+html.theme-transitioning .hdr-gear-btn,
+html.theme-transitioning .peer-scr-title,
+html.theme-transitioning .bnav-btn,
+html.theme-transitioning .rx-card,
+html.theme-transitioning .spec-chip,
+html.theme-transitioning .lib-drug-card,
+html.theme-transitioning .dbc-brand,
+html.theme-transitioning .fav-section,
+html.theme-transitioning .fav-hdr {
   transition:
     background-color 220ms ease-in-out,
     background       220ms ease-in-out,
     color            180ms ease-in-out,
     border-color     220ms ease-in-out,
-    box-shadow       220ms ease-in-out,
-    fill             220ms ease-in-out !important;
-  /* Leave transform and opacity alone — they power tap feedback */
-  animation-duration: 0.001ms !important;
+    box-shadow       220ms ease-in-out !important;
 }
-
 /* ── SEARCH HERO ENTRANCE — subtle scale-up + fade-in ──────────
    Triggers once on load to draw the doctor's eye to the search
    field. Scale starts at .97 so the bar "grows in" from the
