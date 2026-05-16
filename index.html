@@ -1050,6 +1050,17 @@ html.theme-transitioning .spec-scrollable-mask::after,
 html.theme-transitioning .rv-wrap::after {
   transition: background-color 180ms ease-in-out !important;
 }
+/* Lib + Fav: cover ALL child elements including anonymous JS-rendered divs
+   that have inline style background:var(--color-surface/bg).
+   Without this, brand sub-rows and other generated nodes snap instantly. */
+html.theme-transitioning #libScr *,
+html.theme-transitioning #favsScr * {
+  transition:
+    background-color 180ms ease-in-out,
+    background       180ms ease-in-out,
+    color            150ms ease-in-out,
+    border-color     180ms ease-in-out !important;
+}
 /* ── SEARCH HERO ENTRANCE — subtle scale-up + fade-in ──────────
    Triggers once on load to draw the doctor's eye to the search
    field. Scale starts at .97 so the bar "grows in" from the
