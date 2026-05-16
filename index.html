@@ -5595,7 +5595,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .dv-moa-class-strip {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 2px;
   margin-bottom: var(--space-2);
   padding-bottom: var(--space-2);
   border-bottom: 1px solid var(--color-border);
@@ -5803,7 +5803,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   font-size: 14px;
   font-weight: 700;
   color: var(--color-brand);
-  line-height: 1.8;
+  line-height: 1.5;
   direction: rtl;
   text-align: right;
   margin-top: var(--space-2);
@@ -5953,7 +5953,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 }
 .dv-ped-dose-text-p12 {
   font-size: var(--text-base-size);
-  line-height: 1.75;
+  line-height: 1.5;
   color: var(--color-text-secondary);
   font-weight: 400;
   word-break: break-word;
@@ -6078,7 +6078,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 }
 .dv-contra-text-p12 {
   font-size: var(--text-base-size);
-  line-height: 1.75;
+  line-height: 1.5;
   color: var(--color-text-secondary);
   font-weight: 400;
   word-break: break-word;
@@ -6103,7 +6103,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 }
 .dv-se-text-p12 {
   font-size: var(--text-base-size);
-  line-height: 1.75;
+  line-height: 1.5;
   color: var(--color-text-secondary);
   word-break: break-word;
   white-space: pre-wrap;
@@ -6132,7 +6132,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 }
 .dv-pk-cell-val-p12 {
   font-size: var(--text-base-size);
-  line-height: 1.75;
+  line-height: 1.5;
   color: var(--color-text-secondary);
   font-weight: 400;
   word-break: break-word;
@@ -6175,7 +6175,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 }
 .dv-pk-adjust-text-p12 {
   font-size: var(--text-base-size);
-  line-height: 1.75;
+  line-height: 1.5;
   color: var(--color-text-secondary);
   font-weight: 400;
   word-break: break-word;
@@ -8280,7 +8280,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 }
 .cv-depth-body-p11 {
   font-size: var(--text-base-size);
-  line-height: 1.75;
+  line-height: 1.5;
   color: var(--color-text-secondary);
   white-space: pre-wrap;
   word-break: break-word;
@@ -16247,14 +16247,8 @@ async function openDrugViewer(id) {
   if (mechBody) {
     const moaBody = `
       ${hasClass ? `<div class="dv-moa-class-strip">
-        ${cls.therapeutic ? `<div class="dv-moa-class-cell">
-          <div class="dv-moa-class-cell-lbl">Drug Group</div>
-          <div class="dv-moa-class-cell-val">${esc(cls.therapeutic)}</div>
-        </div>` : ''}
-        ${cls.pharmacological ? `<div class="dv-moa-class-cell">
-          <div class="dv-moa-class-cell-lbl">Drug Class</div>
-          <div class="dv-moa-class-cell-val secondary">${esc(cls.pharmacological)}</div>
-        </div>` : ''}
+        ${cls.therapeutic ? `<div class="dv-moa-class-cell-val">${esc(cls.therapeutic)}</div>` : ''}
+        ${cls.pharmacological ? `<div class="dv-moa-class-cell-val secondary">${esc(cls.pharmacological)}</div>` : ''}
       </div>` : ''}
       <div class="cv-depth-block-p11" style="${hasClass ? 'margin-top:var(--space-3)' : ''}">
         <div class="cv-depth-body-p11" dir="auto">${esc(mechBody)}</div>
@@ -16268,43 +16262,6 @@ async function openDrugViewer(id) {
     html += _dvFlatCard({iconBg:'rgba(0,133,254,.10)', iconColor:'var(--color-brand)', iconName:'ph-clipboard-text', title:'Common Uses', content:usesContent});
   }
 
-  // ══ MY NOTES — Phase 12 ════════════════════════════════════
-  // Migrate localStorage note on first view
-  const _legacyNote = localStorage.getItem('rxmgr_drug_notes_' + id) || '';
-  const myNotesVal  = drug.additionalInfo || _legacyNote || '';
-  if (_legacyNote && !drug.additionalInfo) {
-    DB.get('library', id).then(d => {
-      if (d) DB.put('library', {...d, additionalInfo: _legacyNote}).then(() => {
-        localStorage.removeItem('rxmgr_drug_notes_' + id);
-      });
-    });
-  }
-  {
-    const preview = myNotesVal ? myNotesVal.slice(0, 55) + (myNotesVal.length > 55 ? '…' : '') : '';
-    const notesContent = `<div class="dv-notes-card-p12" style="margin:0;border:none;padding:var(--space-3) var(--space-4) var(--space-4)">
-      <div id="dvMN_view_${id}" style="font-size:13.5px;line-height:1.75;color:${myNotesVal ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)'};white-space:pre-wrap;word-break:break-word;${myNotesVal ? '' : 'font-style:italic'}"
-        dir="auto">${myNotesVal ? esc(myNotesVal) : 'Tap Edit to add your notes…'}</div>
-      <div id="dvMN_editor_${id}" style="display:none;margin-top:var(--space-3)">
-        <textarea id="dvMN_ta_${id}" dir="auto"
-          style="width:100%;padding:10px 12px;border:1.5px solid var(--color-brand);border-radius:var(--radius-sm);font-size:14px;font-family:var(--font);outline:none;resize:vertical;min-height:100px;line-height:1.7;background:var(--color-surface);color:var(--color-text-primary);transition:.18s"
-          placeholder="Clinical pearls, local protocols, personal observations…">${esc(myNotesVal)}</textarea>
-        <div style="display:flex;gap:var(--space-2);margin-top:var(--space-2)">
-          <button onclick="dvSaveMyNotes('${id}')"
-            style="flex:1;padding:10px;background:var(--color-brand);color:var(--color-text-inverse);border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:5px">
-            <i class="ph ph-floppy-disk" style="font-size:14px"></i> Save
-          </button>
-          <button onclick="dvCancelMyNotes('${id}')"
-            style="padding:10px 14px;background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);color:var(--color-text-secondary)">Cancel</button>
-        </div>
-      </div>
-      <button id="dvMN_editbtn_${id}" onclick="dvEditMyNotes('${id}')"
-        class="dv-notes-edit-btn-p12" style="margin-top:${myNotesVal ? 'var(--space-3)' : '0'}">
-        <i class="ph ph-pencil" style="font-size:11px"></i>
-        ${myNotesVal ? 'Edit Notes' : 'Add Notes'}
-      </button>
-    </div>`;
-    html += _dvFlatCard({iconBg:'rgba(245,158,11,.10)', iconColor:'var(--color-caution)', iconName:'ph-note-pencil', title:'My Notes', content:notesContent});
-  }
 
   // ══ BRANDS & FORMULAS — Phase 12 / 4.7 ══════════════════════════
   // Now a full collapsible: header (icon + title + formula filter btn + arrow),
