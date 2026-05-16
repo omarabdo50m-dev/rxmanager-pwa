@@ -3084,9 +3084,15 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   letter-spacing:-.2px;
   color:var(--color-text-primary);
   line-height:1.2;
-  padding:8px 0 8px 0;
+  padding:10px 20px;
   text-align:left;
   white-space:nowrap;
+  flex-shrink:0;
+}
+/* Inside .hdr the parent already provides 20px horizontal padding — cancel it */
+.hdr .peer-scr-title{
+  padding-left:0;
+  padding-right:0;
 }
 /* lib fixed header needs no extra padding-bottom since title provides it */
 .lib-fixed-header .search-bar-wrap{padding:4px 20px 8px}
@@ -3445,7 +3451,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 /* ── FAVOURITES SEGMENTED TAB BAR ─────────────────────────────── */
 .fav-tab-bar {
   display: flex;
-  margin: var(--space-4) var(--space-4) var(--space-3);
+  margin: 4px 20px 8px;
   background: var(--color-surface-2);
   border-radius: var(--radius-full);
   padding: 3px;
@@ -8593,9 +8599,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
       </div>
 
       <!-- Screen title -->
-      <div style="padding:12px 20px 12px var(--space-5);flex-shrink:0">
-        <div style="font-size:22px;font-weight:600;color:var(--color-text-primary);letter-spacing:-.2px;line-height:1.2;white-space:nowrap;text-align:left">What are you looking for?</div>
-      </div>
+      <div class="peer-scr-title">What are you looking for?</div>
 
       <!-- Search + recently viewed -->
       <div class="lookup-zone">
