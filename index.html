@@ -15524,7 +15524,6 @@ async function renderLib() {
                 var arDiv = ob.brandAr ? '<div style="font-size:10px;color:var(--color-text-tertiary);font-family:var(--font-ar);direction:rtl">' + esc(ob.brandAr) + '</div>' : '';
                 var cSpan = ob.conc ? '<span style="font-size:11px;color:var(--color-text-secondary);flex-shrink:0">' + esc(ob.conc) + '</span>' : '';
                 return '<div onclick="openDrugViewer(\'' + d.id + '\')" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--color-border);cursor:pointer">'
-                  + fSpan
                   + '<div style="flex:1;min-width:0"><span style="font-size:13px;font-weight:600;color:var(--color-text-primary)">' + esc(ob.brand) + '</span>' + cSpan + fSpan + arDiv + '</div>'
                   + '</div>';
               }).join('')}
