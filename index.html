@@ -4018,11 +4018,11 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: 4px 12px 8px;
+  padding: 2px 20px 6px;
   flex-shrink: 0;
 }
 .lib-scope-chip__ico {
-  font-size: 13px;
+  display: none;
 }
 .lib-scope-chip__name {
   font-size: var(--text-xs-size);
@@ -4031,20 +4031,22 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   flex: 1;
 }
 .lib-scope-chip__clear {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: var(--color-border-strong);
+  background: none;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-secondary);
+  color: var(--color-text-tertiary);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  padding: 0;
+  font-size: 14px;
 }
 .lib-scope-chip__clear:active {
-  opacity: .7;
+  color: var(--color-text-primary);
 }
 
 /* #libItems — transition layer for grid ↔ list swap */
@@ -8708,7 +8710,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
       <span class="lib-scope-chip__ico" id="libScopeChipIco"></span>
       <span class="lib-scope-chip__name" id="libScopeChipName"></span>
       <button class="lib-scope-chip__clear" onclick="exitToGrid();document.getElementById('libSearch').value='';debouncedRenderLib();" aria-label="Clear category filter">
-        <i class="ph ph-x" style="font-size:10px"></i>
+        <i class="ph ph-x" style="font-size:13px"></i>
       </button>
     </div>
     <!-- Active filter summary strip -->
@@ -9888,7 +9890,7 @@ async function buildCategoryGridData() {
     counts[group] = (counts[group] || 0) + 1;
   });
   // Build ordered list — DRUG_GROUPS defines canonical order
-  const groups = Object.keys(DRUG_GROUPS).filter(g => (counts[g] || 0) > 0);
+  const groups = Object.keys(DRUG_GROUPS); // show all groups, even empty ones
   return [
     {
       id:    'All',
