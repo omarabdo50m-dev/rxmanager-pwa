@@ -3844,7 +3844,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .lib-cat-grid {
   display: flex;
   flex-direction: column;
-  padding: var(--space-2) 20px 80px;
+  padding: var(--space-2) 16px 80px 20px;
   gap: 0;
 }
 
@@ -15154,8 +15154,8 @@ async function renderCategoryGrid() {
   const cont = document.getElementById('libItems');
   if (!cont) return;
 
-  // Clear any leftover padding from list-view renders
-  cont.style.paddingBottom = '';
+  // Grid controls its own padding — zero libItems so there's no double-indent
+  cont.style.padding = '0';
 
   const categories = await buildCategoryGridData();
 
@@ -15202,10 +15202,12 @@ async function renderLib() {
   const [lib, allProducts] = await Promise.all([DB.getAll('library'), DB.getAll('products')]);
 
   const cont = document.getElementById('libItems');
+  // Restore default padding when showing list/search (may have been zeroed by grid view)
+  if (cont) cont.style.padding = '';
 
   // ── No search query: show generic cards as before ──────────────────
   if (!q) {
-    let filtered = lib.filter(d => S.activeLibCat === 'All' || (d.group||d.type) === S.activeLibCat);
+    let filtered = lib.filter(d => S.activeLibCat === 'All' || resolveGroupSub(d).group === S.activeLibCat);
 
     // Apply unified filter (route + formula + pregnancy + lactation)
     const filteredIds = applyFilters(filtered.map(d => d.id), _libFilterState);
