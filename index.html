@@ -5780,7 +5780,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   border: none;
   border-bottom: 1px solid rgba(0,133,254,.18);
   border-radius: 0;
-  padding: var(--space-3) var(--space-5);
+  padding: var(--space-2) var(--space-5);
   margin: 0;
 }
 .dv-generic-dose-lbl-p12 {
@@ -5789,7 +5789,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   color: var(--color-brand);
   text-transform: uppercase;
   letter-spacing: .08em;
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-1);
 }
 .dv-generic-dose-en-p12 {
   font-size: 14px;
@@ -5831,8 +5831,8 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-3) var(--space-2);
+  gap: 2px;
+  padding: var(--space-2) var(--space-1);
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--color-border);
   background: var(--color-surface-2);
@@ -6062,8 +6062,8 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   background: var(--color-danger-light);
   border: 1.5px solid rgba(220,38,38,.2);
   border-radius: var(--radius-sm);
-  padding: var(--space-3) var(--space-4);
-  margin-bottom: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-2);
 }
 .dv-contra-lbl-p12 {
   font-size: 9px;
@@ -6071,7 +6071,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   text-transform: uppercase;
   letter-spacing: .08em;
   color: var(--color-danger);
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-1);
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -6088,7 +6088,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   background: var(--color-surface-2);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-2) var(--space-3);
 }
 .dv-se-lbl-p12 {
   font-size: 9px;
@@ -6096,7 +6096,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   text-transform: uppercase;
   letter-spacing: .08em;
   color: var(--color-text-secondary);
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-1);
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -6114,6 +6114,73 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+.dv-pk-cell-p12 {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+}
+.dv-pk-cell-lbl-p12 {
+  font-size: 8.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--color-text-tertiary);
+  margin-bottom: 2px;
+}
+.dv-pk-cell-val-p12 {
+  font-size: var(--text-base-size);
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  font-weight: 400;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+.dv-pk-interactions-p12 {
+  background: var(--color-danger-light);
+  border: 1.5px solid rgba(220,38,38,.18);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-2);
+}
+.dv-pk-interactions-lbl-p12 {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--color-danger);
+  margin-bottom: var(--space-1);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.dv-pk-adjust-p12 {
+  background: var(--color-caution-light);
+  border: 1.5px solid rgba(217,119,6,.18);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+}
+.dv-pk-adjust-lbl-p12 {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--color-caution);
+  margin-bottom: var(--space-1);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.dv-pk-adjust-text-p12 {
+  font-size: var(--text-base-size);
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  font-weight: 400;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
   margin-bottom: var(--space-3);
 }
 .dv-pk-cell-p12 {
@@ -8265,11 +8332,11 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   color: var(--color-text-primary);
 }
 .cv-depth-card-body-p11 {
-  padding: var(--space-3) var(--space-4) var(--space-4);
+  padding: var(--space-2) var(--space-4) var(--space-3);
 }
 /* Each heading+paragraph pair — no inner box, no border, no bg */
 .cv-depth-block-p11 {
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-2);
 }
 .cv-depth-block-p11:last-child { margin-bottom: 0; }
 .cv-depth-heading-p11 {
@@ -16250,7 +16317,7 @@ async function openDrugViewer(id) {
         ${cls.therapeutic ? `<div class="dv-moa-class-cell-val">${esc(cls.therapeutic)}</div>` : ''}
         ${cls.pharmacological ? `<div class="dv-moa-class-cell-val secondary">${esc(cls.pharmacological)}</div>` : ''}
       </div>` : ''}
-      <div class="cv-depth-block-p11" style="${hasClass ? 'margin-top:var(--space-3)' : ''}">
+      <div class="cv-depth-block-p11" style="${hasClass ? 'margin-top:var(--space-2)' : ''}">
         <div class="cv-depth-body-p11" dir="auto">${esc(mechBody)}</div>
       </div>`;
     html += _dvFlatCard({iconBg:'rgba(20,184,166,.10)', iconColor:'#14b8a6', iconName:'ph-flask', title:'Mechanism of Action', content:moaBody});
@@ -16338,14 +16405,14 @@ async function openDrugViewer(id) {
     const pedParsed = parsePedDose(drug.pedDose);
     const hasCalc   = !!pedParsed;
     const pedContent = `
-      ${drug.pedAgeLimit ? `<div class="dv-ped-age-pill-p12">
-        <i class="ph ph-shield-check" style="font-size:13px"></i>
-        Age restriction: ${esc(drug.pedAgeLimit)}
+      ${drug.pedAgeLimit ? `<div class="dv-moa-class-strip" style="margin-bottom:var(--space-2);padding-bottom:var(--space-2)">
+        <div class="dv-moa-class-cell-val" style="display:flex;align-items:center;gap:6px">
+          <i class="ph ph-shield-check" style="font-size:13px;color:var(--color-brand);flex-shrink:0"></i>${esc(drug.pedAgeLimit)}
+        </div>
       </div>` : ''}
-      ${drug.pedDose ? `<div class="dv-ped-dose-block-p12">
-        <div class="dv-ped-dose-lbl-p12">Weight-based dose</div>
-        <div class="dv-ped-dose-text-p12" dir="auto">${esc(drug.pedDose)}</div>
-        ${drug.pedDoseAr ? `<div class="dv-ped-dose-ar-p12" dir="rtl">${esc(drug.pedDoseAr)}</div>` : ''}
+      ${drug.pedDose ? `<div style="margin-bottom:${hasCalc ? 'var(--space-3)' : '0'}">
+        <div class="dv-moa-class-cell-val" dir="ltr" style="text-align:left">${esc(drug.pedDose)}</div>
+        ${drug.pedDoseAr ? `<div class="dv-moa-class-cell-val secondary" dir="rtl" style="text-align:right;font-family:var(--font-ar);margin-top:2px">${esc(drug.pedDoseAr)}</div>` : ''}
       </div>` : ''}
       ${hasCalc ? `<div class="dv-calc-box-p12">
         <div class="dv-calc-title-p12">
