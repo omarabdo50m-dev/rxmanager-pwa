@@ -784,14 +784,6 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .cv-hdr-specialty-tag {
 }
 
 /* ── 28. DV EDIT FAB — white on light bg ── */
-/* .dv-edit-fab uses background:var(--color-bg) + color:var(--color-text-inverse).
-   In light mode bg becomes pale grey and text becomes white.
-   Override to brand button style — makes it stand out and readable. */
-[data-theme="light"] .dv-edit-fab {
-  background: var(--color-brand);
-  color: #ffffff;
-  box-shadow: 0 4px 16px rgba(0,133,254,.35);
-}
 
 /* ── OS PREFERENCE MIRROR — same fixes for media query path ── */
 @media (prefers-color-scheme: light) {
@@ -858,7 +850,6 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .cv-hdr-specialty-tag {
   html:not([data-theme="dark"]) .lib-cancel-select-btn { background: rgba(255,255,255,.15); color: #E8EFF8; }
   html:not([data-theme="dark"]) .lib-cancel-select-btn:active { background: rgba(255,255,255,.25); }
   /* Fix 28 — dv edit fab */
-  html:not([data-theme="dark"]) .dv-edit-fab { background: var(--color-brand); color: #ffffff; box-shadow: 0 4px 16px rgba(0,133,254,.35); }
 }
 
 /* ══════════════════════════════════════════════════════
@@ -5270,9 +5261,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .lib-drug-card-wrap{position:relative}
 .lib-drug-card-wrap.selected > .lib-drug-card{background:var(--color-brand-light);border-color:var(--color-brand);box-shadow:0 0 0 2px rgba(0,133,254,.18)}
 
-/* ── DRUG VIEWER — dv-edit-fab (live) + Phase 12 redesign below ── */
-.dv-edit-fab{position:fixed;bottom:64px;right:16px;background:var(--color-bg);color: var(--color-text-inverse);border:none;padding:12px 22px;border-radius:26px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 6px 20px rgba(15,23,42,.35);display:flex;align-items:center;gap:7px;z-index:90;font-family:var(--font);transition:.15s;letter-spacing:.01em}
-.dv-edit-fab:active{transform:scale(.92)}
+
 
 /* ══════════════════════════════════════════════════════
    DRUG VIEWER — v67.12 Phase 12 redesign
@@ -9610,7 +9599,6 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
     </button>
   </div>
   <div style="overflow-y:auto;flex:1;padding-bottom:100px" id="dvBody"></div>
-  <button class="dv-edit-fab" onclick="drugViewerOpenEditor()"><i class="ph ph-pencil" style="font-size:15px"></i> Edit Drug</button>
 </div>
 
 <!-- ═══ MODALS ═══ -->
