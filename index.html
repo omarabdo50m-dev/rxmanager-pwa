@@ -5578,7 +5578,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 }
 .dv-p12-sub-text {
   font-size: var(--text-sm-size);
-  line-height: 1.55;
+  line-height: 1.4;
   color: var(--color-text-secondary);
   white-space: pre-wrap;
   word-break: break-word;
@@ -5654,7 +5654,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   display: flex;
   align-items: flex-start;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-2) var(--space-4);
   border-bottom: 1px solid var(--color-border);
   transition: background .12s;
   cursor: pointer;
@@ -5665,10 +5665,10 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .dv-brand-row-p12.dimmed { opacity: .35; filter: grayscale(.5); }
 .dv-brand-left-p12 { flex: 1; min-width: 0; }
 .dv-brand-name-p12 {
-  font-size: var(--text-md-size);
+  font-size: 18px;
   font-weight: 700;
   color: var(--color-text-primary);
-  line-height: var(--text-md-height);
+  line-height: 1.3;
   word-break: break-word;
 }
 .dv-brand-name-ar-p12 {
@@ -5706,19 +5706,36 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .dv-brand-dose-p12 {
   font-size: var(--text-sm-size);
   color: var(--color-text-secondary);
-  margin-top: var(--space-1);
-  line-height: var(--text-base-height);
+  margin-top: 2px;
+  line-height: 1.35;
   direction: ltr;
 }
 .dv-brand-dose-ar-p12 {
   font-family: var(--font-ar);
   font-size: var(--text-sm-size);
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--color-text-secondary);
+  direction: rtl;
+  line-height: 1.4;
+}
+/* Brand row restructured layout */
+.dv-brand-main-p12 { width: 100%; }
+.dv-brand-top-p12 { display: flex; align-items: flex-start; gap: var(--space-3); }
+/* AR row — full width, right-aligned content */
+.dv-brand-ar-row-p12 {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 3px;
+  padding-top: 3px;
+  border-top: 1px solid var(--color-border);
+}
+.dv-brand-ar-content-p12 {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
   direction: rtl;
   text-align: right;
-  margin-top: 2px;
-  line-height: 1.8;
 }
 /* Image search button — Phase 12 — matches prescription row icon style */
 .dv-img-btn-p12 {
@@ -6513,6 +6530,9 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .formula-filter-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border:1.5px solid var(--color-border);border-radius:20px;background:var(--color-surface);font-size:12px;font-weight:700;color:var(--color-text-secondary);cursor:pointer;font-family:var(--font);transition:.18s;user-select:none;-webkit-user-select:none}
 .formula-filter-btn:active{background:var(--color-surface-2)}
 .formula-filter-btn.active{border-color:var(--color-brand);color:var(--color-brand);background:var(--color-brand-light)}
+/* Drug viewer formula filter btn — active state (uses search-filter-btn base) */
+.dv-formula-filter-btn { color: var(--color-text-secondary); }
+.dv-formula-filter-active { color: var(--color-brand) !important; }
 .formula-filter-badge{background:var(--color-brand);color:var(--color-text-inverse);border-radius:10px;padding:1px 7px;font-size:10px;font-weight:800;min-width:18px;text-align:center}
 .formula-filter-panel{overflow:hidden;max-height:0;opacity:0;transition:max-height .2s ease,opacity .15s ease;background:var(--color-surface);border-bottom:1px solid var(--color-border)}
 .formula-filter-panel.open{max-height:200px;opacity:1}
@@ -7429,6 +7449,16 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 /* Language visibility — controlled by condViewerScr class */
 #condViewerScr.lang-ar .cv-dose-ar { display:block; }
 #condViewerScr.lang-en .cv-dose-en { display:block; }
+
+/* ── Drug viewer language visibility ── */
+/* EN dose: hide by default, show in EN mode */
+.dv-brand-dose-p12 { display: none; }
+#drugViewerScr.dv-lang-en .dv-brand-dose-p12 { display: block; }
+/* AR row (name-ar + dose-ar): hide by default, show in AR mode */
+.dv-brand-ar-row-p12 { display: none; }
+#drugViewerScr.dv-lang-ar .dv-brand-ar-row-p12 { display: flex; }
+/* Default state (no class set) = AR */
+#drugViewerScr:not(.dv-lang-en) .dv-brand-ar-row-p12 { display: flex; }
 
 /* Arabic brand name — hidden by default, shown in Arabic mode */
 .cv-rx-brand-ar { display:none; }
@@ -9687,6 +9717,33 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
         <i class="ph ph-arrow-left"></i>
       </button>
       <span class="cc-screen-header__title dv-hdr-app-name">RxManager Pro</span>
+      <!-- Language toggle — same pattern as condition viewer -->
+      <div class="cv-lang-trigger-wrap" id="dvLangToggle" role="group" aria-label="Display language">
+        <button class="cv-lang-trigger" id="dvLangTrigger"
+          onclick="dvToggleLangDropdown()"
+          aria-haspopup="listbox"
+          aria-expanded="false"
+          aria-label="Switch display language">
+          <span class="cv-lang-trigger-lbl" id="dvLangTriggerLbl">ع</span>
+          <span class="cv-lang-trigger-chevron" aria-hidden="true">
+            <i class="ph ph-caret-down"></i>
+          </span>
+        </button>
+        <div class="cv-lang-dropdown" id="dvLangDropdown" role="listbox" aria-label="Language">
+          <button class="cv-lang-option" id="dvBtnAr"
+            role="option" aria-checked="true"
+            onclick="setDvLang('ar');dvCloseLangDropdown()">
+            <span>عربي</span>
+            <span class="cv-lang-option-check" aria-hidden="true"><i class="ph ph-check"></i></span>
+          </button>
+          <button class="cv-lang-option" id="dvBtnEn"
+            role="option" aria-checked="false"
+            onclick="setDvLang('en');dvCloseLangDropdown()">
+            <span>English</span>
+            <span class="cv-lang-option-check" aria-hidden="true"><i class="ph ph-check"></i></span>
+          </button>
+        </div>
+      </div>
       <button class="cc-screen-header__action" id="dvFavBtn" onclick="toggleFavDrugViewer()" title="Favourite" style="background:none;border:none;padding:3px;font-size:20px;">
         <i class="ph ph-star" style="font-size:20px"></i>
       </button>
@@ -16214,14 +16271,16 @@ async function openDrugViewer(id) {
     const brandCount   = displayProds.length;
     const brandPreview = brandCount ? `${brandCount} brand${brandCount !== 1 ? 's' : ''}` : '';
 
-    // Formula filter button in header — stopPropagation so it doesn't toggle the collapsible
+    // Formula filter button in header — uses exact search-filter-btn style like in lib
     const fmtFilterBtn = availableFormulas.length > 1
-      ? `<button class="formula-filter-btn${_dvFormulaFilter.size > 0 ? ' active' : ''}"
+      ? `<button class="search-filter-btn dv-formula-filter-btn${_dvFormulaFilter.size > 0 ? ' dv-formula-filter-active' : ''}"
            id="dvFormulaFilterBtn_${id}"
            onclick="event.stopPropagation();toggleDvFormulaPanel('${id}')"
-           style="padding:3px 10px;font-size:10px;font-weight:700;border-radius:6px;display:inline-flex;align-items:center;gap:4px;text-transform:none;letter-spacing:0;flex-shrink:0">
-           <span id="dvFilterBtnLbl_${id}"><i class="ph ph-funnel" style="font-size:12px;vertical-align:-1px"></i> ${_dvFormulaFilter.size > 0 ? `Formula (${_dvFormulaFilter.size})` : 'Filter'}</span>
-           ${_dvFormulaFilter.size > 0 ? `<span class="formula-filter-badge" style="font-size:9px;padding:1px 5px">${_dvFormulaFilter.size}</span>` : ''}
+           aria-label="Filter by formula"
+           title="Filter by formula"
+           style="position:relative">
+           <i class="ph ph-faders" style="font-size:18px"></i>
+           ${_dvFormulaFilter.size > 0 ? `<span class="lib-filter-badge" style="display:block"></span>` : '<span class="lib-filter-badge" id="dvFilterBadge_' + id + '"></span>'}
          </button>`
       : '';
 
@@ -16402,6 +16461,8 @@ async function openDrugViewer(id) {
 
   document.getElementById('dvBody').innerHTML = html;
   document.getElementById('dvBody').scrollTop = 0;
+  // Apply current lang state to screen
+  setDvLang(_dvLang);
   openScreen('drugViewerScr');
 }
 
@@ -16413,6 +16474,56 @@ function _dvPregCellP12(label, cat) {
     <span class="dv-preg-cell-lbl-p12">${label}</span>
     <span class="dv-preg-cell-val-p12">${display}</span>
   </div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// DRUG VIEWER — Language toggle (mirrors condition viewer)
+// ═══════════════════════════════════════════════════════
+let _dvLang = 'ar'; // default: Arabic
+
+function setDvLang(lang) {
+  _dvLang = lang;
+  const scr = document.getElementById('drugViewerScr');
+  if (scr) {
+    scr.classList.remove('dv-lang-ar', 'dv-lang-en');
+    scr.classList.add('dv-lang-' + lang);
+  }
+  const arBtn = document.getElementById('dvBtnAr');
+  const enBtn = document.getElementById('dvBtnEn');
+  if (arBtn) arBtn.setAttribute('aria-checked', String(lang === 'ar'));
+  if (enBtn) enBtn.setAttribute('aria-checked', String(lang === 'en'));
+  const lbl = document.getElementById('dvLangTriggerLbl');
+  if (lbl) lbl.textContent = lang === 'ar' ? 'ع' : 'EN';
+}
+
+function dvToggleLangDropdown() {
+  const wrap = document.getElementById('dvLangToggle');
+  if (!wrap) return;
+  if (wrap.classList.contains('open')) dvCloseLangDropdown();
+  else dvOpenLangDropdown();
+}
+
+function dvOpenLangDropdown() {
+  const wrap    = document.getElementById('dvLangToggle');
+  const trigger = document.getElementById('dvLangTrigger');
+  if (!wrap) return;
+  wrap.classList.add('open');
+  if (trigger) trigger.setAttribute('aria-expanded', 'true');
+  const _handler = (e) => {
+    if (!wrap.contains(e.target)) {
+      dvCloseLangDropdown();
+      document.removeEventListener('pointerdown', _handler, true);
+    }
+  };
+  document.addEventListener('pointerdown', _handler, true);
+}
+
+function dvCloseLangDropdown() {
+  const wrap    = document.getElementById('dvLangToggle');
+  const trigger = document.getElementById('dvLangTrigger');
+  if (!wrap) return;
+  wrap.classList.remove('open');
+  if (trigger) trigger.setAttribute('aria-expanded', 'false');
 }
 
 function _closeDrugViewer(cb) {
@@ -17416,12 +17527,12 @@ async function _refreshDvBrands(drugId) {
   if (!container) return;
   container.innerHTML = _buildBrandRows(drugId, drug, displayProds);
 
-  // Update filter button label + badge in the collapsible header
+  // Update filter button badge in the collapsible header
   const n = _dvFormulaFilter.size;
-  const lbl = document.getElementById(`dvFilterBtnLbl_${drugId}`);
   const btn = document.getElementById(`dvFormulaFilterBtn_${drugId}`);
-  if (lbl) lbl.innerHTML = `<i class="ph ph-funnel" style="font-size:12px;vertical-align:-1px"></i> ${n > 0 ? `Formula (${n})` : 'Filter'}`;
-  if (btn) btn.classList.toggle('active', n > 0);
+  const badge = btn?.querySelector('.lib-filter-badge');
+  if (btn) btn.classList.toggle('dv-formula-filter-active', n > 0);
+  if (badge) badge.style.display = n > 0 ? 'block' : 'none';
   // Re-render chips inside panel
   const panel = document.getElementById(`dvFormulaPanel_${drugId}`);
   const chipsWrap = panel?.querySelector('.formula-chips-grid');
@@ -17471,27 +17582,38 @@ function _singleBrandRow(p, drug, dimmed) {
   const brandAr   = p.brandAr || '';
   const searchParts = [brandName, p.conc, p.formula].filter(Boolean);
   const googleImgUrl = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(searchParts.join(' '))}`;
-  return `<div class="dv-brand-row-p12${dimmed ? ' dimmed' : ''}" onclick="void(0)">
-    <div class="dv-brand-left-p12">
-      <div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 6px">
-        <span class="dv-brand-name-p12">${esc(brandName)}</span>
-        ${p.conc    ? `<span class="dv-conc-badge-p12">${esc(p.conc)}</span>` : ''}
-        ${p.formula ? `<span class="dv-formula-badge-p12">${esc(p.formula)}</span>` : ''}
-      </div>
-      ${(brandAr || hasAr) ? `<div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:6px;margin-top:2px">
+
+  // AR row: brand-ar + dose-ar right-aligned, search icon at far right
+  const arRow = (brandAr || hasAr) ? `
+    <div class="dv-brand-ar-row-p12">
+      <div class="dv-brand-ar-content-p12">
         ${brandAr ? `<span class="dv-brand-name-ar-p12" dir="rtl">${esc(brandAr)}</span>` : ''}
         ${hasAr ? `<span class="dv-brand-dose-ar-p12" dir="rtl">${esc(p.doseAr)}</span>` : ''}
-      </div>` : ''}
-      ${hasEn ? `<div class="dv-brand-dose-p12"><i class="ph ph-prescription" style="font-size:11px;vertical-align:-1px;margin-right:3px;color:var(--color-text-tertiary)"></i>${esc(p.dose)}</div>` : ''}
+      </div>
+    </div>` : '';
+
+  return `<div class="dv-brand-row-p12${dimmed ? ' dimmed' : ''}" onclick="void(0)">
+    <div class="dv-brand-main-p12">
+      <div class="dv-brand-top-p12">
+        <div class="dv-brand-left-p12" style="flex:1;min-width:0">
+          <div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 6px">
+            <span class="dv-brand-name-p12">${esc(brandName)}</span>
+            ${p.conc    ? `<span class="dv-conc-badge-p12">${esc(p.conc)}</span>` : ''}
+            ${p.formula ? `<span class="dv-formula-badge-p12">${esc(p.formula)}</span>` : ''}
+          </div>
+          ${hasEn ? `<div class="dv-brand-dose-p12"><i class="ph ph-prescription" style="font-size:11px;vertical-align:-1px;margin-right:3px;color:var(--color-text-tertiary)"></i>${esc(p.dose)}</div>` : ''}
+        </div>
+        <a href="${googleImgUrl}" target="_blank" rel="noopener"
+          class="dv-img-btn-p12"
+          onclick="event.stopPropagation()"
+          ontouchstart="this.style.opacity='1'"
+          ontouchend="this.style.opacity='0.7'"
+          title="Search images for ${esc(brandName)}">
+          <i class="ph ph-magnifying-glass" style="font-size:15px"></i>
+        </a>
+      </div>
+      ${arRow}
     </div>
-    <a href="${googleImgUrl}" target="_blank" rel="noopener"
-      class="dv-img-btn-p12"
-      onclick="event.stopPropagation()"
-      ontouchstart="this.style.opacity='1'"
-      ontouchend="this.style.opacity='0.7'"
-      title="Search images for ${esc(brandName)}">
-      <i class="ph ph-magnifying-glass" style="font-size:14px"></i>
-    </a>
   </div>`;
 }
 
