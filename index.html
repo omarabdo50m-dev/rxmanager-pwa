@@ -2445,7 +2445,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 
 .search-bar-wrap{
   background: transparent;
-  padding: 4px 20px 14px;
+  padding: 4px 20px 8px;
   flex-shrink: 0;
 }
 
@@ -2564,7 +2564,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   flex-shrink: 0;
   display: none;
   margin-top: 0;
-  padding-bottom: 4px;
+  padding-bottom: 6px;
   position: relative; /* needed so ::after positions correctly */
 }
 .rv-wrap.has-items {
@@ -3084,18 +3084,19 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 #libScr.peer-open,#favsScr.peer-open{display:flex}
 #libScr .lib-scroll-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 #favsScr .favs-scroll-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
-/* Peer nav screen title — sits below hdr-top row, adapts to theme */
+/* Peer nav screen title — matches home "What are you looking for?" style exactly */
 .peer-scr-title{
-  font-size:var(--text-xl-size, 24px);
+  font-size:26px;
   font-weight:800;
   letter-spacing:-.5px;
   color:var(--color-text-primary);
-  line-height:1.1;
-  padding:2px 0 10px;
+  line-height:1.15;
+  padding:10px 0 2px;
   text-align:left;
+  white-space:nowrap;
 }
 /* lib fixed header needs no extra padding-bottom since title provides it */
-.lib-fixed-header .search-bar-wrap{padding:8px 20px 12px}
+.lib-fixed-header .search-bar-wrap{padding:4px 20px 8px}
 .lib-fixed-header .search-inp{animation:none}
 .scr-hdr{background:var(--color-bg);color: var(--color-text-inverse);padding:var(--header-top-pad) 15px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;box-shadow:0 4px 12px rgba(15,23,42,.3);flex-shrink:0}
 .back-btn{background:none;border:none;color:rgba(255,255,255,.8);font-size:22px;cursor:pointer;padding:2px 4px;line-height:1;transition:.15s}
