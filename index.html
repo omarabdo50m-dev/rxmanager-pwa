@@ -3718,37 +3718,56 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .lib-filter-cat-btn.has-filter .lib-filter-cat-name {
   color: var(--color-brand);
 }
-/* Route pills inside sheet — horizontal wrap */
+/* Route pills inside sheet — 2-column grid matching safety toggle layout */
 .lib-filter-route-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
 }
 .lib-filter-route-pill {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 5px 10px;
-  border-radius: var(--radius-full);
+  gap: var(--space-2);
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
   border: 1.5px solid var(--color-border);
   background: var(--color-surface-2);
-  color: var(--color-text-secondary);
-  font-size: 12px;
-  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 700;
   font-family: var(--font);
   cursor: pointer;
-  transition: background .15s, border-color .15s, color .15s;
+  transition: background .2s, border-color .2s, color .2s;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   -webkit-user-select: none;
   white-space: nowrap;
 }
-.lib-filter-route-pill:active { opacity: .75; transform: scale(.95); }
+/* The pill track — mirrors safety-toggle__track */
+.lib-filter-route-pill::before {
+  content: '';
+  position: relative;
+  width: 36px;
+  height: 20px;
+  min-width: 36px;
+  border-radius: var(--radius-full);
+  background: var(--color-border-strong);
+  flex-shrink: 0;
+  transition: background .22s;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,.2);
+}
+/* Knob inside the track using box-shadow trick */
+.lib-filter-route-pill::before {
+  background-image: radial-gradient(circle 8px at 10px 50%, #fff 100%, transparent 100%);
+}
+.lib-filter-route-pill:active { opacity: .75; transform: scale(.98); }
 .lib-filter-route-pill.active {
+  background: var(--color-surface);
+  border-color: var(--color-border-strong);
+}
+.lib-filter-route-pill.active::before {
   background: var(--color-brand);
-  border-color: var(--color-brand);
-  color: var(--color-text-inverse);
-  font-weight: 700;
+  background-image: radial-gradient(circle 8px at calc(100% - 10px) 50%, #fff 100%, transparent 100%);
 }
 
 /* ── SAFETY SLIDING TOGGLE ────────────────────────────────────
@@ -3920,7 +3939,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .lib-cat-grid {
   display: flex;
   flex-direction: column;
-  padding: var(--space-2) 16px 80px 20px;
+  padding: var(--space-2) 16px 80px 16px;
   gap: 0;
 }
 
@@ -8878,16 +8897,16 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
         <i class="ph ph-pill" style="font-size:11px"></i>
         Form / Route
       </div>
-      <div class="lib-filter-route-pills" style="flex-wrap:wrap">
-        <button class="lib-filter-route-pill active" id="lfs_All" onclick="libSheetSetRoute('All')">All</button>
-        <button class="lib-filter-route-pill" id="lfs_Tab_Cap" onclick="libSheetSetRoute('Tab/Cap')">💊 Tab / Cap</button>
-        <button class="lib-filter-route-pill" id="lfs_Syrup_Susp_Drops" onclick="libSheetSetRoute('Syrup/Susp/Drops')">🥄 Syrup / Drops</button>
-        <button class="lib-filter-route-pill" id="lfs_Injections" onclick="libSheetSetRoute('Injections')">💉 Injection</button>
-        <button class="lib-filter-route-pill" id="lfs_Suppositories" onclick="libSheetSetRoute('Suppositories')">Suppository</button>
-        <button class="lib-filter-route-pill" id="lfs_Sachets" onclick="libSheetSetRoute('Sachets')">Sachet</button>
-        <button class="lib-filter-route-pill" id="lfs_Inhaled" onclick="libSheetSetRoute('Inhaled')">🫁 Inhaled</button>
-        <button class="lib-filter-route-pill" id="lfs_Topical" onclick="libSheetSetRoute('Topical')">🩹 Topical</button>
-        <button class="lib-filter-route-pill" id="lfs_Other" onclick="libSheetSetRoute('Other')">Other</button>
+      <div class="lib-filter-route-pills">
+        <button class="lib-filter-route-pill active" id="lfs_All" onclick="libSheetSetRoute('All')" style="grid-column:1/-1"><i class="ph ph-squares-four" style="font-size:14px"></i> All</button>
+        <button class="lib-filter-route-pill" id="lfs_Tab_Cap" onclick="libSheetSetRoute('Tab/Cap')"><i class="ph ph-pill" style="font-size:14px"></i> Tab / Cap</button>
+        <button class="lib-filter-route-pill" id="lfs_Syrup_Susp_Drops" onclick="libSheetSetRoute('Syrup/Susp/Drops')"><i class="ph ph-flask" style="font-size:14px"></i> Syrup / Drops</button>
+        <button class="lib-filter-route-pill" id="lfs_Injections" onclick="libSheetSetRoute('Injections')"><i class="ph ph-syringe" style="font-size:14px"></i> Injection</button>
+        <button class="lib-filter-route-pill" id="lfs_Suppositories" onclick="libSheetSetRoute('Suppositories')"><i class="ph ph-cylinder" style="font-size:14px"></i> Suppository</button>
+        <button class="lib-filter-route-pill" id="lfs_Sachets" onclick="libSheetSetRoute('Sachets')"><i class="ph ph-package" style="font-size:14px"></i> Sachet</button>
+        <button class="lib-filter-route-pill" id="lfs_Inhaled" onclick="libSheetSetRoute('Inhaled')"><i class="ph ph-wind" style="font-size:14px"></i> Inhaled</button>
+        <button class="lib-filter-route-pill" id="lfs_Topical" onclick="libSheetSetRoute('Topical')"><i class="ph ph-hand-heart" style="font-size:14px"></i> Topical</button>
+        <button class="lib-filter-route-pill" id="lfs_Other" onclick="libSheetSetRoute('Other')"><i class="ph ph-dots-three-circle" style="font-size:14px"></i> Other</button>
       </div>
     </div>
 
