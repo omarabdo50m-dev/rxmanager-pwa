@@ -3664,7 +3664,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
    Uses existing .modal-overlay / .modal-sheet skeleton.
    ─────────────────────────────────────────── */
 .lib-filter-sheet-section {
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-3);
 }
 .lib-filter-sheet-section:last-child {
   margin-bottom: 0;
@@ -3675,7 +3675,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   color: var(--color-text-tertiary);
   text-transform: uppercase;
   letter-spacing: .08em;
-  margin-bottom: var(--space-2);
+  margin-bottom: 6px;
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -3722,18 +3722,18 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .lib-filter-route-pills {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: 6px;
 }
 .lib-filter-route-pill {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 7px 12px;
+  gap: 4px;
+  padding: 5px 10px;
   border-radius: var(--radius-full);
   border: 1.5px solid var(--color-border);
   background: var(--color-surface-2);
   color: var(--color-text-secondary);
-  font-size: var(--text-sm-size);
+  font-size: 12px;
   font-weight: 600;
   font-family: var(--font);
   cursor: pointer;
@@ -3741,6 +3741,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   -webkit-user-select: none;
+  white-space: nowrap;
 }
 .lib-filter-route-pill:active { opacity: .75; transform: scale(.95); }
 .lib-filter-route-pill.active {
@@ -3749,6 +3750,80 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   color: var(--color-text-inverse);
   font-weight: 700;
 }
+
+/* ── SAFETY SLIDING TOGGLE ────────────────────────────────────
+   iOS-style pill toggle for pregnancy & breastfeeding filters.
+   Two states: off (dim track, knob left) / on (coloured track, knob right).
+   ─────────────────────────────────────────────────────────── */
+.safety-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface-2);
+  transition: border-color .2s, background .2s;
+}
+.safety-toggle.active {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface);
+}
+/* The pill track */
+.safety-toggle__track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  background: var(--color-border-strong);
+  flex-shrink: 0;
+  transition: background .22s;
+}
+.safety-toggle__track--safe  { /* green when on */ }
+.safety-toggle__track--unsafe { /* red when on */ }
+.safety-toggle.active .safety-toggle__track--safe   { background: #22c55e; }
+.safety-toggle.active .safety-toggle__track--unsafe { background: #ef4444; }
+/* The sliding knob */
+.safety-toggle__knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,.30);
+  transition: transform .22s cubic-bezier(.34,1.26,.64,1);
+}
+.safety-toggle.active .safety-toggle__knob {
+  transform: translateX(16px);
+}
+/* Label beside the track */
+.safety-toggle__label {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.safety-toggle__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+.safety-toggle__sub {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--color-text-tertiary);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.safety-toggle.active .safety-toggle__title { color: var(--color-text-primary); }
 /* Apply + Clear buttons at bottom of filter sheet */
 .lib-filter-sheet-actions {
   display: flex;
@@ -8804,15 +8879,15 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
         Form / Route
       </div>
       <div class="lib-filter-route-pills" style="flex-wrap:wrap">
-        <button class="lib-filter-route-pill active" id="lfs_All" onclick="libSheetSetRoute('All')">🔬 All</button>
+        <button class="lib-filter-route-pill active" id="lfs_All" onclick="libSheetSetRoute('All')">All</button>
         <button class="lib-filter-route-pill" id="lfs_Tab_Cap" onclick="libSheetSetRoute('Tab/Cap')">💊 Tab / Cap</button>
-        <button class="lib-filter-route-pill" id="lfs_Syrup_Susp_Drops" onclick="libSheetSetRoute('Syrup/Susp/Drops')">🥄 Syrup / Susp / Drops</button>
-        <button class="lib-filter-route-pill" id="lfs_Injections" onclick="libSheetSetRoute('Injections')">💉 Injections</button>
-        <button class="lib-filter-route-pill" id="lfs_Suppositories" onclick="libSheetSetRoute('Suppositories')">🔹 Suppositories</button>
-        <button class="lib-filter-route-pill" id="lfs_Sachets" onclick="libSheetSetRoute('Sachets')">🧂 Sachets</button>
+        <button class="lib-filter-route-pill" id="lfs_Syrup_Susp_Drops" onclick="libSheetSetRoute('Syrup/Susp/Drops')">🥄 Syrup / Drops</button>
+        <button class="lib-filter-route-pill" id="lfs_Injections" onclick="libSheetSetRoute('Injections')">💉 Injection</button>
+        <button class="lib-filter-route-pill" id="lfs_Suppositories" onclick="libSheetSetRoute('Suppositories')">Suppository</button>
+        <button class="lib-filter-route-pill" id="lfs_Sachets" onclick="libSheetSetRoute('Sachets')">Sachet</button>
         <button class="lib-filter-route-pill" id="lfs_Inhaled" onclick="libSheetSetRoute('Inhaled')">🫁 Inhaled</button>
         <button class="lib-filter-route-pill" id="lfs_Topical" onclick="libSheetSetRoute('Topical')">🩹 Topical</button>
-        <button class="lib-filter-route-pill" id="lfs_Other" onclick="libSheetSetRoute('Other')">📋 Other</button>
+        <button class="lib-filter-route-pill" id="lfs_Other" onclick="libSheetSetRoute('Other')">Other</button>
       </div>
     </div>
 
@@ -8827,9 +8902,25 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
         <i class="ph ph-heartbeat" style="font-size:11px"></i>
         Pregnancy
       </div>
-      <div style="display:flex;gap:var(--space-2)" id="libPregChips">
-        <div class="formula-chip" id="libPregSafeChip" onclick="libTogglePregGroup('safe')"><span class="fc-check"></span><span style="color:#15803d;font-weight:700">✓ Safe <span style="font-weight:400;opacity:.7">(A / B)</span></span></div>
-        <div class="formula-chip" id="libPregUnsafeChip" onclick="libTogglePregGroup('unsafe')"><span class="fc-check"></span><span style="color:#be123c;font-weight:700">✕ Unsafe <span style="font-weight:400;opacity:.7">(C / D / X)</span></span></div>
+      <div style="display:flex;gap:var(--space-3)">
+        <div class="safety-toggle" id="libPregSafeChip" onclick="libTogglePregGroup('safe')" role="switch" aria-checked="false">
+          <div class="safety-toggle__track safety-toggle__track--safe">
+            <div class="safety-toggle__knob"></div>
+          </div>
+          <div class="safety-toggle__label">
+            <span class="safety-toggle__title">Safe</span>
+            <span class="safety-toggle__sub">Cat A / B</span>
+          </div>
+        </div>
+        <div class="safety-toggle" id="libPregUnsafeChip" onclick="libTogglePregGroup('unsafe')" role="switch" aria-checked="false">
+          <div class="safety-toggle__track safety-toggle__track--unsafe">
+            <div class="safety-toggle__knob"></div>
+          </div>
+          <div class="safety-toggle__label">
+            <span class="safety-toggle__title">Unsafe</span>
+            <span class="safety-toggle__sub">Cat C / D / X</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -8839,9 +8930,25 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
         <i class="ph ph-baby" style="font-size:11px"></i>
         Breastfeeding
       </div>
-      <div style="display:flex;gap:var(--space-2)" id="libLacChips">
-        <div class="formula-chip" id="libLacSafeChip" onclick="libToggleLacGroup('safe')"><span class="fc-check"></span><span style="color:#15803d;font-weight:700">✓ Safe</span></div>
-        <div class="formula-chip" id="libLacUnsafeChip" onclick="libToggleLacGroup('unsafe')"><span class="fc-check"></span><span style="color:#be123c;font-weight:700">✕ Unsafe</span></div>
+      <div style="display:flex;gap:var(--space-3)">
+        <div class="safety-toggle" id="libLacSafeChip" onclick="libToggleLacGroup('safe')" role="switch" aria-checked="false">
+          <div class="safety-toggle__track safety-toggle__track--safe">
+            <div class="safety-toggle__knob"></div>
+          </div>
+          <div class="safety-toggle__label">
+            <span class="safety-toggle__title">Safe</span>
+            <span class="safety-toggle__sub">Safe</span>
+          </div>
+        </div>
+        <div class="safety-toggle" id="libLacUnsafeChip" onclick="libToggleLacGroup('unsafe')" role="switch" aria-checked="false">
+          <div class="safety-toggle__track safety-toggle__track--unsafe">
+            <div class="safety-toggle__knob"></div>
+          </div>
+          <div class="safety-toggle__label">
+            <span class="safety-toggle__title">Unsafe</span>
+            <span class="safety-toggle__sub">Caution / Unsafe</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -16808,33 +16915,29 @@ function _updateLibSafetyChips() {
   const pregSafeActive = ['A','B'].every(c => _libFilterState.pregnancyCategories.has(c));
   const pregSafeChip = document.getElementById('libPregSafeChip');
   if (pregSafeChip) {
-    pregSafeChip.classList.toggle('checked', pregSafeActive);
-    const ch = pregSafeChip.querySelector('.fc-check');
-    if (ch) ch.textContent = pregSafeActive ? '✓' : '';
+    pregSafeChip.classList.toggle('active', pregSafeActive);
+    pregSafeChip.setAttribute('aria-checked', pregSafeActive ? 'true' : 'false');
   }
   // Pregnancy — unsafe group (C+D+X)
   const pregUnsafeActive = ['C','D','X'].every(c => _libFilterState.pregnancyCategories.has(c));
   const pregUnsafeChip = document.getElementById('libPregUnsafeChip');
   if (pregUnsafeChip) {
-    pregUnsafeChip.classList.toggle('checked', pregUnsafeActive);
-    const ch = pregUnsafeChip.querySelector('.fc-check');
-    if (ch) ch.textContent = pregUnsafeActive ? '✓' : '';
+    pregUnsafeChip.classList.toggle('active', pregUnsafeActive);
+    pregUnsafeChip.setAttribute('aria-checked', pregUnsafeActive ? 'true' : 'false');
   }
   // Lactation — safe group (Safe)
   const lacSafeActive = ['Safe'].every(v => _libFilterState.lactation.has(v));
   const lacSafeChip = document.getElementById('libLacSafeChip');
   if (lacSafeChip) {
-    lacSafeChip.classList.toggle('checked', lacSafeActive);
-    const ch = lacSafeChip.querySelector('.fc-check');
-    if (ch) ch.textContent = lacSafeActive ? '✓' : '';
+    lacSafeChip.classList.toggle('active', lacSafeActive);
+    lacSafeChip.setAttribute('aria-checked', lacSafeActive ? 'true' : 'false');
   }
   // Lactation — unsafe group (Caution+Unsafe)
   const lacUnsafeActive = ['Caution','Unsafe'].every(v => _libFilterState.lactation.has(v));
   const lacUnsafeChip = document.getElementById('libLacUnsafeChip');
   if (lacUnsafeChip) {
-    lacUnsafeChip.classList.toggle('checked', lacUnsafeActive);
-    const ch = lacUnsafeChip.querySelector('.fc-check');
-    if (ch) ch.textContent = lacUnsafeActive ? '✓' : '';
+    lacUnsafeChip.classList.toggle('active', lacUnsafeActive);
+    lacUnsafeChip.setAttribute('aria-checked', lacUnsafeActive ? 'true' : 'false');
   }
 }
 
