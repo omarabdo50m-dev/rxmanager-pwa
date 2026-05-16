@@ -8825,14 +8825,11 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
     <div class="lib-filter-sheet-section">
       <div class="lib-filter-sheet-label">
         <i class="ph ph-heartbeat" style="font-size:11px"></i>
-        Pregnancy Category
+        Pregnancy
       </div>
-      <div style="display:flex;gap:var(--space-2);flex-wrap:wrap" id="libPregChips">
-        <div class="formula-chip" onclick="libTogglePreg('A')"><span class="fc-check"></span><span style="color:#15803d;font-weight:800">A</span></div>
-        <div class="formula-chip" onclick="libTogglePreg('B')"><span class="fc-check"></span><span style="color:#0085fe;font-weight:800">B</span></div>
-        <div class="formula-chip" onclick="libTogglePreg('C')"><span class="fc-check"></span><span style="color:#b45309;font-weight:800">C</span></div>
-        <div class="formula-chip" onclick="libTogglePreg('D')"><span class="fc-check"></span><span style="color:#c2410c;font-weight:800">D</span></div>
-        <div class="formula-chip" onclick="libTogglePreg('X')"><span class="fc-check"></span><span style="color:#be123c;font-weight:800">X</span></div>
+      <div style="display:flex;gap:var(--space-2)" id="libPregChips">
+        <div class="formula-chip" id="libPregSafeChip" onclick="libTogglePregGroup('safe')"><span class="fc-check"></span><span style="color:#15803d;font-weight:700">✓ Safe <span style="font-weight:400;opacity:.7">(A / B)</span></span></div>
+        <div class="formula-chip" id="libPregUnsafeChip" onclick="libTogglePregGroup('unsafe')"><span class="fc-check"></span><span style="color:#be123c;font-weight:700">✕ Unsafe <span style="font-weight:400;opacity:.7">(C / D / X)</span></span></div>
       </div>
     </div>
 
@@ -8840,12 +8837,11 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
     <div class="lib-filter-sheet-section">
       <div class="lib-filter-sheet-label">
         <i class="ph ph-baby" style="font-size:11px"></i>
-        Breastfeeding / Lactation
+        Breastfeeding
       </div>
-      <div style="display:flex;gap:var(--space-2);flex-wrap:wrap" id="libLacChips">
-        <div class="formula-chip" onclick="libToggleLac('Safe')"><span class="fc-check"></span><span style="color:#15803d">✓ Safe</span></div>
-        <div class="formula-chip" onclick="libToggleLac('Caution')"><span class="fc-check"></span><span style="color:#b45309">⚠ Caution</span></div>
-        <div class="formula-chip" onclick="libToggleLac('Unsafe')"><span class="fc-check"></span><span style="color:#be123c">✕ Unsafe</span></div>
+      <div style="display:flex;gap:var(--space-2)" id="libLacChips">
+        <div class="formula-chip" id="libLacSafeChip" onclick="libToggleLacGroup('safe')"><span class="fc-check"></span><span style="color:#15803d;font-weight:700">✓ Safe</span></div>
+        <div class="formula-chip" id="libLacUnsafeChip" onclick="libToggleLacGroup('unsafe')"><span class="fc-check"></span><span style="color:#be123c;font-weight:700">✕ Unsafe</span></div>
       </div>
     </div>
 
@@ -16723,6 +16719,23 @@ function libToggleSafetyPanel() {
   if (safetyPill) safetyPill.classList.toggle('active', _libSafetyPanelOpen || countActiveFilters(_libFilterState) - _libFilterState.routes.size - _libFilterState.formulas.size > 0);
 }
 
+// Pregnancy: "safe" = A+B, "unsafe" = C+D+X — acts as a toggle per group
+function libTogglePregGroup(group) {
+  const safeSet   = ['A','B'];
+  const unsafeSet = ['C','D','X'];
+  const cats = group === 'safe' ? safeSet : unsafeSet;
+  const allActive = cats.every(c => _libFilterState.pregnancyCategories.has(c));
+  if (allActive) {
+    cats.forEach(c => _libFilterState.pregnancyCategories.delete(c));
+  } else {
+    cats.forEach(c => _libFilterState.pregnancyCategories.add(c));
+  }
+  _updateLibSafetyChips();
+  _updateLibFilterSummary();
+  renderLib();
+}
+
+// Legacy per-category toggle kept for compat (picker screen etc.)
 function libTogglePreg(cat) {
   if (_libFilterState.pregnancyCategories.has(cat)) _libFilterState.pregnancyCategories.delete(cat);
   else _libFilterState.pregnancyCategories.add(cat);
@@ -16731,6 +16744,23 @@ function libTogglePreg(cat) {
   renderLib();
 }
 
+// Breastfeeding: "safe" = Safe only, "unsafe" = Caution+Unsafe — acts as a toggle per group
+function libToggleLacGroup(group) {
+  const safeSet   = ['Safe'];
+  const unsafeSet = ['Caution','Unsafe'];
+  const vals = group === 'safe' ? safeSet : unsafeSet;
+  const allActive = vals.every(v => _libFilterState.lactation.has(v));
+  if (allActive) {
+    vals.forEach(v => _libFilterState.lactation.delete(v));
+  } else {
+    vals.forEach(v => _libFilterState.lactation.add(v));
+  }
+  _updateLibSafetyChips();
+  _updateLibFilterSummary();
+  renderLib();
+}
+
+// Legacy per-value toggle kept for compat
 function libToggleLac(val) {
   if (_libFilterState.lactation.has(val)) _libFilterState.lactation.delete(val);
   else _libFilterState.lactation.add(val);
@@ -16774,30 +16804,38 @@ function _updateLibRoutePills() {
 }
 
 function _updateLibSafetyChips() {
-  // Preg chips
-  ['A','B','C','D','X'].forEach(cat => {
-    const chips = document.querySelectorAll(`#libPregChips .formula-chip`);
-    chips.forEach(c => {
-      const span = c.querySelector('span:last-child');
-      if (span && span.textContent.startsWith(cat)) {
-        const active = _libFilterState.pregnancyCategories.has(cat);
-        c.classList.toggle('checked', active);
-        const ch = c.querySelector('.fc-check'); if (ch) ch.textContent = active ? '✓' : '';
-      }
-    });
-  });
-  // Lactation chips
-  ['Safe','Caution','Unsafe'].forEach(val => {
-    const chips = document.querySelectorAll(`#libLacChips .formula-chip`);
-    chips.forEach(c => {
-      const span = c.querySelector('span:last-child');
-      if (span && span.textContent.includes(val)) {
-        const active = _libFilterState.lactation.has(val);
-        c.classList.toggle('checked', active);
-        const ch = c.querySelector('.fc-check'); if (ch) ch.textContent = active ? '✓' : '';
-      }
-    });
-  });
+  // Pregnancy — safe group (A+B)
+  const pregSafeActive = ['A','B'].every(c => _libFilterState.pregnancyCategories.has(c));
+  const pregSafeChip = document.getElementById('libPregSafeChip');
+  if (pregSafeChip) {
+    pregSafeChip.classList.toggle('checked', pregSafeActive);
+    const ch = pregSafeChip.querySelector('.fc-check');
+    if (ch) ch.textContent = pregSafeActive ? '✓' : '';
+  }
+  // Pregnancy — unsafe group (C+D+X)
+  const pregUnsafeActive = ['C','D','X'].every(c => _libFilterState.pregnancyCategories.has(c));
+  const pregUnsafeChip = document.getElementById('libPregUnsafeChip');
+  if (pregUnsafeChip) {
+    pregUnsafeChip.classList.toggle('checked', pregUnsafeActive);
+    const ch = pregUnsafeChip.querySelector('.fc-check');
+    if (ch) ch.textContent = pregUnsafeActive ? '✓' : '';
+  }
+  // Lactation — safe group (Safe)
+  const lacSafeActive = ['Safe'].every(v => _libFilterState.lactation.has(v));
+  const lacSafeChip = document.getElementById('libLacSafeChip');
+  if (lacSafeChip) {
+    lacSafeChip.classList.toggle('checked', lacSafeActive);
+    const ch = lacSafeChip.querySelector('.fc-check');
+    if (ch) ch.textContent = lacSafeActive ? '✓' : '';
+  }
+  // Lactation — unsafe group (Caution+Unsafe)
+  const lacUnsafeActive = ['Caution','Unsafe'].every(v => _libFilterState.lactation.has(v));
+  const lacUnsafeChip = document.getElementById('libLacUnsafeChip');
+  if (lacUnsafeChip) {
+    lacUnsafeChip.classList.toggle('checked', lacUnsafeActive);
+    const ch = lacUnsafeChip.querySelector('.fc-check');
+    if (ch) ch.textContent = lacUnsafeActive ? '✓' : '';
+  }
 }
 
 function _updateLibFilterSummary() {
