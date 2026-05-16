@@ -4090,6 +4090,17 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .lib-cat-tile {
   animation: lib-tile-in .18s ease both;
 }
+/* Shared stagger-in for home + fav cards */
+@keyframes card-stagger-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.card-anim {
+  animation: card-stagger-in .2s cubic-bezier(.32,.72,0,1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-anim { animation: none; }
+}
 
 /* Light mode */
 [data-theme="light"] .lib-cat-tile {
@@ -10962,11 +10973,15 @@ function setView(view) {
   // Peer screens: show/hide via CSS class, no z-index stack, no history push
   document.getElementById('libScr').classList.toggle('peer-open', view==='lib');
   document.getElementById('favsScr').classList.toggle('peer-open', view==='fav');
+  // Scroll to top on every tab switch
   if (view === 'rx') {
+    document.getElementById('mainList')?.scrollTo({ top: 0 });
     renderMain();
   } else if (view === 'fav') {
+    document.querySelector('#favsScr .favs-scroll-body')?.scrollTo({ top: 0 });
     renderFavourites();
   } else {
+    document.querySelector('#libScr .lib-scroll-body')?.scrollTo({ top: 0 });
     // Always land on the category grid when opening the Drugs tab
     S.libView = 'grid';
     S.activeLibCat = 'All';
@@ -11045,8 +11060,8 @@ async function renderFavourites() {
         <div class="fav-empty-body">Tap the star on any prescription to pin it here</div>
       </div>`;
     } else {
-      condList.innerHTML = condItems.map(item => `
-        <div class="lib-drug-card" onclick="openConditionViewer('${esc(item.id)}');document.getElementById('favsScr').classList.remove('peer-open')">
+      condList.innerHTML = condItems.map((item, _ci) => `
+        <div class="lib-drug-card card-anim" style="animation-delay:${Math.min(_ci*18,220)}ms" onclick="openConditionViewer('${esc(item.id)}');document.getElementById('favsScr').classList.remove('peer-open')">
           <div class="rx-icon-circle" style="background:${_hexToRgba12(item.specClr)};color:${item.specClr}">
             <i class="ph ${item.specIco}" style="font-size:20px"></i>
           </div>
@@ -11079,12 +11094,12 @@ async function renderFavourites() {
         <div class="fav-empty-body">Tap the star on any drug in the library to pin it here</div>
       </div>`;
     } else {
-      drugList.innerHTML = drugItems.map(item => {
+      drugList.innerHTML = drugItems.map((item, _ci) => {
         const clr = catClr(item.group);
         const subLabel = item.subgroup
           ? `${esc(item.group)} · ${esc(item.subgroup)}`
           : esc(item.group);
-        return `<div class="lib-drug-card" onclick="openDrugViewer('${esc(item.id)}');document.getElementById('favsScr').classList.remove('peer-open')">
+        return `<div class="lib-drug-card card-anim" style="animation-delay:${Math.min(_ci*18,220)}ms" onclick="openDrugViewer('${esc(item.id)}');document.getElementById('favsScr').classList.remove('peer-open')">
           <div class="rx-icon-circle" style="background:${clr.s}18;color:${clr.s}">
             <i class="ph ph-pill"></i>
           </div>
@@ -12484,16 +12499,18 @@ const CARD_COLOR_MAP = {
   // ── Analytics: log successful condition search (debounced) ────────
   if (q && q.length > 2) _scheduleCondSearchLog(q);
 
-  container.innerHTML = filterBarHtml + list.map(c => {
+  container.innerHTML = filterBarHtml + list.map((c, _ci) => {
     // Use live specialty record (color + icon) — falls back to hardcoded map then grey
     const _liveSpec  = _SPECIALTIES_CACHE.find(s => s.name === c.specialty);
     const specColor  = (_liveSpec?.color) || CARD_COLOR_MAP[c.specialty] || '#64748B';
     const iconName   = (_liveSpec?.icon)  || _resolveConditionIcon(c.specialty);
     const ariaLabel = c.specialty ? `${c.name}, ${c.specialty}` : c.name;
-    return `<div class="rx-card"
+    const _delay = Math.min(_ci * 18, 220);
+    return `<div class="rx-card card-anim"
       role="button"
       tabindex="0"
       aria-label="${esc(ariaLabel)}"
+      style="animation-delay:${_delay}ms"
       onclick="openViewer('${esc(c.id)}')"
       onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openViewer('${esc(c.id)}')}">
       <div class="rx-icon-circle" style="background:${_hexToRgba12(specColor)};color:${specColor}">
