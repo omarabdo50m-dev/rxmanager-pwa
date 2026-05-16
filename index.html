@@ -3780,15 +3780,17 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
    ─────────────────────────────────────────────────────────────── */
 .lib-drug-card{
   background:var(--color-surface);
-  border-radius:var(--radius-md);
+  border-radius:var(--radius-lg);    /* 14px — matches condition card */
   margin-bottom:var(--space-2);
   box-shadow:var(--shadow-sm);
   cursor:pointer;
   display:flex;
+  align-items:center;
   overflow:hidden;
-  border:1px solid var(--color-border);
-  min-height:72px;
-  align-items:stretch;
+  border:none;                       /* no border — matches condition card */
+  padding:var(--space-3) var(--space-4);  /* 12px/16px — matches condition card */
+  gap:var(--space-3);
+  min-height:68px;
   transition:transform .12s ease, box-shadow .12s ease;
   -webkit-tap-highlight-color:transparent;
 }
@@ -3796,14 +3798,13 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   transform:scale(.985);
   box-shadow:none;
 }
-/* 3px left stripe — color set via inline style per card */
+/* Stripe hidden — no colored sideline */
 .lib-drug-stripe{
-  width:3px;
-  flex-shrink:0;
+  display:none;
 }
-/* Card body — vertically centered */
+/* Card body */
 .lib-drug-body{
-  padding:var(--space-4) var(--space-3);
+  padding:0;                         /* padding now on card, not body */
   flex:1;
   min-width:0;
   display:flex;
@@ -3811,13 +3812,16 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   justify-content:center;
   gap:var(--space-1);
 }
-/* Generic name — text-md weight 600 */
+/* Generic name — matches condition card name */
 .lib-drug-name{
-  font-size:var(--text-md-size);
+  font-size:var(--text-md-size);     /* 17px — matches rx-name */
   line-height:var(--text-md-height);
-  font-weight:600;
+  font-weight:700;                   /* matches rx-name */
   color:var(--color-text-primary);
-  word-break:break-word;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  letter-spacing:-.15px;
   font-family:var(--font);
 }
 /* Group label row */
@@ -3827,13 +3831,16 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   gap:var(--space-2);
   flex-wrap:wrap;
 }
-/* Group/subgroup label — text-sm secondary */
+/* Group/subgroup label — matches rx-spec-label */
 .lib-drug-group-label{
   font-size:var(--text-sm-size);
   line-height:var(--text-sm-height);
   font-weight:400;
   color:var(--color-text-secondary);
   font-family:var(--font);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 /* Formula count badge — shown only when filters active */
 .lib-drug-formula-badge{
@@ -3845,16 +3852,16 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   color:var(--color-brand);
   white-space:nowrap;
 }
-/* Chevron — right side */
+/* Chevron — matches rx-arr */
 .lib-drug-arr{
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:0 var(--space-3) 0 var(--space-2);
   flex-shrink:0;
   color:var(--color-text-tertiary);
-  font-size:16px;
+  font-size:var(--text-base-size);
   align-self:center;
+  padding:0;
 }
 /* Legacy aliases — kept so search-result card inline styles still work */
 .lib-drug-ico{display:none}   /* hidden — Phase 7 removes icon from card */
@@ -8362,14 +8369,11 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 <!-- LIBRARY -->
 <div class="screen" id="libScr">
   <div class="cc-screen-header">
-    <button class="hdr-theme-btn" onclick="if(_libSelectMode)toggleLibSelectMode();libClearAllFilters();closeScreen('libScr')" aria-label="Back" style="color:rgba(255,255,255,.65);flex-shrink:0">
+    <button class="cc-screen-header__back" onclick="if(_libSelectMode)toggleLibSelectMode();libClearAllFilters();closeScreen('libScr')" aria-label="Back">
       <i class="ph ph-arrow-left" style="font-size:20px"></i>
     </button>
-    <span class="cc-screen-header__title" id="libScrTitle">Drug Library</span>
-    <button class="cc-screen-header__action cc-screen-header__action--primary" id="libNewBtn" onclick="openDrugEditor(null)">
-      <i class="ph ph-plus" style="font-size:13px"></i> New
-    </button>
-    <button class="hdr-theme-btn" id="libMenuBtn" onclick="openLibMenu()" title="More options" aria-label="More options" style="color:rgba(255,255,255,.55);flex-shrink:0">
+    <span class="cc-screen-header__title" id="libScrTitle" style="font-size:var(--text-lg-size);font-weight:800;letter-spacing:-.3px">Drug Library</span>
+    <button class="cc-screen-header__back" id="libMenuBtn" onclick="openLibMenu()" title="More options" aria-label="More options">
       <i class="ph ph-dots-three-outline" style="font-size:18px"></i>
     </button>
   </div>
@@ -14760,17 +14764,16 @@ async function renderLib() {
       const cardClickAction = _libSelectMode ? `toggleLibDrugSelect('${d.id}', event)` : '';
       const innerClickAction = _libSelectMode ? `toggleLibDrugSelect('${d.id}', event)` : `openDrugViewer('${d.id}')`;
 
-      html += `<div class="lib-drug-card${_libSelectMode?' selectable':''}${isSelected?' selected':''}" id="libcard_${d.id}" data-drugid="${d.id}" style="flex-direction:column;align-items:stretch;padding:0;overflow:hidden"${_libSelectMode?` onclick="${cardClickAction}"`:''}}>
-        <div style="display:flex;align-items:stretch;overflow:hidden">
-          <div class="lib-drug-stripe" style="background:${clr.s};flex-shrink:0"></div>
-          <div style="display:flex;align-items:center;gap:10px;padding:12px 12px 12px 12px;flex:1;cursor:pointer;border-bottom:1px solid var(--color-border)" onclick="${innerClickAction}">
-            ${_libSelectMode ? `<div class="lib-sel-check${isSelected?' checked':''}"></div>` : ''}
-            <div style="flex:1;min-width:0">
-              <div style="font-size:var(--text-md-size);font-weight:600;color:var(--color-text-primary);line-height:var(--text-md-height)">${esc(d.name)}</div>
-              <div style="font-size:var(--text-sm-size);color:var(--color-text-secondary);margin-top:var(--space-1)">${esc(gs.group||'Drug')}${gs.subgroup?' · '+esc(gs.subgroup):''}</div>
-            </div>
-            ${!_libSelectMode ? `<div class="lib-drug-arr"><i class="ph ph-caret-right"></i></div>` : ''}
+      html += `<div class="lib-drug-card${_libSelectMode?' selectable':''}${isSelected?' selected':''}" id="libcard_${d.id}" data-drugid="${d.id}"${_libSelectMode?` onclick="${cardClickAction}"`:''}}>
+        <div style="display:flex;align-items:center;gap:var(--space-3);padding:0;flex:1;cursor:pointer" onclick="${innerClickAction}">
+          ${_libSelectMode
+            ? `<div class="lib-sel-check${isSelected?' checked':''}"></div>`
+            : `<div class="rx-icon-circle" style="background:${clr.s}18;color:${clr.s}"><i class="ph ph-pill"></i></div>`}
+          <div style="flex:1;min-width:0">
+            <div class="lib-drug-name">${esc(d.name)}</div>
+            <div class="lib-drug-group-label">${esc(gs.group||'Drug')}${gs.subgroup?' · '+esc(gs.subgroup):''}</div>
           </div>
+          ${!_libSelectMode ? `<div class="lib-drug-arr"><i class="ph ph-caret-right" style="font-size:14px"></i></div>` : ''}
         </div>
         ${_libSelectMode ? '' : matchingProds.map(function(p){
           var arLine = p.brandAr ? '<div style="font-size:11px;color:var(--color-text-tertiary);font-family:var(--font-ar);direction:rtl;text-align:right;margin-top:1px">' + esc(p.brandAr) + '</div>' : '';
@@ -14841,8 +14844,9 @@ async function renderLib() {
       const isSelected = _libSelected.has(d.id);
       const clickAction = _libSelectMode ? `toggleLibDrugSelect('${d.id}', event)` : `openDrugViewer('${d.id}')`;
       return `<div class="lib-drug-card${_libSelectMode?' selectable':''}${isSelected?' selected':''}" id="libcard_${d.id}" data-drugid="${d.id}" onclick="${clickAction}">
-        <div class="lib-drug-stripe" style="background:${clr.s}"></div>
-        ${_libSelectMode ? `<div style="display:flex;align-items:center;padding:0 12px;align-self:center"><div class="lib-sel-check${isSelected?' checked':''}"></div></div>` : ''}
+        ${_libSelectMode
+          ? `<div style="display:flex;align-items:center;padding:0 12px;align-self:center"><div class="lib-sel-check${isSelected?' checked':''}"></div></div>`
+          : `<div class="rx-icon-circle" style="background:${clr.s}18;color:${clr.s}"><i class="ph ph-pill"></i></div>`}
         <div class="lib-drug-body">
           <div class="lib-drug-name">${esc(d.name)}</div>
           <div class="lib-drug-meta">
@@ -14850,7 +14854,7 @@ async function renderLib() {
           </div>
           ${snippet}
         </div>
-        ${_libSelectMode ? '' : '<div class="lib-drug-arr"><i class="ph ph-caret-right"></i></div>'}
+        ${_libSelectMode ? '' : '<div class="lib-drug-arr"><i class="ph ph-caret-right" style="font-size:14px"></i></div>'}
       </div>`;
     }).join('');
   }
@@ -14919,8 +14923,7 @@ function libGenericCard(d, allProducts, _unused) {
     : '';
 
   return `<div class="lib-drug-card${_libSelectMode?' selectable':''}${isSelected?' selected':''}" id="libcard_${d.id}" data-drugid="${d.id}" onclick="${clickAction}">
-    <div class="lib-drug-stripe" style="background:${clr.s}"></div>
-    ${checkbox}
+    ${_libSelectMode ? checkbox : `<div class="rx-icon-circle" style="background:${clr.s}18;color:${clr.s}"><i class="ph ph-pill"></i></div>`}
     <div class="lib-drug-body">
       <div class="lib-drug-name">${esc(d.name)}${comboBadge}</div>
       <div class="lib-drug-meta">
@@ -14929,7 +14932,7 @@ function libGenericCard(d, allProducts, _unused) {
         ${brandHint}
       </div>
     </div>
-    ${_libSelectMode ? '' : '<div class="lib-drug-arr"><i class="ph ph-caret-right"></i></div>'}
+    ${_libSelectMode ? '' : '<div class="lib-drug-arr"><i class="ph ph-caret-right" style="font-size:14px"></i></div>'}
   </div>`;
 }
 
