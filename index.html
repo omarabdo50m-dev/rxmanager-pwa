@@ -8376,11 +8376,24 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 <div id="libScr">
   <!-- ── Fixed header zone: title row + home-style search pill ── -->
   <div class="lib-fixed-header">
-    <div class="cc-screen-header">
-      <span class="cc-screen-header__title" id="libScrTitle" style="font-size:var(--text-lg-size);font-weight:800;letter-spacing:-.3px">Drug Library</span>
-      <button class="cc-screen-header__back" id="libMenuBtn" onclick="openLibMenu()" title="More options" aria-label="More options">
-        <i class="ph ph-dots-three-outline" style="font-size:18px"></i>
-      </button>
+    <div class="hdr" style="padding-bottom:10px">
+      <div class="hdr-top">
+        <div class="hdr-title-block">
+          <span class="hdr-app-name">RxManager Pro</span>
+          <span id="libScrTitle" style="font-size:var(--text-lg-size);font-weight:800;letter-spacing:-.3px;color:var(--color-text-inverse);line-height:1.1">Drug Library</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+          <button class="hdr-theme-btn" onclick="hdrToggleTheme()" title="Toggle light / dark mode" aria-label="Toggle theme">
+            <i class="ph ph-moon"></i>
+          </button>
+          <button class="cc-screen-header__back" id="libMenuBtn" onclick="openLibMenu()" title="More options" aria-label="More options">
+            <i class="ph ph-dots-three-outline" style="font-size:18px"></i>
+          </button>
+          <button class="hdr-gear-btn" onclick="updateGhLibStatus();openScreen('settingsScr')" title="Settings" aria-label="Settings">
+            <i class="ph ph-gear"></i>
+          </button>
+        </div>
+      </div>
     </div>
     <!-- Search pill — same markup & classes as home screen -->
     <div class="search-bar-wrap">
@@ -8881,9 +8894,22 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 <!-- FAVOURITES SCREEN — Phase 4.13 redesign -->
 <div id="favsScr">
 
-  <!-- Header: canonical .cc-screen-header — Phase 4.13 -->
-  <div class="cc-screen-header">
-    <span class="cc-screen-header__title">Favourites</span>
+  <!-- Header: matches home screen shell -->
+  <div class="hdr" style="padding-bottom:10px">
+    <div class="hdr-top">
+      <div class="hdr-title-block">
+        <span class="hdr-app-name">RxManager Pro</span>
+        <span style="font-size:var(--text-lg-size);font-weight:800;letter-spacing:-.3px;color:var(--color-text-inverse);line-height:1.1">Favourites</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+        <button class="hdr-theme-btn" onclick="hdrToggleTheme()" title="Toggle light / dark mode" aria-label="Toggle theme">
+          <i class="ph ph-moon"></i>
+        </button>
+        <button class="hdr-gear-btn" onclick="updateGhLibStatus();openScreen('settingsScr')" title="Settings" aria-label="Settings">
+          <i class="ph ph-gear"></i>
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Scrollable body -->
@@ -19554,6 +19580,12 @@ function _syncThemeToggleUI(theme) {
     // Brand blue in dark mode (sun pops against navy), amber in light mode (moon on white)
     hdrBtn.style.color = theme === 'light' ? '#CA8A04' : 'var(--color-brand)';
   }
+  // Sync theme icons on peer nav screens (lib, fav) which share the same button class
+  document.querySelectorAll('.hdr-theme-btn').forEach(btn => {
+    const ico = btn.querySelector('i');
+    if (ico) ico.className = theme === 'light' ? 'ph ph-moon' : 'ph ph-sun';
+    btn.style.color = theme === 'light' ? '#CA8A04' : 'var(--color-brand)';
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════════
