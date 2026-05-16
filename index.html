@@ -16570,13 +16570,13 @@ async function openDrugViewer(id) {
     // unique id for this drug's legend toggle
     const legendId = 'pregLegend_' + id;
     const pregContent = `
-      <div class="dv-preg-row-p12" style="border-bottom:1px solid var(--color-border)">
+      <div class="dv-preg-row-p12" style="border-bottom:none">
         <div class="dv-preg-row-lbl-p12"><i class="ph ph-shield-check" style="font-size:11px"></i> FDA Pregnancy Category</div>
         <div class="dv-preg-cat-single-p12 ${pregCatCls}">
           <span class="dv-preg-cat-letter-p12">${pregCatDisplay}</span>
         </div>
       </div>
-      <div style="padding-left:var(--space-3);padding-top:3px;padding-bottom:var(--space-2);border-bottom:1px solid var(--color-border)">
+      <div style="padding-left:var(--space-3);padding-top:1px;padding-bottom:var(--space-2);border-bottom:1px solid var(--color-border)">
         <button class="dv-legend-btn-p12" onclick="(function(btn){var el=document.getElementById('${legendId}');var open=el.style.display!=='none';el.style.display=open?'none':'block';btn.textContent=open?'What does this mean?':'Hide';}).call(this,this)">What does this mean?</button>
         <div id="${legendId}" style="display:none">
           <div class="dv-preg-legend-grid-p12">
