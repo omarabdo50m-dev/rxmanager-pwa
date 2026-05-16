@@ -1924,14 +1924,14 @@ function _checkGatePassword() {
 
           <!-- 2. Patient Presentation -->
           <div class="form-row">
-            <label class="form-label">Patient Picture URL (EN)</label>
-            <input type="url" id="cf-patient_picture_en" onblur="condSave('patient_picture_en',this.value); condPreviewImg('en')"/>
-            <img id="cf-img-en" src="" alt="" class="img-preview" style="display:none"/>
+            <label class="form-label">Patient Presentation (EN)</label>
+            <p class="form-hint">One block per blank line — first line is the heading, rest is body text.</p>
+            <textarea id="cf-patient_picture_en" rows="4" style="resize:vertical" onblur="condSave('patient_picture_en',this.value)"></textarea>
           </div>
           <div class="form-row">
-            <label class="form-label">Patient Picture URL (AR)</label>
-            <input type="url" id="cf-patient_picture_ar" onblur="condSave('patient_picture_ar',this.value); condPreviewImg('ar')"/>
-            <img id="cf-img-ar" src="" alt="" class="img-preview" style="display:none"/>
+            <label class="form-label">Patient Presentation (AR)</label>
+            <p class="form-hint">One block per blank line — first line is the heading, rest is body text.</p>
+            <textarea id="cf-patient_picture_ar" dir="rtl" rows="4" style="resize:vertical" onblur="condSave('patient_picture_ar',this.value)"></textarea>
           </div>
 
           <!-- 3. Red Flags & Referral -->
@@ -4441,9 +4441,7 @@ async function condEdit(id) {
   // Sibling
   condRenderSibling(c.sibling_id);
 
-  // Image previews
-  condPreviewImg('en', c.patient_picture_en);
-  condPreviewImg('ar', c.patient_picture_ar);
+  // Patient presentation fields
   document.getElementById('cf-patient_picture_en').value = c.patient_picture_en ?? '';
   document.getElementById('cf-patient_picture_ar').value = c.patient_picture_ar ?? '';
 
