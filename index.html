@@ -3068,11 +3068,10 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 @keyframes fab-pop-in{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
 
 /* ── SCREENS ────────────────────────── */
-.screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;flex-direction:column;animation:slide-in .2s cubic-bezier(.22,.68,0,1);max-width:480px;margin:0 auto}
+.screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;flex-direction:column;max-width:480px;margin:0 auto;opacity:0;transform:translateX(14px);transition:opacity .16s ease,transform .16s cubic-bezier(.22,.68,0,1)}
 .screen.open{display:flex}
-.screen.slide-out{animation:slide-out .16s cubic-bezier(.22,.68,0,1) forwards}
-@keyframes slide-in{from{transform:translateX(14px);opacity:0}to{transform:none;opacity:1}}
-@keyframes slide-out{from{transform:none;opacity:1}to{transform:translateX(-14px);opacity:0}}
+.screen.scr-visible{opacity:1;transform:none}
+.screen.scr-out{opacity:0;transform:translateX(-14px);pointer-events:none}
 /* Peer nav screens — sit alongside home, no z-index stack, no slide-in */
 #libScr,#favsScr{position:fixed;inset:0;z-index:10;background:var(--color-bg);display:none;flex-direction:column;max-width:480px;margin:0 auto;animation:none;overflow:hidden}
 #libScr.peer-open,#favsScr.peer-open{display:flex}
@@ -10902,11 +10901,19 @@ function toast(msg) {
 // SCREEN ROUTING
 // ═══════════════════════════════════════════════════════
 function openScreen(id) {
-  document.getElementById(id).classList.add('open');
+  const scr = document.getElementById(id);
+  scr.classList.add('open');
+  // Force reflow so transition fires from the off-screen start position
+  scr.getBoundingClientRect();
+  scr.classList.add('scr-visible');
   history.pushState({screen: id}, '');
 }
 function closeScreen(id) {
-  document.getElementById(id).classList.remove('open');
+  const scr = document.getElementById(id);
+  scr.classList.add('scr-out');
+  setTimeout(() => {
+    scr.classList.remove('open', 'scr-visible', 'scr-out');
+  }, 160);
 }
 window.addEventListener('popstate', () => {
   // If lightbox is open, close it — don't navigate away from the condition viewer
@@ -10922,7 +10929,7 @@ window.addEventListener('popstate', () => {
   }
   // Only close true overlay screens — lib/fav are peer nav tabs, not history entries
   const open = document.querySelector('.screen.open');
-  if (open && open.id !== 'libScr' && open.id !== 'favsScr') open.classList.remove('open');
+  if (open && open.id !== 'libScr' && open.id !== 'favsScr') closeScreen(open.id);
 });
 
 // ═══════════════════════════════════════════════════════
@@ -12757,9 +12764,7 @@ function _cvSpinner() {
 
 function closeConditionViewer() {
   cvCloseLangDropdown();
-  const _scr = document.getElementById('condViewerScr');
-  _scr.classList.add('slide-out');
-  setTimeout(() => { _scr.classList.remove('slide-out'); closeScreen('condViewerScr'); }, 155);
+  closeScreen('condViewerScr');
 }
 
 // ── CV-2: fetchConditionData — fetch prescriptions + drugs in background ───────
@@ -16378,14 +16383,13 @@ function _dvPregCellP12(label, cat) {
 }
 
 function _closeDrugViewer(cb) {
-  const _scr = document.getElementById('drugViewerScr');
-  _scr.classList.add('slide-out');
-  setTimeout(() => { _scr.classList.remove('slide-out'); closeScreen('drugViewerScr'); if (cb) cb(); }, 155);
+  closeScreen('drugViewerScr');
+  if (cb) setTimeout(cb, 160);
 }
 function drugViewerOpenEditor() {
   _dvFormulaFilter.clear();
   _dvFormulaPanelOpen = false;
-  _closeDrugViewer(() => setTimeout(() => openDrugEditor(_dvCurrentId), 0));
+  _closeDrugViewer(() => openDrugEditor(_dvCurrentId));
 }
 
 function toggleFavDrugViewer() {
