@@ -16845,13 +16845,17 @@ function libToggleSafetyPanel() {
   if (safetyPill) safetyPill.classList.toggle('active', _libSafetyPanelOpen || countActiveFilters(_libFilterState) - _libFilterState.routes.size - _libFilterState.formulas.size > 0);
 }
 
-// Pregnancy: "safe" = A+B, "unsafe" = C+D+X — acts as a toggle per group
+// Pregnancy: "safe" = A+B, "unsafe" = C+D+X — mutually exclusive toggle
 function libTogglePregGroup(group) {
   const safeSet   = ['A','B'];
   const unsafeSet = ['C','D','X'];
-  const cats = group === 'safe' ? safeSet : unsafeSet;
+  const cats      = group === 'safe' ? safeSet : unsafeSet;
+  const opposite  = group === 'safe' ? unsafeSet : safeSet;
   const allActive = cats.every(c => _libFilterState.pregnancyCategories.has(c));
+  // Clear opposite group first (mutual exclusion)
+  opposite.forEach(c => _libFilterState.pregnancyCategories.delete(c));
   if (allActive) {
+    // Already active → toggle off
     cats.forEach(c => _libFilterState.pregnancyCategories.delete(c));
   } else {
     cats.forEach(c => _libFilterState.pregnancyCategories.add(c));
@@ -16870,12 +16874,15 @@ function libTogglePreg(cat) {
   renderLib();
 }
 
-// Breastfeeding: "safe" = Safe only, "unsafe" = Caution+Unsafe — acts as a toggle per group
+// Breastfeeding: "safe" = Safe only, "unsafe" = Caution+Unsafe — mutually exclusive toggle
 function libToggleLacGroup(group) {
   const safeSet   = ['Safe'];
   const unsafeSet = ['Caution','Unsafe'];
-  const vals = group === 'safe' ? safeSet : unsafeSet;
+  const vals     = group === 'safe' ? safeSet : unsafeSet;
+  const opposite = group === 'safe' ? unsafeSet : safeSet;
   const allActive = vals.every(v => _libFilterState.lactation.has(v));
+  // Clear opposite group first (mutual exclusion)
+  opposite.forEach(v => _libFilterState.lactation.delete(v));
   if (allActive) {
     vals.forEach(v => _libFilterState.lactation.delete(v));
   } else {
@@ -17060,11 +17067,39 @@ function _syncLibSheetCatDisplay() {
   }
 }
 
-// Route selection inside the filter sheet
+// Route selection inside the filter sheet — multi-select
+// "All" clears all specific routes; specific routes toggle individually;
+// if all specific routes are deselected the state returns to "All".
 function libSheetSetRoute(route) {
-  libSetRoute(route);              // existing function — updates filterState + renders lib
-  _syncLibSheetRoutePills();       // update sheet pills
-  _syncLibSheetFormulaSection();   // show/hide formula section
+  if (route === 'All') {
+    // Clear everything → back to All
+    _libFilterState.routes.clear();
+    _libFilterState.formulas.clear();
+    _libActiveRoute = 'All';
+  } else {
+    // Toggle this route
+    if (_libFilterState.routes.has(route)) {
+      _libFilterState.routes.delete(route);
+    } else {
+      _libFilterState.routes.add(route);
+    }
+    _libFilterState.formulas.clear();
+    // If nothing selected, reset to All
+    _libActiveRoute = _libFilterState.routes.size === 0 ? 'All' : route;
+  }
+  _syncLibSheetRoutePillsMulti();
+  _updateLibFilterSummary();
+  renderLib();
+}
+
+function _syncLibSheetRoutePillsMulti() {
+  const noRoutes = _libFilterState.routes.size === 0;
+  const allEl = document.getElementById('lfs_All');
+  if (allEl) allEl.classList.toggle('active', noRoutes);
+  ['Tab/Cap','Syrup/Susp/Drops','Injections','Suppositories','Sachets','Inhaled','Topical','Other'].forEach(r => {
+    const el = document.getElementById('lfs_' + r.replace(/[^a-zA-Z0-9]/g,'_'));
+    if (el) el.classList.toggle('active', _libFilterState.routes.has(r));
+  });
 }
 
 // Override libClearAllFilters to also sync sheet UI
@@ -17077,7 +17112,7 @@ function libClearAllFilters() {
   const sp = document.getElementById('libSafetyPanel');  if (sp) sp.style.display = 'none';
   _updateLibRoutePills();
   _updateLibSafetyChips();
-  _syncLibSheetRoutePills();
+  _syncLibSheetRoutePillsMulti();
   _syncLibSheetFormulaSection();
   _updateLibFilterSummary();
   renderLib();
