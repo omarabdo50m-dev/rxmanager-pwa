@@ -3039,7 +3039,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .screen.open{display:flex}
 @keyframes slide-in{from{transform:translateX(6%);opacity:.5}to{transform:none;opacity:1}}
 /* Peer nav screens — sit alongside home, no z-index stack, no slide-in */
-#libScr,#favsScr{position:fixed;inset:0;z-index:10;background:var(--color-bg);display:none;flex-direction:column;max-width:480px;margin:0 auto;animation:none}
+#libScr,#favsScr{position:fixed;inset:0;z-index:10;background:var(--color-bg);display:none;flex-direction:column;max-width:480px;margin:0 auto;animation:none;overflow-y:auto;-webkit-overflow-scrolling:touch}
 #libScr.peer-open,#favsScr.peer-open{display:flex}
 .scr-hdr{background:var(--color-bg);color: var(--color-text-inverse);padding:var(--header-top-pad) 15px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;box-shadow:0 4px 12px rgba(15,23,42,.3);flex-shrink:0}
 .back-btn{background:none;border:none;color:rgba(255,255,255,.8);font-size:22px;cursor:pointer;padding:2px 4px;line-height:1;transition:.15s}
