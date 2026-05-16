@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="theme-color" content="#071925"/>
+<meta name="theme-color" content="#0d0f12"/>
 <title>Roshetta+</title>
 <!-- ═══════════════════════════════════════════════════════════
      PHASE 09 — PWA Manifest & Meta Tags
@@ -25,8 +25,8 @@
 <link rel="icon" type="image/png" sizes="72x72" href="/icons/icon-72.png"/>
 <!-- Microsoft Tiles (Edge, Windows) -->
 <meta name="msapplication-TileImage" content="/icons/icon-144.png"/>
-<meta name="msapplication-TileColor" content="#071925"/>
-<meta name="msapplication-navbutton-color" content="#071925"/>
+<meta name="msapplication-TileColor" content="#0d0f12"/>
+<meta name="msapplication-navbutton-color" content="#0d0f12"/>
 <!-- Open Graph / social sharing -->
 <meta property="og:type" content="website"/>
 <meta property="og:title" content="RxManager Pro"/>
@@ -74,48 +74,43 @@
 :root {
 
   /* ── SURFACE TOKENS ─────────────────────────────────────── */
-  --color-bg:               #071925;  /* page background AND header background */
-  --color-surface:          #102540;  /* card surfaces */
-  --color-surface-2:        #0d2038;  /* secondary surfaces, input bg */
+  --color-bg:               #0d0f12;  /* page background — near-black */
+  --color-surface:          #161c24;  /* card surfaces */
+  --color-surface-2:        #111418;  /* secondary surfaces, input bg */
   --color-surface-elevated: #fefffe;  /* bottom nav near-white — new v1.1 */
-  --color-border:           #1a3a5c;  /* card borders, dividers */
-  --color-border-strong:    #245080;  /* stronger dividers */
+  --color-border:           #243040;  /* card borders, dividers */
+  --color-border-strong:    #344d66;  /* stronger dividers */
 
   /* ── TEXT TOKENS ────────────────────────────────────────── */
-  --color-text-primary:   #E8EFF8;  /* headings, condition names */
-  --color-text-secondary: #9DC0DC;  /* specialty labels, metadata — v75.1: lifted for WCAG AA */
-  --color-text-tertiary:  #4A7090;  /* placeholder text, inactive */
-  --color-text-inverse:   #E8EFF8;  /* white-on-dark text/icons — replaces bare #fff */
+  --color-text-primary:   #f0f6ff;  /* headings, condition names — near white */
+  --color-text-secondary: #c0d4e4;  /* body text, metadata — bright & readable */
+  --color-text-tertiary:  #5a7a90;  /* placeholder text, inactive */
+  --color-text-inverse:   #f0f6ff;  /* white-on-dark text/icons */
 
   /* ── BRAND TOKENS ───────────────────────────────────────── */
-  --color-brand:       #0085fe;  /* vivid blue — primary interactive */
-  --color-brand-light: #00346a;  /* brand tint backgrounds (dark theme) */
-  --color-brand-dark:  #006fd4;  /* pressed / darker brand states */
+  --color-brand:       #0068cc;  /* toned-down blue — primary interactive */
+  --color-brand-light: #0d2035;  /* brand tint backgrounds (dark theme) */
+  --color-brand-dark:  #0058a8;  /* pressed / darker brand states */
 
   /* ── SEMANTIC TOKENS — clinical meaning only ────────────── */
-  /* Foreground: lifted to -400 scale so they read on dark navy surfaces */
-  --color-danger:        #F87171;  /* red-400   */
-  --color-caution:       #FBBF24;  /* amber-400 */
+  /* Foreground: readable on near-black surfaces */
+  --color-danger:        #fb923c;  /* amber-red — warm, brand-coherent danger */
+  --color-caution:       #FBBF24;  /* amber-400 — unchanged */
   --color-safe:          #4ADE80;  /* green-400 */
   --color-info:          #38BDF8;  /* sky-400   */
-  /* Backgrounds: navy-tinted, not near-black — sit on --color-surface comfortably */
-  --color-danger-light:  #221218;  /* navy + red tint   */
-  --color-caution-light: #1e1a0e;  /* navy + amber tint */
-  --color-safe-light:    #0e1f18;  /* navy + green tint */
-  --color-info-light:    #0d1e2e;  /* navy + sky tint   */
+  /* Backgrounds: dark tints sitting on --color-surface (#161c24) */
+  --color-danger-light:  #1e1208;  /* near-black + amber-red tint */
+  --color-caution-light: #1a160a;  /* near-black + amber tint     */
+  --color-safe-light:    #0a1610;  /* near-black + green tint     */
+  --color-info-light:    #0d1520;  /* near-black + sky tint       */
 
-  /* ── SHADOW TOKENS — v75.1: blue-tinted, tighter spread ────
-     Pure-black shadows read as muddy on the navy surface palette.
-     Replacing with a deep-navy-blue tint (7,34,84) makes shadows
-     feel like they belong to the same color family — lighter,
-     airy, and more modern. Spread reduced to stay crisp.
-     ────────────────────────────────────────────────────────── */
-  --shadow-sm: 0 1px 2px rgba(7,34,84,.30), 0 1px 4px rgba(7,34,84,.18);
-  --shadow-md: 0 3px 10px rgba(7,34,84,.40), 0 1px 3px rgba(7,34,84,.22);
-  --shadow-lg: 0 8px 24px rgba(7,34,84,.52), 0 3px 6px rgba(7,34,84,.28);
-  /* Search pill shadow — strong elevation + brand-tinted depth layer */
-  --shadow-search:       0 6px 24px rgba(0,53,102,.42), 0 2px 6px rgba(7,34,84,.28), 0 1px 2px rgba(7,34,84,.18);
-  --shadow-search-focus: 0 8px 32px rgba(0,53,102,.50), 0 3px 8px rgba(7,34,84,.32), 0 0 0 3px rgba(0,133,254,.28);
+  /* ── SHADOW TOKENS — neutral dark, no blue cast on near-black bg ── */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.40), 0 1px 4px rgba(0,0,0,.24);
+  --shadow-md: 0 3px 10px rgba(0,0,0,.50), 0 1px 3px rgba(0,0,0,.30);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,.60), 0 3px 6px rgba(0,0,0,.36);
+  /* Search pill shadow */
+  --shadow-search:       0 6px 24px rgba(0,0,0,.48), 0 2px 6px rgba(0,0,0,.30), 0 1px 2px rgba(0,0,0,.20);
+  --shadow-search-focus: 0 8px 32px rgba(0,0,0,.56), 0 3px 8px rgba(0,0,0,.34), 0 0 0 3px rgba(0,104,204,.28);
 
   /* ── SPACING TOKENS — 4px grid ──────────────────────────── */
   --space-1:   4px;
@@ -164,14 +159,14 @@
      Dark mode: brand-tinted background + glowing border.
      Light mode: overridden in [data-theme="light"] block.
      ──────────────────────────────────────────────────────── */
-  --color-chip-active-bg:     rgba(0,133,254,.18);  /* brand tint — not solid fill */
-  --color-chip-active-border: rgba(0,133,254,.80);  /* clear brand outline */
-  --color-chip-active-text:   #7AC8FF;              /* bright readable on dark bg */
+  --color-chip-active-bg:     rgba(0,104,204,.18);  /* brand tint — not solid fill */
+  --color-chip-active-border: rgba(0,104,204,.80);  /* clear brand outline */
+  --color-chip-active-text:   #5ab0f0;              /* bright readable on dark bg */
 
   /* ── RGB CHANNEL TOKENS — for use in rgba() mask gradients ── */
   /* These expose the raw RGB channels of key surface colors so   */
   /* fade masks can dissolve into the correct background color.   */
-  --color-bg-rgb:      7, 25, 37;    /* #071925 decomposed — dark mode bg */
+  --color-bg-rgb:      13, 15, 18;    /* #0d0f12 decomposed — dark mode bg */
 
   /* ── LEGACY ALIASES — keep existing CSS rules working ───── */
   /* Progressively replaced screen-by-screen in Phase 4.      */
@@ -9134,12 +9129,12 @@ function _showCrashBanner(msg) {
   banner.id = 'crash-banner';
   banner.innerHTML = `
     <div style="position:fixed;top:0;left:0;right:0;z-index:99999;
-      background:#1F0A0A;border-bottom:2px solid #EF4444;
+      background:#1e1208;border-bottom:2px solid #fb923c;
       padding:12px 16px;display:flex;align-items:center;gap:10px">
       <i class="ph ph-warning" style="color:#EF4444;font-size:20px"></i>
       <div style="flex:1">
-        <div style="font-weight:700;color:#E8EFF8;font-size:13px">Something went wrong</div>
-        <div style="color:#9DC0DC;font-size:11px;margin-top:2px">${msg}</div>
+        <div style="font-weight:700;color:#f0f6ff;font-size:13px">Something went wrong</div>
+        <div style="color:#c0d4e4;font-size:11px;margin-top:2px">${msg}</div>
       </div>
       <button onclick="location.reload()"
         style="background:#EF4444;color:#fff;border:none;border-radius:6px;
