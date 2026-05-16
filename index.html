@@ -8701,14 +8701,6 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
         </div>
       </div>
     </div>
-    <!-- Phase 4: Category scope chip — shown when libView==='list' + search active -->
-    <div class="lib-scope-chip" id="libScopeChip" style="display:none">
-      <span class="lib-scope-chip__ico" id="libScopeChipIco"></span>
-      <span class="lib-scope-chip__name" id="libScopeChipName"></span>
-      <button class="lib-scope-chip__clear" onclick="exitToGrid();document.getElementById('libSearch').value='';debouncedRenderLib();" aria-label="Clear category filter">
-        <i class="ph ph-x" style="font-size:13px"></i>
-      </button>
-    </div>
     <!-- Active filter summary strip -->
     <div class="lib-filter-active-strip" id="libFilterStrip">
       <i class="ph ph-funnel" style="font-size:12px;color:var(--color-brand);flex-shrink:0"></i>
@@ -8723,6 +8715,14 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
         <span class="rv-label"><i class="ph ph-clock-counter-clockwise" style="font-size:10px;vertical-align:-1px;margin-right:3px"></i>Recent</span>
         <div class="rv-chips" id="libRvChips"></div>
       </div>
+    </div>
+    <!-- Phase 4: Category scope chip — below recent strip, shown when in list view -->
+    <div class="lib-scope-chip" id="libScopeChip" style="display:none">
+      <span class="lib-scope-chip__ico" id="libScopeChipIco"></span>
+      <span class="lib-scope-chip__name" id="libScopeChipName"></span>
+      <button class="lib-scope-chip__clear" onclick="exitToGrid();document.getElementById('libSearch').value='';debouncedRenderLib();" aria-label="Clear category filter">
+        <i class="ph ph-x" style="font-size:13px"></i>
+      </button>
     </div>
   </div><!-- /.lib-fixed-header -->
 
