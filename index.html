@@ -4601,12 +4601,12 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 /* Active slot — receives touches */
 .lb-img-slot.lb-active{ pointer-events:auto; z-index:2; }
 .lb-img-slot.lb-behind{ z-index:1; }
-/* Slide-in animations for the incoming slot */
-.lb-img-slot.lb-in-right{ animation:lb-slide-in-right .32s cubic-bezier(.32,.72,0,1) both }
-.lb-img-slot.lb-in-left { animation:lb-slide-in-left  .32s cubic-bezier(.32,.72,0,1) both }
-/* Slide-out for the outgoing slot */
-.lb-img-slot.lb-out-left { animation:lb-slide-out-left  .32s cubic-bezier(.32,.72,0,1) both }
-.lb-img-slot.lb-out-right{ animation:lb-slide-out-right .32s cubic-bezier(.32,.72,0,1) both }
+/* Slide-in animations for the incoming slot — z-index:3 so it slides OVER the outgoing */
+.lb-img-slot.lb-in-right{ animation:lb-slide-in-right .32s cubic-bezier(.32,.72,0,1) both; z-index:3; }
+.lb-img-slot.lb-in-left { animation:lb-slide-in-left  .32s cubic-bezier(.32,.72,0,1) both; z-index:3; }
+/* Slide-out for the outgoing slot — stays at z-index:1 so it slides underneath */
+.lb-img-slot.lb-out-left { animation:lb-slide-out-left  .32s cubic-bezier(.32,.72,0,1) both; z-index:1; }
+.lb-img-slot.lb-out-right{ animation:lb-slide-out-right .32s cubic-bezier(.32,.72,0,1) both; z-index:1; }
 @keyframes lb-slide-in-right { from{transform:translateX(100%)} to{transform:translateX(0)} }
 @keyframes lb-slide-in-left  { from{transform:translateX(-100%)} to{transform:translateX(0)} }
 @keyframes lb-slide-out-left  { from{transform:translateX(0)} to{transform:translateX(-100%)} }
@@ -13431,6 +13431,7 @@ function openLightbox(idx, readonly = false, thumbEl = null) {
 
   // Reset slots to known state
   _lbActiveSlot = 'A';
+  _lbAnimating = false;
   const slotA = document.getElementById('lbSlotA');
   const slotB = document.getElementById('lbSlotB');
   slotA.className = 'lb-img-slot lb-active';
@@ -13552,10 +13553,15 @@ function _lbRender(slideDir = null, thumbEl = null) {
   }
 }
 
+let _lbAnimating = false; // guard: ignore nav taps while slide animation is running
+
 function lightboxNav(dir) {
+  if (_lbAnimating) return;            // block rapid taps mid-animation
   const next = _lbIdx + dir;
   if (next < 0 || next >= _lbPhotos.length) return;
   _lbIdx = next;
+  _lbAnimating = true;
+  setTimeout(() => { _lbAnimating = false; }, 340); // slightly longer than SLIDE_MS
   _lbRender(dir);
 }
 
