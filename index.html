@@ -7508,7 +7508,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 .cv-depth-heading-p11 {
   font-size: var(--text-sm-size);
   font-weight: 700;
-  color: var(--color-brand);
+  color: var(--color-text-primary);  /* was --color-brand — headings should be white, not blue */
   margin-bottom: var(--space-2);
 }
 .cv-depth-body-p11 {
@@ -10423,29 +10423,29 @@ async function renderSpecStrip() {
   // ── Specialty color map — matches master plan ──────────────────
   // Maps specialty name to its hex accent color.
   const SPEC_COLOR_MAP = {
-    'General Practice':   '#006fd4',
-    'General':            '#006fd4',
-    'Paediatrics':        '#7C3AED',
-    'Internal Medicine':  '#0891B2',
-    'Surgery':            '#DC2626',
-    'Cardiology':         '#E11D48',
-    'Respiratory':        '#0284C7',
-    'Gastroenterology':   '#D97706',
-    'Neurology':          '#6366F1',
-    'Endocrinology':      '#059669',
-    'Infectious Disease': '#16A34A',
-    'Psychiatry':         '#6366F1',
-    'Dermatology':        '#F59E0B',
-    'Orthopaedics':       '#78716C',
-    'OB/GYN':             '#EC4899',
-    'Urology':            '#0D9488',
-    'Ophthalmology':      '#8B5CF6',
-    'ENT':                '#14B8A6',
-    'Haematology':        '#B91C1C',
-    'Rheumatology':       '#A855F7',
-    'Emergency':          '#EF4444',
-    'ICU':                '#0F172A',
-    'Oncology':           '#9333EA',
+    'General Practice':   '#60a5fa',  /* blue-400    — was #006fd4 dark navy */
+    'General':            '#60a5fa',
+    'Paediatrics':        '#a78bfa',  /* violet-400  — was #7C3AED too vivid */
+    'Internal Medicine':  '#38bdf8',  /* sky-400     — was #0891B2 */
+    'Surgery':            '#f87171',  /* red-400     — was #DC2626 too saturated */
+    'Cardiology':         '#fb7185',  /* rose-400    — was #E11D48 */
+    'Respiratory':        '#7dd3fc',  /* sky-300     — was #0284C7 dark */
+    'Gastroenterology':   '#fbbf24',  /* amber-400   — was #D97706 dark */
+    'Neurology':          '#818cf8',  /* indigo-400  — was #6366F1 */
+    'Endocrinology':      '#34d399',  /* emerald-400 — was #059669 dark */
+    'Infectious Disease': '#4ade80',  /* green-400   — was #16A34A dark */
+    'Psychiatry':         '#818cf8',  /* indigo-400  */
+    'Dermatology':        '#fcd34d',  /* amber-300   — was #F59E0B */
+    'Orthopaedics':       '#a8a29e',  /* stone-400   — was #78716C dark */
+    'OB/GYN':             '#f9a8d4',  /* pink-300    — was #EC4899 vivid */
+    'Urology':            '#2dd4bf',  /* teal-400    — was #0D9488 dark */
+    'Ophthalmology':      '#c084fc',  /* purple-400  — was #8B5CF6 */
+    'ENT':                '#5eead4',  /* teal-300    — was #14B8A6 */
+    'Haematology':        '#fca5a5',  /* red-300     — was #B91C1C */
+    'Rheumatology':       '#d8b4fe',  /* purple-300  — was #A855F7 */
+    'Emergency':          '#f87171',  /* red-400     — was #EF4444 */
+    'ICU':                '#94a3b8',  /* slate-400   — was #0F172A (near-black!) */
+    'Oncology':           '#c084fc',  /* purple-400  — was #9333EA vivid */
   };
 
   // Helper: pick a color for any specialty — fallback to brand
@@ -10457,9 +10457,9 @@ async function renderSpecStrip() {
     const partial = Object.keys(SPEC_COLOR_MAP).find(k => k.includes(first) || first.includes(k.split(' ')[0]));
     if (partial) return SPEC_COLOR_MAP[partial];
     // Deterministic fallback — derive from name charcode
-    const palette = ['#006fd4','#7C3AED','#0891B2','#DC2626','#E11D48','#0284C7',
-                     '#D97706','#6366F1','#059669','#16A34A','#EC4899','#0D9488',
-                     '#8B5CF6','#14B8A6','#B91C1C','#A855F7','#EF4444','#F59E0B'];
+    const palette = ['#60a5fa','#a78bfa','#38bdf8','#f87171','#fb7185','#7dd3fc',
+                     '#fbbf24','#818cf8','#34d399','#4ade80','#f9a8d4','#2dd4bf',
+                     '#c084fc','#5eead4','#fca5a5','#d8b4fe','#f87171','#fcd34d'];
     const idx = name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % palette.length;
     return palette[idx];
   }
@@ -11699,18 +11699,18 @@ function renderMain() {
 
   // Fix 3: use the same canonical color map as the specialty chip strip
   const CARD_COLOR_MAP = {
-    'General Practice':   '#006fd4', 'General':            '#006fd4',
-    'Paediatrics':        '#7C3AED', 'Internal Medicine':  '#0891B2',
-    'Surgery':            '#DC2626', 'Cardiology':         '#E11D48',
-    'Respiratory':        '#0284C7', 'Gastroenterology':   '#D97706',
-    'Neurology':          '#6366F1', 'Endocrinology':      '#059669',
-    'Infectious Disease': '#16A34A', 'Psychiatry':         '#6366F1',
-    'Dermatology':        '#F59E0B', 'Orthopaedics':       '#78716C',
-    'OB/GYN':             '#EC4899', 'Urology':            '#0D9488',
-    'Ophthalmology':      '#8B5CF6', 'ENT':                '#14B8A6',
-    'Haematology':        '#B91C1C', 'Rheumatology':       '#A855F7',
-    'Emergency':          '#EF4444', 'ICU':                '#0F172A',
-    'Oncology':           '#9333EA',
+    'General Practice':   '#60a5fa', 'General':            '#60a5fa',
+    'Paediatrics':        '#a78bfa', 'Internal Medicine':  '#38bdf8',
+    'Surgery':            '#f87171', 'Cardiology':         '#fb7185',
+    'Respiratory':        '#7dd3fc', 'Gastroenterology':   '#fbbf24',
+    'Neurology':          '#818cf8', 'Endocrinology':      '#34d399',
+    'Infectious Disease': '#4ade80', 'Psychiatry':         '#818cf8',
+    'Dermatology':        '#fcd34d', 'Orthopaedics':       '#a8a29e',
+    'OB/GYN':             '#f9a8d4', 'Urology':            '#2dd4bf',
+    'Ophthalmology':      '#c084fc', 'ENT':                '#5eead4',
+    'Haematology':        '#fca5a5', 'Rheumatology':       '#d8b4fe',
+    'Emergency':          '#f87171', 'ICU':                '#94a3b8',
+    'Oncology':           '#c084fc',
   };
 
   // Convert hex to rgba for the 12% opacity circle background
@@ -11723,18 +11723,18 @@ function renderMain() {
 
   // ── Fix 10: Active filter context bar ───────────────────────────
   const FILTER_BAR_COLOR_MAP = {
-    'General Practice':   '#006fd4', 'General':            '#006fd4',
-    'Paediatrics':        '#7C3AED', 'Internal Medicine':  '#0891B2',
-    'Surgery':            '#DC2626', 'Cardiology':         '#E11D48',
-    'Respiratory':        '#0284C7', 'Gastroenterology':   '#D97706',
-    'Neurology':          '#6366F1', 'Endocrinology':      '#059669',
-    'Infectious Disease': '#16A34A', 'Psychiatry':         '#6366F1',
-    'Dermatology':        '#F59E0B', 'Orthopaedics':       '#78716C',
-    'OB/GYN':             '#EC4899', 'Urology':            '#0D9488',
-    'Ophthalmology':      '#8B5CF6', 'ENT':                '#14B8A6',
-    'Haematology':        '#B91C1C', 'Rheumatology':       '#A855F7',
-    'Emergency':          '#EF4444', 'ICU':                '#0F172A',
-    'Oncology':           '#9333EA',
+    'General Practice':   '#60a5fa', 'General':            '#60a5fa',
+    'Paediatrics':        '#a78bfa', 'Internal Medicine':  '#38bdf8',
+    'Surgery':            '#f87171', 'Cardiology':         '#fb7185',
+    'Respiratory':        '#7dd3fc', 'Gastroenterology':   '#fbbf24',
+    'Neurology':          '#818cf8', 'Endocrinology':      '#34d399',
+    'Infectious Disease': '#4ade80', 'Psychiatry':         '#818cf8',
+    'Dermatology':        '#fcd34d', 'Orthopaedics':       '#a8a29e',
+    'OB/GYN':             '#f9a8d4', 'Urology':            '#2dd4bf',
+    'Ophthalmology':      '#c084fc', 'ENT':                '#5eead4',
+    'Haematology':        '#fca5a5', 'Rheumatology':       '#d8b4fe',
+    'Emergency':          '#f87171', 'ICU':                '#94a3b8',
+    'Oncology':           '#c084fc',
   };
   const filterBarHtml = S.activeSpec !== 'All' ? (() => {
     return `<div class="active-filter-bar" role="status" aria-live="polite">
