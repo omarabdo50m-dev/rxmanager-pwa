@@ -3043,7 +3043,16 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 #libScr.peer-open,#favsScr.peer-open{display:flex}
 #libScr .lib-scroll-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 #favsScr .favs-scroll-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.lib-fixed-header{background:var(--color-bg);flex-shrink:0;z-index:20}
+/* Peer nav screen title — sits below hdr-top row, adapts to theme */
+.peer-scr-title{
+  font-size:var(--text-lg-size);
+  font-weight:800;
+  letter-spacing:-.3px;
+  color:var(--color-text-primary);
+  line-height:1.1;
+  padding:6px var(--space-5) 10px;
+}
+/* lib fixed header needs no extra padding-bottom since title provides it */
 .lib-fixed-header .search-bar-wrap{padding:6px 20px 12px}
 .lib-fixed-header .search-inp{animation:none}
 .scr-hdr{background:var(--color-bg);color: var(--color-text-inverse);padding:var(--header-top-pad) 15px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;box-shadow:0 4px 12px rgba(15,23,42,.3);flex-shrink:0}
@@ -8376,24 +8385,21 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 <div id="libScr">
   <!-- ── Fixed header zone: title row + home-style search pill ── -->
   <div class="lib-fixed-header">
-    <div class="hdr" style="padding-bottom:10px">
+    <div class="hdr">
       <div class="hdr-top">
         <div class="hdr-title-block">
           <span class="hdr-app-name">RxManager Pro</span>
-          <span id="libScrTitle" style="font-size:var(--text-lg-size);font-weight:800;letter-spacing:-.3px;color:var(--color-text-inverse);line-height:1.1">Drug Library</span>
         </div>
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
           <button class="hdr-theme-btn" onclick="hdrToggleTheme()" title="Toggle light / dark mode" aria-label="Toggle theme">
             <i class="ph ph-moon"></i>
-          </button>
-          <button class="cc-screen-header__back" id="libMenuBtn" onclick="openLibMenu()" title="More options" aria-label="More options">
-            <i class="ph ph-dots-three-outline" style="font-size:18px"></i>
           </button>
           <button class="hdr-gear-btn" onclick="updateGhLibStatus();openScreen('settingsScr')" title="Settings" aria-label="Settings">
             <i class="ph ph-gear"></i>
           </button>
         </div>
       </div>
+      <div class="peer-scr-title" id="libScrTitle">Drug Library</div>
     </div>
     <!-- Search pill — same markup & classes as home screen -->
     <div class="search-bar-wrap">
@@ -8895,11 +8901,10 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 <div id="favsScr">
 
   <!-- Header: matches home screen shell -->
-  <div class="hdr" style="padding-bottom:10px">
+  <div class="hdr">
     <div class="hdr-top">
       <div class="hdr-title-block">
         <span class="hdr-app-name">RxManager Pro</span>
-        <span style="font-size:var(--text-lg-size);font-weight:800;letter-spacing:-.3px;color:var(--color-text-inverse);line-height:1.1">Favourites</span>
       </div>
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
         <button class="hdr-theme-btn" onclick="hdrToggleTheme()" title="Toggle light / dark mode" aria-label="Toggle theme">
@@ -8910,6 +8915,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
         </button>
       </div>
     </div>
+    <div class="peer-scr-title">Favourites</div>
   </div>
 
   <!-- Scrollable body -->
