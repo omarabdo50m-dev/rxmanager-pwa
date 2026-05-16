@@ -5288,7 +5288,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 /* ── Phase 12: Hero section ──────────────────────────── */
 .dv-hero-p12 {
   background: var(--color-bg);
-  padding: var(--space-2) var(--space-4) var(--space-4);
+  padding: var(--space-1) var(--space-4) var(--space-1);
 }
 /* Group › subgroup breadcrumb — sits above the drug name */
 .dv-hero-p12-breadcrumb-line {
@@ -5318,7 +5318,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 /* ── Drug viewer: extended sticky header with breadcrumb + drug name ── */
 .dv-screen-header {
   background: var(--color-bg);
-  padding: var(--header-top-pad) var(--space-4) var(--space-3);
+  padding: var(--header-top-pad) var(--space-4) var(--space-2);
   position: sticky;
   top: 0;
   z-index: 50;
@@ -5349,10 +5349,10 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 }
 .dv-screen-header__drug-name {
   font-size: var(--text-xl-size);
-  font-weight: 900;
+  font-weight: 800;
   color: var(--color-text-primary);
-  line-height: 1.1;
-  letter-spacing: -.3px;
+  line-height: 1.22;
+  letter-spacing: -.4px;
   word-break: break-word;
   padding-left: 2px;
   font-family: var(--font);
@@ -5591,38 +5591,36 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   color: var(--color-text-primary);
 }
 
-/* ── Phase 12: MOA class badge strip (inside collapsible) ──── */
+/* ── Phase 12: MOA class rows — two stacked label+value pairs, no box ── */
 .dv-moa-class-strip {
   display: flex;
-  align-items: stretch;
-  background: var(--color-brand-light);
-  border: 1px solid rgba(0,133,254,.18);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
+  flex-direction: column;
+  gap: var(--space-2);
   margin-bottom: var(--space-3);
-  max-width: 100%;
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
 }
 .dv-moa-class-cell {
-  padding: 5px 12px;
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
   min-width: 0;
 }
 .dv-moa-class-cell + .dv-moa-class-cell {
-  border-left: 1px solid rgba(0,133,254,.14);
-  background: rgba(0,133,254,.04);
+  border-left: none;
+  background: none;
 }
 .dv-moa-class-cell-lbl {
-  font-size: 8.5px;
-  font-weight: 800;
-  color: var(--color-brand);
+  font-size: var(--text-xs-size);
+  font-weight: 700;
+  color: var(--color-text-tertiary);
   text-transform: uppercase;
-  letter-spacing: .08em;
-  margin-bottom: 2px;
+  letter-spacing: .07em;
   line-height: 1;
 }
 .dv-moa-class-cell-val {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: var(--text-sm-size);
+  font-weight: 600;
   color: var(--color-text-primary);
   line-height: 1.3;
   word-break: break-word;
@@ -5630,7 +5628,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .dv-moa-class-cell-val.secondary {
   font-weight: 600;
   color: var(--color-text-secondary);
-  font-size: 11.5px;
+  font-size: var(--text-sm-size);
 }
 
 /* ── Phase 12: Brands section ───────────────────────── */
@@ -5917,11 +5915,12 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   margin-bottom: var(--space-2);
 }
 .dv-ped-dose-text-p12 {
-  font-size: 13.5px;
-  line-height: 1.7;
-  color: var(--color-text-primary);
-  font-weight: 500;
+  font-size: var(--text-base-size);
+  line-height: 1.75;
+  color: var(--color-text-secondary);
+  font-weight: 400;
   word-break: break-word;
+  white-space: pre-wrap;
 }
 .dv-ped-dose-ar-p12 {
   font-family: var(--font-ar);
@@ -6041,10 +6040,10 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   gap: var(--space-2);
 }
 .dv-contra-text-p12 {
-  font-size: 13.5px;
+  font-size: var(--text-base-size);
   line-height: 1.75;
-  color: #7f1d1d;
-  font-weight: 500;
+  color: var(--color-text-secondary);
+  font-weight: 400;
   word-break: break-word;
   white-space: pre-wrap;
 }
@@ -6066,7 +6065,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   gap: var(--space-2);
 }
 .dv-se-text-p12 {
-  font-size: 13.5px;
+  font-size: var(--text-base-size);
   line-height: 1.75;
   color: var(--color-text-secondary);
   word-break: break-word;
@@ -6095,11 +6094,12 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   margin-bottom: 3px;
 }
 .dv-pk-cell-val-p12 {
-  font-size: var(--text-sm-size);
-  line-height: 1.55;
+  font-size: var(--text-base-size);
+  line-height: 1.75;
   color: var(--color-text-secondary);
-  font-weight: 500;
+  font-weight: 400;
   word-break: break-word;
+  white-space: pre-wrap;
 }
 .dv-pk-interactions-p12 {
   background: var(--color-danger-light);
@@ -6137,10 +6137,10 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   gap: var(--space-2);
 }
 .dv-pk-adjust-text-p12 {
-  font-size: var(--text-sm-size);
+  font-size: var(--text-base-size);
   line-height: 1.75;
-  color: #78350f;
-  font-weight: 500;
+  color: var(--color-text-secondary);
+  font-weight: 400;
   word-break: break-word;
   white-space: pre-wrap;
 }
@@ -10955,18 +10955,18 @@ function renderNumberedList(text, itemStyle='') {
       .map(s => s.replace(/^\s*\d+[\.\)]\s*/, '').trim())
       .filter(Boolean);
     return '<ol style="margin:0;padding-left:18px;list-style:decimal">' +
-      items.map(i => `<li style="font-size:13.5px;line-height:1.7;color:var(--text2);margin-bottom:4px;padding-left:2px${itemStyle?';'+itemStyle:''}" dir="auto">${esc(i)}</li>`).join('') +
+      items.map(i => `<li style="font-size:var(--text-base-size);line-height:1.75;color:var(--color-text-secondary);margin-bottom:4px;padding-left:2px${itemStyle?';'+itemStyle:''}" dir="auto">${esc(i)}</li>`).join('') +
       '</ol>';
   }
   // Detect semicolon-separated items (at least 2 semicolons)
   const parts = text.split(/;\s*/).map(s => s.trim()).filter(Boolean);
   if (parts.length >= 3) {
     return '<ol style="margin:0;padding-left:18px;list-style:decimal">' +
-      parts.map(i => `<li style="font-size:13.5px;line-height:1.7;color:var(--text2);margin-bottom:4px;padding-left:2px" dir="auto">${esc(i)}</li>`).join('') +
+      parts.map(i => `<li style="font-size:var(--text-base-size);line-height:1.75;color:var(--color-text-secondary);margin-bottom:4px;padding-left:2px" dir="auto">${esc(i)}</li>`).join('') +
       '</ol>';
   }
   // Fallback: plain pre-wrap
-  return `<div style="font-size:13.5px;line-height:1.75;color:var(--text2);white-space:pre-wrap;word-break:break-word" dir="auto">${esc(text)}</div>`;
+  return `<div style="font-size:var(--text-base-size);line-height:1.75;color:var(--color-text-secondary);white-space:pre-wrap;word-break:break-word" dir="auto">${esc(text)}</div>`;
 }
 
 
