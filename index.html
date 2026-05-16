@@ -6740,16 +6740,13 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   margin-top: var(--space-2);
   padding-left: 0;
   padding-right: 0;
-  justify-content: flex-end;   /* push to right edge */
   line-height: 1.6;
   direction: ltr;
 }
 .cv-rx-drug-note.rtl {
   flex-direction: row-reverse;
   direction: rtl;
-  padding-left: 0;
-  padding-right: 0;
-  justify-content: flex-end;   /* push to right edge */
+  justify-content: flex-end;   /* Arabic: push icon+text group to right edge */
 }
 .cv-rx-drug-note-ico {
   font-size: 12px;
@@ -6882,7 +6879,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   font-weight:600;                  /* was 500 — bumped up, swapped with note weight */
   color:var(--color-text-primary);
   direction:ltr;
-  text-align:right;
+  text-align:left;
   margin-top:var(--space-1);
   line-height:1.7;
   display:none;
@@ -7310,7 +7307,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   background: var(--color-danger-light);
   border: 1.5px solid rgba(220,38,38,.22);
   border-radius: var(--radius-md);
-  margin: var(--space-2) var(--space-3) 0;
+  margin: var(--space-2) var(--space-4) 0;
   padding: var(--space-3) var(--space-4);
   box-shadow: var(--shadow-sm);
 }
@@ -7432,7 +7429,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   background: var(--color-danger-light);
   border: 1.5px solid rgba(239,68,68,.22);
   border-radius: var(--radius-md);
-  margin: var(--space-3) var(--space-3) 0;
+  margin: var(--space-3) var(--space-4) 0;
   overflow: hidden;
   box-shadow: var(--shadow-sm);
 }
@@ -7503,7 +7500,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   border: 1px solid var(--color-border);
   border-left: 3px solid var(--color-brand);
   border-radius: var(--radius-md);
-  margin: var(--space-3) var(--space-3) 0;
+  margin: var(--space-3) var(--space-4) 0;
   padding: var(--space-4);
   box-shadow: var(--shadow-sm);
 }
@@ -7547,7 +7544,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   background: var(--color-surface);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
-  margin: var(--space-3) var(--space-3) 0;
+  margin: var(--space-3) var(--space-4) 0;
   padding: var(--space-4);
   box-shadow: var(--shadow-sm);
 }
@@ -13050,9 +13047,9 @@ function _cvRenderPrescription(rx, agePrefix) {
               }).join('')
             : '')}
         </div>
-        <!-- Line 2: Arabic dose — right-aligned -->
-        ${d.dose_ar ? `<div class="cv-dose-ar" dir="rtl" style="padding-left:0;text-align:right">${esc(d.dose_ar)}</div>` : ''}
-        ${d.dose    ? `<div class="cv-dose-en" style="padding-left:0;text-align:right">${esc(d.dose)}</div>` : ''}
+        <!-- Line 2: Arabic dose — right-aligned via dir=rtl -->
+        ${d.dose_ar ? `<div class="cv-dose-ar" dir="rtl">${esc(d.dose_ar)}</div>` : ''}
+        ${d.dose    ? `<div class="cv-dose-en">${esc(d.dose)}</div>` : ''}
         <!-- Line 2b: Drug note — right-aligned, rtl/ltr follows text language -->
         ${d.drug_note ? (() => {
           const isAr = isArabicQuery(d.drug_note);
