@@ -5578,7 +5578,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 }
 .dv-p12-sub-text {
   font-size: var(--text-sm-size);
-  line-height: 1.8;
+  line-height: 1.55;
   color: var(--color-text-secondary);
   white-space: pre-wrap;
   word-break: break-word;
@@ -5595,9 +5595,9 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .dv-moa-class-strip {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  margin-bottom: var(--space-3);
-  padding-bottom: var(--space-3);
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+  padding-bottom: var(--space-2);
   border-bottom: 1px solid var(--color-border);
 }
 .dv-moa-class-cell {
@@ -5720,23 +5720,26 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   margin-top: 2px;
   line-height: 1.8;
 }
-/* Image search button — Phase 12 */
+/* Image search button — Phase 12 — matches prescription row icon style */
 .dv-img-btn-p12 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  font-size: 14px;
+  width: auto;
+  height: auto;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  border: none;
+  font-size: 15px;
   text-decoration: none;
   flex-shrink: 0;
-  margin-top: 2px;
-  transition: background .15s, border-color .15s;
-  color: var(--color-text-tertiary);
+  margin-top: 3px;
+  transition: opacity .15s;
+  color: var(--color-text-secondary);
+  opacity: .70;
 }
+.dv-img-btn-p12:active { opacity: 1; }
 
 /* ── Phase 12: Generic adult dose highlight box ──────── */
 .dv-generic-dose-p12 {
@@ -17368,7 +17371,7 @@ function _renderDvFormulaPanelOnly(drugId, availableFormulas) {
     </div>`;
   }).join('');
   return `<div class="formula-filter-panel" id="dvFormulaPanel_${drugId}" style="border:none;border-top:1px solid var(--color-border);border-radius:0;background:transparent;margin-bottom:10px">
-    <div class="formula-filter-inner" style="padding:8px 0 4px">
+    <div class="formula-filter-inner" style="padding:8px var(--space-4) 4px">
       <div class="formula-filter-title">
         <span>Filter by Formula</span>
         <button class="formula-filter-clear" onclick="clearDvFormulaFilter('${drugId}')"><i class="ph ph-x" style="font-size:10px;vertical-align:0;margin-right:2px"></i>Clear</button>
@@ -17470,20 +17473,22 @@ function _singleBrandRow(p, drug, dimmed) {
   const googleImgUrl = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(searchParts.join(' '))}`;
   return `<div class="dv-brand-row-p12${dimmed ? ' dimmed' : ''}" onclick="void(0)">
     <div class="dv-brand-left-p12">
-      <div class="dv-brand-name-p12">${esc(brandName)}</div>
-      ${brandAr ? `<div class="dv-brand-name-ar-p12" dir="rtl">${esc(brandAr)}</div>` : ''}
-      <div class="dv-brand-meta-p12">
-        ${p.formula ? `<span class="dv-formula-badge-p12">${esc(p.formula)}</span>` : ''}
+      <div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 6px">
+        <span class="dv-brand-name-p12">${esc(brandName)}</span>
         ${p.conc    ? `<span class="dv-conc-badge-p12">${esc(p.conc)}</span>` : ''}
+        ${p.formula ? `<span class="dv-formula-badge-p12">${esc(p.formula)}</span>` : ''}
       </div>
+      ${(brandAr || hasAr) ? `<div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:6px;margin-top:2px">
+        ${brandAr ? `<span class="dv-brand-name-ar-p12" dir="rtl">${esc(brandAr)}</span>` : ''}
+        ${hasAr ? `<span class="dv-brand-dose-ar-p12" dir="rtl">${esc(p.doseAr)}</span>` : ''}
+      </div>` : ''}
       ${hasEn ? `<div class="dv-brand-dose-p12"><i class="ph ph-prescription" style="font-size:11px;vertical-align:-1px;margin-right:3px;color:var(--color-text-tertiary)"></i>${esc(p.dose)}</div>` : ''}
-      ${hasAr ? `<div class="dv-brand-dose-ar-p12" dir="rtl">${esc(p.doseAr)}</div>` : ''}
     </div>
     <a href="${googleImgUrl}" target="_blank" rel="noopener"
       class="dv-img-btn-p12"
       onclick="event.stopPropagation()"
-      ontouchstart="this.style.background='var(--color-brand-light)';this.style.borderColor='var(--color-brand)'"
-      ontouchend="this.style.background='var(--color-surface-2)';this.style.borderColor='var(--color-border)'"
+      ontouchstart="this.style.opacity='1'"
+      ontouchend="this.style.opacity='0.7'"
       title="Search images for ${esc(brandName)}">
       <i class="ph ph-magnifying-glass" style="font-size:14px"></i>
     </a>
