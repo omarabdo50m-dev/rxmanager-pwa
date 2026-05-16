@@ -16060,20 +16060,7 @@ async function openDrugViewer(id) {
     drugNameEl.style.display = '';
   }
 
-  // ══ HERO — Phase 12 — Option C: two class badges always visible ══════
-  html += `<div class="dv-hero-p12">
-    <!-- Two-badge class strip — always visible -->
-    ${hasClass ? `<div class="dv-hero-p12-badges">
-      ${cls.therapeutic ? `<div class="dv-hero-p12-badge">
-        <div class="dv-hero-p12-badge-lbl">Drug group</div>
-        <div class="dv-hero-p12-badge-val">${esc(cls.therapeutic)}</div>
-      </div>` : ''}
-      ${cls.pharmacological ? `<div class="dv-hero-p12-badge">
-        <div class="dv-hero-p12-badge-lbl">Drug class</div>
-        <div class="dv-hero-p12-badge-val secondary">${esc(cls.pharmacological)}</div>
-      </div>` : ''}
-    </div>` : ''}
-  </div>`;
+  // ══ HERO — Phase 12 — badges removed (drug group/class shown in MOA card) ══
 
   // ══ DRUG DETAILS collapsible — breadcrumb, combo tags, source (collapsed by default) ══
   const hasDetails = !!(combos.length || drug.source); // group/subgroup moved to hero breadcrumb
@@ -16103,22 +16090,21 @@ async function openDrugViewer(id) {
     html += _dvCollapsible({id: 'details_' + id, iconClass: 'navy', iconName: 'ph-info', title: 'Drug Details', preview: detailsPreview || undefined, content: detailsContent, defaultOpen: false});
   }
 
-  // ══ MECHANISM OF ACTION — Phase 12 ══════════════════════════
+  // ══ MECHANISM OF ACTION — flat card, cv-depth-card style ═══════════════
   if (mechBody) {
-    const moaContent = `<div class="dv-coll-inner-p12">
-      ${hasClass ? `<div class="dv-moa-class-strip">
-        ${cls.therapeutic ? `<div class="dv-moa-class-cell">
-          <div class="dv-moa-class-cell-lbl">Drug Group</div>
-          <div class="dv-moa-class-cell-val">${esc(cls.therapeutic)}</div>
-        </div>` : ''}
-        ${cls.pharmacological ? `<div class="dv-moa-class-cell">
-          <div class="dv-moa-class-cell-lbl">Drug Class</div>
-          <div class="dv-moa-class-cell-val secondary">${esc(cls.pharmacological)}</div>
-        </div>` : ''}
-      </div>` : ''}
-      <div class="dv-p12-sub-text" dir="auto">${esc(mechBody)}</div>
+    html += `<div class="cv-depth-card-p11" style="margin-top:var(--space-3)">
+      <div class="cv-depth-card-hdr-p11">
+        <div class="cv-depth-card-icon-p11" style="background:rgba(20,184,166,.10)">
+          <i class="ph ph-flask" style="font-size:15px;color:#14b8a6"></i>
+        </div>
+        <span class="cv-depth-card-title-p11">Mechanism of Action</span>
+      </div>
+      <div class="cv-depth-card-body-p11">
+        <div class="cv-depth-block-p11">
+          <div class="cv-depth-body-p11" dir="auto">${esc(mechBody)}</div>
+        </div>
+      </div>
     </div>`;
-    html += _dvCollapsible({id: 'moa_' + id, iconClass: 'teal', iconName: 'ph-flask', title: 'Mechanism of Action', content: moaContent});
   }
 
   // ══ COMMON USES — Phase 12 ══════════════════════════════════
