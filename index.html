@@ -7194,14 +7194,16 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   gap: 5px;
   margin-top: var(--space-2);
   padding-left: 0;
-  padding-right: 0;
+  padding-right: 24px; /* match search icon col — EN text stays left of right line */
   line-height: 1.6;
   direction: ltr;
 }
 .cv-rx-drug-note.rtl {
   flex-direction: row-reverse;
   direction: rtl;
-  justify-content: flex-end;   /* Arabic: push icon+text group to right edge */
+  justify-content: flex-end;
+  padding-right: 0;  /* AR: icon flush to right line, no padding needed */
+  padding-left: 0;
 }
 .cv-rx-drug-note-ico {
   font-size: 12px;
@@ -7339,6 +7341,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   line-height:1.7;
   display:none;
   font-family:var(--font);
+  padding-right:24px; /* reserve space matching search icon col so text doesn't cross right line */
 }
 .cv-dose-ar {
   font-family:'IBM Plex Sans Arabic','IBM Plex Sans',system-ui,sans-serif;
@@ -7350,6 +7353,8 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   margin-top:var(--space-1);
   line-height:1.7;
   display:none;
+  padding-right:0; /* right edge flush — aligns with search icon via text-align:right */
+  padding-left:24px; /* mirror: don't let AR text start before the left column ends */
 }
 /* Language visibility — controlled by condViewerScr class */
 #condViewerScr.lang-ar .cv-dose-ar { display:block; }
@@ -7374,9 +7379,10 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  width:24px;
-  height:24px;
-  border-radius:var(--radius-sm);
+  /* No fixed width/padding — icon stroke is the element, aligns with right line */
+  width:auto;
+  height:auto;
+  padding:0;
   background:none;
   border:none;
   font-size:15px;
@@ -13596,7 +13602,7 @@ function _cvRenderPrescription(rx, agePrefix) {
           return `<div class="cv-rx-drug-note${isAr ? ' rtl' : ''}">${isAr ? txt + ico : ico + txt}</div>`;
         })() : ''}
         <!-- Line 3: class tag › generic name — indented to align with brand name -->
-        ${(tagLabel || isBrandDifferentFromGeneric) ? `<div style="margin-top:3px;line-height:1.4;padding-left:26px">
+        ${(tagLabel || isBrandDifferentFromGeneric) ? `<div style="margin-top:3px;line-height:1.4;">
           <span class="cv-rx-class-tag">${esc(tagLabel || '')}</span>${tagLabel && isBrandDifferentFromGeneric ? `<span style="font-size:10px;color:var(--color-text-tertiary);margin:0 3px">›</span>` : ''}${isBrandDifferentFromGeneric ? `<span style="font-size:var(--text-xs-size);color:var(--color-text-tertiary);font-style:italic">${esc(d.resolvedGeneric)}</span>` : ''}
         </div>` : ''}
       </div>`;
