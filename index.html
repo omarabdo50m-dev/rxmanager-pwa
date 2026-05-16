@@ -15501,10 +15501,11 @@ async function renderLib() {
         </div>
         ${_libSelectMode ? '' : matchingProds.map(function(p){
           var fTag = p.formula ? '<span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;background:var(--color-brand-light);color:var(--color-brand);margin-left:6px">' + esc(p.formula) + '</span>' : '';
-          var arLine = p.brandAr ? '<div style="font-size:11px;color:var(--color-text-tertiary);font-family:var(--font-ar);direction:rtl;text-align:right;margin-top:2px">' + esc(p.brandAr) + '</div>' : '';
+          var cTag = p.conc ? '<span style="font-size:11px;font-weight:500;color:var(--color-text-secondary);margin-left:5px">' + esc(p.conc) + '</span>' : '';
+          var arLine = p.brandAr ? '<div style="font-size:11px;color:var(--color-text-tertiary);font-family:var(--font-ar);direction:rtl;text-align:right;margin-top:2px">' + esc(p.brandAr) + (p.conc ? ' ' + esc(p.conc) : '') + '</div>' : '';
           return '<div class="lib-brand-row" style="display:flex;align-items:center;gap:10px;padding:8px 14px 8px 17px;cursor:pointer;border-bottom:1px solid var(--color-border);background:var(--color-surface)" onclick="openDrugViewer(\'' + d.id + '\')">' 
             + '<div style="flex:1;min-width:0">'
-            + '<div style="display:flex;align-items:center">' + '<span style="font-size:14px;font-weight:600;color:var(--color-text-primary)">' + libHighlight(p.brand, q) + '</span>' + fTag + '</div>'
+            + '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:2px">' + '<span style="font-size:14px;font-weight:600;color:var(--color-text-primary)">' + libHighlight(p.brand, q) + '</span>' + cTag + fTag + '</div>'
             + arLine
             + '</div></div>';
         }).join('')}
@@ -15524,8 +15525,8 @@ async function renderLib() {
                 var cSpan = ob.conc ? '<span style="font-size:11px;color:var(--color-text-secondary);flex-shrink:0">' + esc(ob.conc) + '</span>' : '';
                 return '<div onclick="openDrugViewer(\'' + d.id + '\')" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--color-border);cursor:pointer">'
                   + fSpan
-                  + '<div style="flex:1;min-width:0"><span style="font-size:13px;font-weight:600;color:var(--color-text-primary)">' + esc(ob.brand) + '</span>' + arDiv + '</div>'
-                  + cSpan + '</div>';
+                  + '<div style="flex:1;min-width:0"><span style="font-size:13px;font-weight:600;color:var(--color-text-primary)">' + esc(ob.brand) + '</span>' + cSpan + fSpan + arDiv + '</div>'
+                  + '</div>';
               }).join('')}
             </div>
           </div>
