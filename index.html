@@ -1007,7 +1007,8 @@ body { background: var(--color-bg); color: var(--color-text-primary); }
    for users who have chosen to minimise motion.
    ─────────────────────────────────────────────────────────────────── */
 html.theme-transitioning {
-  --_theme-t: 220ms ease-in-out;
+  --_theme-t: 180ms ease-in-out;
+  will-change: auto;
 }
 html.theme-transitioning body,
 html.theme-transitioning #app,
@@ -1031,13 +1032,21 @@ html.theme-transitioning .spec-chip,
 html.theme-transitioning .lib-drug-card,
 html.theme-transitioning .dbc-brand,
 html.theme-transitioning .fav-section,
-html.theme-transitioning .fav-hdr {
+html.theme-transitioning .fav-hdr,
+html.theme-transitioning .spec-scrollable-mask,
+html.theme-transitioning .rv-wrap {
   transition:
-    background-color 220ms ease-in-out,
-    background       220ms ease-in-out,
-    color            180ms ease-in-out,
-    border-color     220ms ease-in-out,
-    box-shadow       220ms ease-in-out !important;
+    background-color 180ms ease-in-out,
+    background       180ms ease-in-out,
+    color            150ms ease-in-out,
+    border-color     180ms ease-in-out,
+    box-shadow       180ms ease-in-out !important;
+}
+/* Pseudo-element fade masks: transition their background-color so they
+   cross-fade with the page instead of snapping and flashing */
+html.theme-transitioning .spec-scrollable-mask::after,
+html.theme-transitioning .rv-wrap::after {
+  transition: background-color 180ms ease-in-out !important;
 }
 /* ── SEARCH HERO ENTRANCE — subtle scale-up + fade-in ──────────
    Triggers once on load to draw the doctor's eye to the search
@@ -8420,7 +8429,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
         <span class="search-ico"><i class="ph ph-magnifying-glass"></i></span>
         <input class="search-inp" type="text" id="libSearch" placeholder="Search drugs, class, use…" oninput="debouncedRenderLib()" dir="auto" autocomplete="off"/>
         <div class="search-right">
-          <button class="search-clear" id="libSearchClearBtn" onclick="document.getElementById('libSearch').value='';debouncedRenderLib()" aria-label="Clear search" style="display:none"><i class="ph ph-x" style="font-size:13px;font-weight:700"></i></button>
+          <button class="search-clear" id="libSearchClearBtn" onclick="document.getElementById('libSearch').value='';debouncedRenderLib();this.style.display='none';" aria-label="Clear search" style="display:none"><i class="ph ph-x" style="font-size:13px;font-weight:700"></i></button>
           <button class="search-filter-btn" id="libFilterBtn" onclick="openLibFilterSheet()" aria-label="Filter drugs" title="Filter">
             <i class="ph ph-faders"></i>
             <span class="lib-filter-badge" id="libFilterBadge"></span>
@@ -14597,6 +14606,10 @@ function setLibCat(c) {
 let _libSearchTimer;
 function debouncedRenderLib() {
   clearTimeout(_libSearchTimer);
+  // Show/hide clear button immediately on keystroke (no debounce delay)
+  const libQ = (document.getElementById('libSearch')?.value || '');
+  const libClearBtn = document.getElementById('libSearchClearBtn');
+  if (libClearBtn) libClearBtn.style.display = libQ ? 'flex' : 'none';
   _libSearchTimer = setTimeout(renderLib, 250);
 }
 
@@ -19582,7 +19595,7 @@ function _applyTheme(theme, animate) {
     clearTimeout(_applyTheme._timer);
     _applyTheme._timer = setTimeout(() => {
       html.classList.remove('theme-transitioning');
-    }, 260);
+    }, 210);
   }
 
   if (theme === 'light') {
@@ -19643,11 +19656,12 @@ function _syncThemeToggleUI(theme) {
     // Brand blue in dark mode (sun pops against navy), amber in light mode (moon on white)
     hdrBtn.style.color = theme === 'light' ? '#CA8A04' : 'var(--color-brand)';
   }
-  // Sync theme icons on peer nav screens (lib, fav) — only swap the icon class,
-  // let CSS [data-theme] rules handle colors so transitions stay smooth
+  // Sync theme icons and colors on ALL screens (home, lib, fav)
   document.querySelectorAll('.hdr-theme-btn').forEach(btn => {
     const ico = btn.querySelector('i');
     if (ico) ico.className = theme === 'light' ? 'ph ph-moon' : 'ph ph-sun';
+    // Apply same color as home screen button so all screens match
+    btn.style.color = theme === 'light' ? '#CA8A04' : 'var(--color-brand)';
   });
 }
 
