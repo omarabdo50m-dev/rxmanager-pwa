@@ -4593,21 +4593,21 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 }
 
 /* ── Strip: one wide row of all images side-by-side ── */
-/* translateX is driven entirely by JS; CSS transition applies only when .lb-animating */
+/* Width & slide widths are set in px by JS (stage.clientWidth × n).
+   translateX also in px — no % ambiguity across nested flex containers. */
 #lbStrip{
   display:flex;
-  width:100%;height:100%;
+  height:100%;
   will-change:transform;
   transition:none;
 }
 #lbStrip.lb-animating{
   transition:transform .32s cubic-bezier(.32,.72,0,1);
 }
-
-/* Each slide is exactly 100% of the stage */
+/* Each slide: JS sets width = stage.clientWidth px */
 .lb-slide{
-  flex:0 0 100%;
-  width:100%;height:100%;
+  flex:none;
+  height:100%;
   display:flex;align-items:center;justify-content:center;
   overflow:hidden;
   position:relative;
@@ -4618,7 +4618,6 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   display:block;
   user-select:none;-webkit-user-select:none;
   will-change:transform;
-  /* smooth zoom via transform — transition applied by JS */
   transform-origin:50% 50%;
 }
 
@@ -13412,36 +13411,34 @@ let _lbHistoryPushed = false;
 function _lbStrip()  { return document.getElementById('lbStrip');  }
 function _lbStage()  { return document.getElementById('lightboxStage'); }
 
-/** Build the strip DOM from _lbPhotos (called once per open) */
+/** Build the strip DOM from _lbPhotos (called once per open).
+ *  All widths are in px so translateX(-idx * slideW) is unambiguous. */
 function _lbBuildStrip() {
   const strip = _lbStrip();
-  if (!strip) return;
+  const stage = _lbStage();
+  if (!strip || !stage) return;
+  const slideW = stage.clientWidth;
   strip.innerHTML = _lbPhotos.map((entry, i) => {
     const src = typeof entry === 'string' ? entry : (entry.url || '');
-    return `<div class="lb-slide" data-idx="${i}"><img src="${src}" alt="" draggable="false" loading="lazy"/></div>`;
+    return `<div class="lb-slide" data-idx="${i}" style="width:${slideW}px"><img src="${src}" alt="" draggable="false" loading="lazy"/></div>`;
   }).join('');
-  // Size strip width = n × 100%
-  strip.style.width  = (_lbPhotos.length * 100) + '%';
-  strip.style.height = '100%';
-  // Each slide must be 100% of the STAGE, not of the strip
-  strip.querySelectorAll('.lb-slide').forEach(s => {
-    s.style.width = (100 / _lbPhotos.length) + '%';
-  });
+  strip.style.width = (_lbPhotos.length * slideW) + 'px';
 }
 
-/** Move strip to _lbIdx, optionally animated */
+/** Move strip to _lbIdx, optionally animated. Uses px — no % ambiguity. */
 function _lbSetPosition(animated) {
   const strip = _lbStrip();
-  if (!strip) return;
+  const stage = _lbStage();
+  if (!strip || !stage) return;
+  const slideW = stage.clientWidth;
   if (animated) {
     strip.classList.add('lb-animating');
-    // Remove class after transition ends so future instant-jumps are instant
     const cleanup = () => { strip.classList.remove('lb-animating'); strip.removeEventListener('transitionend', cleanup); };
     strip.addEventListener('transitionend', cleanup, { once: true });
   } else {
     strip.classList.remove('lb-animating');
   }
-  strip.style.transform = `translateX(${-_lbIdx * (100 / _lbPhotos.length)}%)`;
+  strip.style.transform = `translateX(${-_lbIdx * slideW}px)`;
 }
 
 /** Update counter, dots, caption, prev/next visibility */
@@ -13479,9 +13476,9 @@ function openLightbox(idx, readonly = false, thumbEl = null) {
     _lbHistoryPushed = true;
   }
 
-  _lbBuildStrip();
-  _lbSetPosition(false);   // instant jump — no animation on open
-  _lbZoomReset();
+  _lbBuildStrip();         // build DOM first so _lbZoomReset can find the img
+  _lbZoomReset();          // reset zoom state + clear any stale img transform
+  _lbSetPosition(false);   // instant jump to correct slide — no animation on open
   _lbUpdateUI();
 
   overlay.classList.add('open');
@@ -13515,9 +13512,9 @@ function _lbDoClose(overlay) {
 function lightboxNav(dir) {
   const next = _lbIdx + dir;
   if (next < 0 || next >= _lbPhotos.length) return;
-  _lbZoomReset();          // always reset zoom before navigating
+  _lbZoomReset();    // reset current slide zoom (DOM + state vars inside IIFE)
   _lbIdx = next;
-  _lbSetPosition(true);    // animated slide
+  _lbSetPosition(true);
   _lbUpdateUI();
 }
 
@@ -13565,18 +13562,22 @@ let _lbZoomReset = function() {};
   }
 
   function _clampPan(scale, tx, ty) {
-    // When zoomed, clamp pan so image edge can't go past stage centre
-    const stage  = document.getElementById('lightboxStage');
-    const img    = _currentImg();
+    // Clamp pan so the zoomed image never shows blank space inside the stage.
+    // Use the img's actual rendered rect (after object-fit:contain) for accuracy.
+    const stage = document.getElementById('lightboxStage');
+    const img   = _currentImg();
     if (!stage || !img) return { tx, ty };
-    const sw = stage.clientWidth, sh = stage.clientHeight;
-    const iw = img.naturalWidth  || img.clientWidth;
-    const ih = img.naturalHeight || img.clientHeight;
-    // Rendered size before zoom
-    const renderedW = Math.min(sw, iw * (sh / ih));
-    const renderedH = Math.min(sh, ih * (sw / iw));
-    const overW = Math.max(0, (renderedW * scale - sw) / 2);
-    const overH = Math.max(0, (renderedH * scale - sh) / 2);
+    const sw = stage.clientWidth,  sh = stage.clientHeight;
+    // getBoundingClientRect gives the rendered size before our transform
+    // Temporarily clear transform to measure natural rendered size
+    const prev = img.style.transform;
+    img.style.transform = 'none';
+    const r = img.getBoundingClientRect();
+    img.style.transform = prev;
+    const rw = r.width, rh = r.height;
+    // How much the zoomed image overflows each axis
+    const overW = Math.max(0, (rw * scale - sw) / 2);
+    const overH = Math.max(0, (rh * scale - sh) / 2);
     return {
       tx: Math.max(-overW, Math.min(overW, tx)),
       ty: Math.max(-overH, Math.min(overH, ty)),
@@ -13708,16 +13709,14 @@ let _lbZoomReset = function() {};
 
   function _onCancel() { _t = null; _pinch = null; }
 
-  // Attach — touchstart non-passive so we can preventDefault for pinch
-  document.addEventListener('DOMContentLoaded', () => {
-    const stage = document.getElementById('lightboxStage');
-    if (stage) {
-      stage.addEventListener('touchstart',  _onStart,  { passive: false });
-      stage.addEventListener('touchmove',   _onMove,   { passive: false });
-      stage.addEventListener('touchend',    _onEnd,    { passive: true  });
-      stage.addEventListener('touchcancel', _onCancel, { passive: true  });
-    }
-  });
+  // Attach directly — DOMContentLoaded has already fired by the time
+  // this script runs (inline script at bottom of body).
+  // Use event delegation on document so it still works even if the
+  // lightbox overlay is rebuilt/re-inserted into the DOM.
+  document.addEventListener('touchstart',  (e) => { if (e.target.closest('#lightboxStage')) _onStart(e);  }, { passive: false });
+  document.addEventListener('touchmove',   (e) => { if (e.target.closest('#lightboxStage')) _onMove(e);   }, { passive: false });
+  document.addEventListener('touchend',    (e) => { if (e.target.closest('#lightboxStage')) _onEnd(e);    }, { passive: true  });
+  document.addEventListener('touchcancel', (e) => { if (e.target.closest('#lightboxStage')) _onCancel(e); }, { passive: true  });
 }());
 
 // ── Compatibility shim: old openViewer → new openConditionViewer ─────────────
