@@ -12285,6 +12285,78 @@ function _hexToRgba12(hex) {
   return `rgba(${r},${g},${b},0.12)`;
 }
 
+// ── Condition icon helpers — module-level so renderFavourites can use them too ──
+const CARD_ICON_MAP = {
+  'Cardiology':'ph-heart','Respiratory':'ph-cloud','Pulmonology':'ph-cloud',
+  'Gastroenterology':'ph-fork-knife','Hepatology':'ph-drop','Neurology':'ph-brain',
+  'Ophthalmology':'ph-eye','ENT':'ph-ear','Otolaryngology':'ph-ear',
+  'Orthopaedics':'ph-bone','Orthopedics':'ph-bone','Urology':'ph-drop',
+  'Nephrology':'ph-drop','Haematology':'ph-drop-half','Hematology':'ph-drop-half',
+  'Dermatology':'ph-bandaids','OB/GYN':'ph-gender-female','Obstetrics':'ph-baby',
+  'Gynaecology':'ph-gender-female','Gynecology':'ph-gender-female',
+  'Rheumatology':'ph-hand','Endocrinology':'ph-thermometer',
+  'Oncology':'ph-cell-signal-full','Paediatrics':'ph-baby','Pediatrics':'ph-baby',
+  'General Practice':'ph-stethoscope','General':'ph-stethoscope',
+  'Internal Medicine':'ph-clipboard-text','Infectious Disease':'ph-virus',
+  'Microbiology':'ph-virus','Psychiatry':'ph-brain','Psychology':'ph-brain',
+  'Emergency':'ph-first-aid','Emergency Medicine':'ph-first-aid','ICU':'ph-heartbeat',
+  'Critical Care':'ph-heartbeat','Surgery':'ph-scissors','Anaesthesia':'ph-syringe',
+  'Anesthesia':'ph-syringe','Allergy':'ph-shield-warning','Immunology':'ph-shield',
+  'Palliative Care':'ph-hand-heart','Pain Management':'ph-first-aid',
+  'Geriatrics':'ph-person-simple-walk','Sports Medicine':'ph-person-simple-run',
+  'Nutrition':'ph-fork-knife','Dietetics':'ph-fork-knife','Dentistry':'ph-tooth',
+  'Oral Medicine':'ph-tooth','Plastic Surgery':'ph-scissors',
+  'Vascular Surgery':'ph-wave-sine','Cardiothoracic Surgery':'ph-heart',
+  'Neurosurgery':'ph-brain','Urosurgery':'ph-drop','Occupational Medicine':'ph-hard-hat',
+  'Pharmacology':'ph-pill','Radiology':'ph-x-ray','Pathology':'ph-flask',
+};
+const SPECIALTY_KEYWORD_ICONS = [
+  { k: /heart|cardio|coronary/,                i: 'ph-heart' },
+  { k: /lung|pulmon|bronch|respir|thorac/,     i: 'ph-cloud' },
+  { k: /brain|neuro|spine|spinal|cerebr/,      i: 'ph-brain' },
+  { k: /eye|ophthalm|ocular|retina|cornea/,    i: 'ph-eye' },
+  { k: /ear|nose|throat|ent\b|otolaryn|sinus/, i: 'ph-ear' },
+  { k: /bone|ortho|joint|skeletal|musculo/,    i: 'ph-bone' },
+  { k: /skin|derm|wound/,                      i: 'ph-bandaids' },
+  { k: /kidney|renal|nephro|urolog|bladder/,   i: 'ph-drop' },
+  { k: /blood|haem|hamat|haemat|hematol/,      i: 'ph-drop-half' },
+  { k: /liver|hepat|gastro|bowel|colon|gi\b/,  i: 'ph-fork-knife' },
+  { k: /hand|rheuma|connective/,               i: 'ph-hand' },
+  { k: /endocrin|thyroid|diabet|hormone/,      i: 'ph-thermometer' },
+  { k: /reprod|gynae|gynec|obstetr|obstet|uterus|ovari/, i: 'ph-gender-female' },
+  { k: /pregnan|matern|antenatal|prenatal/,    i: 'ph-baby' },
+  { k: /child|paediatr|pediatr|neonat|infant/, i: 'ph-baby' },
+  { k: /cancer|oncol|tumour|tumor|lymphom|leukaem|leukemi/, i: 'ph-cell-signal-full' },
+  { k: /tooth|dental|oral|mouth/,              i: 'ph-tooth' },
+  { k: /anaesth|anesth|sedati/,                i: 'ph-syringe' },
+  { k: /infect|microbi|virus|bacter|parasit/,  i: 'ph-virus' },
+  { k: /psych|mental|behav/,                   i: 'ph-brain' },
+  { k: /allerg|immunol/,                       i: 'ph-shield' },
+  { k: /emerg|urgent|trauma|accident/,         i: 'ph-first-aid' },
+  { k: /icu\b|critical|intensive/,             i: 'ph-heartbeat' },
+  { k: /surg/,                                  i: 'ph-scissors' },
+  { k: /vascular|vasc/,                        i: 'ph-wave-sine' },
+  { k: /palliativ|hospice|pain/,               i: 'ph-hand-heart' },
+  { k: /geriatr|elderly|aged/,                 i: 'ph-person-simple-walk' },
+  { k: /sport|exercis|athletic/,               i: 'ph-person-simple-run' },
+  { k: /nutrit|diet|food/,                     i: 'ph-fork-knife' },
+  { k: /radiol|imaging|scan|xray|x-ray/,       i: 'ph-x-ray' },
+  { k: /pathol|lab\b|laborator/,               i: 'ph-flask' },
+  { k: /pharmac|drug|medic/,                   i: 'ph-pill' },
+  { k: /occup|work|indust/,                    i: 'ph-hard-hat' },
+  { k: /plastic|cosmetic|reconstruct/,         i: 'ph-scissors' },
+  { k: /general|family|primary|gp\b/,          i: 'ph-stethoscope' },
+  { k: /internal|medicine\b/,                  i: 'ph-clipboard-text' },
+];
+function _resolveConditionIcon(specialty) {
+  if (CARD_ICON_MAP[specialty]) return CARD_ICON_MAP[specialty];
+  const lower = (specialty || '').toLowerCase();
+  for (const { k, i } of SPECIALTY_KEYWORD_ICONS) {
+    if (k.test(lower)) return i;
+  }
+  return 'ph-stethoscope';
+}
+
 function renderMain() {
   const q = document.getElementById('mainSearch').value.toLowerCase().trim();
 
@@ -12343,129 +12415,7 @@ function renderMain() {
   // for instant visual grouping. Falls back to ph-stethoscope for unknown names.
   //
   // Dynamic specialties added at runtime (via Specialty Manager) are resolved
-  // by _resolveConditionIcon() using keyword matching on the specialty name —
-  // no code change needed when new specialties are added.
-const CARD_ICON_MAP = {
-    // ── Body-organ icons (most specific) ──────────────────────────
-    'Cardiology':           'ph-heart',           // heart
-    'Respiratory':          'ph-cloud',            // lungs
-    'Pulmonology':          'ph-cloud',
-    'Gastroenterology':     'ph-fork-knife',          // stomach / GI tract
-    'Hepatology':           'ph-drop',             // liver / bile (nearest match)
-    'Neurology':            'ph-brain',            // brain
-    'Ophthalmology':        'ph-eye',              // eye
-    'ENT':                  'ph-ear',              // ear (ear + nose + throat)
-    'Otolaryngology':       'ph-ear',
-    'Orthopaedics':         'ph-bone',             // bone / joint
-    'Orthopedics':          'ph-bone',
-    'Urology':              'ph-drop',             // kidney / bladder
-    'Nephrology':           'ph-drop',
-    'Haematology':          'ph-drop-half',        // blood cells
-    'Hematology':           'ph-drop-half',
-    'Dermatology':          'ph-bandaids',         // skin
-    'OB/GYN':               'ph-gender-female',    // female reproductive
-    'Obstetrics':           'ph-baby',
-    'Gynaecology':          'ph-gender-female',
-    'Gynecology':           'ph-gender-female',
-    'Rheumatology':         'ph-hand',             // joints / connective tissue
-    'Endocrinology':        'ph-thermometer',      // hormone / metabolic
-    'Oncology':             'ph-cell-signal-full', // cell / cancer
-    'Paediatrics':          'ph-baby',             // child
-    'Pediatrics':           'ph-baby',
-
-    // ── Clinical-domain icons ──────────────────────────────────────
-    'General Practice':     'ph-stethoscope',
-    'General':              'ph-stethoscope',
-    'Internal Medicine':    'ph-clipboard-text',
-    'Infectious Disease':   'ph-virus',
-    'Microbiology':         'ph-virus',
-    'Psychiatry':           'ph-brain',            // brain (psychiatric)
-    'Psychology':           'ph-brain',
-    'Emergency':            'ph-first-aid',
-    'Emergency Medicine':   'ph-first-aid',
-    'ICU':                  'ph-heartbeat',
-    'Critical Care':        'ph-heartbeat',
-    'Surgery':              'ph-scissors',
-    'Anaesthesia':          'ph-syringe',
-    'Anesthesia':           'ph-syringe',
-    'Allergy':              'ph-shield-warning',
-    'Immunology':           'ph-shield',
-    'Palliative Care':      'ph-hand-heart',
-    'Pain Management':      'ph-first-aid',
-    'Geriatrics':           'ph-person-simple-walk',
-    'Sports Medicine':      'ph-person-simple-run',
-    'Nutrition':            'ph-fork-knife',
-    'Dietetics':            'ph-fork-knife',
-    'Dentistry':            'ph-tooth',
-    'Oral Medicine':        'ph-tooth',
-    'Plastic Surgery':      'ph-scissors',
-    'Vascular Surgery':     'ph-wave-sine',
-    'Cardiothoracic Surgery':'ph-heart',
-    'Neurosurgery':         'ph-brain',
-    'Urosurgery':           'ph-drop',
-    'Occupational Medicine':'ph-hard-hat',
-    'Pharmacology':         'ph-pill',
-    'Radiology':            'ph-x-ray',
-    'Pathology':            'ph-flask',
-  };
-
-  // ── Dynamic specialty icon resolver ──────────────────────────────────────────
-  // For any specialty NOT in CARD_ICON_MAP (e.g. user-created via Specialty Manager),
-  // keyword patterns on the specialty name pick the best available icon.
-  // Patterns are ordered specific → general; first match wins.
-  // If nothing matches, ph-stethoscope is returned.
-const SPECIALTY_KEYWORD_ICONS = [
-    // Organs / body parts
-    { k: /heart|cardio|coronary/,                i: 'ph-heart' },
-    { k: /lung|pulmon|bronch|respir|thorac/,     i: 'ph-cloud' },
-    { k: /brain|neuro|spine|spinal|cerebr/,      i: 'ph-brain' },
-    { k: /eye|ophthalm|ocular|retina|cornea/,    i: 'ph-eye' },
-    { k: /ear|nose|throat|ent\b|otolaryn|sinus/, i: 'ph-ear' },
-    { k: /bone|ortho|joint|skeletal|musculo/,    i: 'ph-bone' },
-    { k: /skin|derm|wound/,                      i: 'ph-bandaids' },
-    { k: /kidney|renal|nephro|urolog|bladder/,   i: 'ph-drop' },
-    { k: /blood|haem|hamat|haemat|hematol/,      i: 'ph-drop-half' },
-    { k: /liver|hepat|gastro|bowel|colon|gi\b/,  i: 'ph-fork-knife' },
-    { k: /hand|rheuma|connective/,               i: 'ph-hand' },
-    { k: /endocrin|thyroid|diabet|hormone/,      i: 'ph-thermometer' },
-    { k: /reprod|gynae|gynec|obstetr|obstet|uterus|ovari/, i: 'ph-gender-female' },
-    { k: /pregnan|matern|antenatal|prenatal/,    i: 'ph-baby' },
-    { k: /child|paediatr|pediatr|neonat|infant/, i: 'ph-baby' },
-    { k: /cancer|oncol|tumour|tumor|lymphom|leukaem|leukemi/, i: 'ph-cell-signal-full' },
-    { k: /tooth|dental|oral|mouth/,              i: 'ph-tooth' },
-    { k: /anaesth|anesth|sedati/,                i: 'ph-syringe' },
-
-    // Clinical domains
-    { k: /infect|microbi|virus|bacter|parasit/,  i: 'ph-virus' },
-    { k: /psych|mental|behav/,                   i: 'ph-brain' },
-    { k: /allerg|immunol/,                       i: 'ph-shield' },
-    { k: /emerg|urgent|trauma|accident/,         i: 'ph-first-aid' },
-    { k: /icu\b|critical|intensive/,             i: 'ph-heartbeat' },
-    { k: /surg/,                                  i: 'ph-scissors' },
-    { k: /vascular|vasc/,                        i: 'ph-wave-sine' },
-    { k: /palliativ|hospice|pain/,               i: 'ph-hand-heart' },
-    { k: /geriatr|elderly|aged/,                 i: 'ph-person-simple-walk' },
-    { k: /sport|exercis|athletic/,               i: 'ph-person-simple-run' },
-    { k: /nutrit|diet|food/,                     i: 'ph-fork-knife' },
-    { k: /radiol|imaging|scan|xray|x-ray/,       i: 'ph-x-ray' },
-    { k: /pathol|lab\b|laborator/,               i: 'ph-flask' },
-    { k: /pharmac|drug|medic/,                   i: 'ph-pill' },
-    { k: /occup|work|indust/,                    i: 'ph-hard-hat' },
-    { k: /plastic|cosmetic|reconstruct/,         i: 'ph-scissors' },
-    { k: /general|family|primary|gp\b/,          i: 'ph-stethoscope' },
-    { k: /internal|medicine\b/,                  i: 'ph-clipboard-text' },
-  ];
-
-  // Resolve icon for a condition: look up specialty in CARD_ICON_MAP;
-  // if not found, run keyword match on specialty name; final fallback stethoscope.
-function _resolveConditionIcon(specialty) {
-    if (CARD_ICON_MAP[specialty]) return CARD_ICON_MAP[specialty];
-    const lower = (specialty || '').toLowerCase();
-    for (const { k, i } of SPECIALTY_KEYWORD_ICONS) {
-      if (k.test(lower)) return i;
-    }
-    return 'ph-stethoscope';
-  }
+  // CARD_ICON_MAP, SPECIALTY_KEYWORD_ICONS, _resolveConditionIcon — hoisted to module level
 
   // Fix 3: use the same canonical color map as the specialty chip strip
 const CARD_COLOR_MAP = {
