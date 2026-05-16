@@ -3850,7 +3850,8 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 
 /* "All Drugs" row — no special treatment needed, same card style */
 .lib-cat-tile--all {
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-3);
+  background: var(--color-brand-light, rgba(0,133,254,.08));
 }
 
 /* Base tile — matches .lib-drug-card exactly */
@@ -3917,18 +3918,13 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   text-overflow: ellipsis;
 }
 .lib-cat-tile--all .lib-cat-tile__name {
+  color: var(--color-brand);
   font-weight: 700;
 }
 
-/* Drug count badge */
+/* Drug count badge — hidden */
 .lib-cat-tile__count {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-tertiary);
-  background: var(--color-border);
-  border-radius: 20px;
-  padding: 3px 11px;
-  flex-shrink: 0;
+  display: none;
 }
 
 /* Chevron caret */
@@ -15174,7 +15170,6 @@ async function renderCategoryGrid() {
   cont.innerHTML = `<div class="lib-cat-grid">${
     categories.map((cat, i) => {
       const isAll  = cat.id === 'All';
-      // Stagger: 20ms per row, capped at 200ms
       const delay  = Math.min(i * 20, 200);
       const action = isAll
         ? `enterCategory('All')`
@@ -15186,8 +15181,8 @@ async function renderCategoryGrid() {
         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${action}}"
         role="button"
         tabindex="0"
-        aria-label="${esc(cat.name)}, ${cat.count} drug${cat.count !== 1 ? 's' : ''}"
-      ><div class="lib-cat-tile__dot"></div><div class="lib-cat-tile__name">${esc(cat.name)}</div><div class="lib-cat-tile__count">${cat.count}</div></div>`;
+        aria-label="${esc(cat.name)}"
+      >${isAll ? '' : '<div class="lib-cat-tile__dot"></div>'}<div class="lib-cat-tile__name">${esc(cat.name)}</div></div>`;
     }).join('')
   }</div>`;
 }
