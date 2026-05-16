@@ -6778,7 +6778,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 /* Single brand line (primary or alt) */
 .cv-rx-brand-line {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-2);
 }
 
@@ -7082,7 +7082,8 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   display:flex;
   align-items:center;
   gap:var(--space-2);
-  padding:var(--space-2) var(--space-4) var(--space-3);
+  padding:var(--space-2) var(--space-4) var(--space-3) var(--space-4);
+  margin:0 0 0 0;
   font-size:var(--text-xs-size);
   color:var(--color-text-tertiary);
   font-style:italic;
@@ -12935,8 +12936,8 @@ function _renderBrandLine({ brand, brandAr, conc, formula, libDrugId, isPrimary,
   // Both cells are 18px wide and centred — primary shows the drug number,
   // alt shows "or" — so the brand name column has a fixed left edge on both lines.
   const leftCell = isPrimary
-    ? `<div class="cv-rx-num" style="flex-shrink:0;align-self:center">${drugNum}</div>`
-    : `<div class="cv-rx-alt-label" style="width:18px;flex-shrink:0;text-align:center;align-self:center">or</div>`;
+    ? `<div class="cv-rx-num" style="flex-shrink:0;align-self:flex-start;margin-top:3px">${drugNum}</div>`
+    : `<div class="cv-rx-alt-label" style="width:18px;flex-shrink:0;text-align:center;align-self:flex-start;margin-top:3px">or</div>`;
 
   const brandSpan = libDrugId
     ? `<span class="cv-rx-brand-name linked tappable" onclick="event.stopPropagation();openDrugViewer('${libDrugId}')">${esc(brand)}</span>`
@@ -12977,7 +12978,7 @@ function _cvRenderPrescription(rx, agePrefix) {
 
   // Quiet context line
   if (rx.iteration_context) {
-    html += `<div class="cv-rx-context-line">${esc(rx.iteration_context)}</div>`;
+    html += `<div class="cv-rx-context-line" dir="auto">${esc(rx.iteration_context)}</div>`;
   }
 
   // Drug rows + note blocks
@@ -13084,7 +13085,7 @@ function _cvRenderPrescription(rx, agePrefix) {
 
   // Source citation (outside the block, subdued)
   if (rx.source) {
-    html += `<div style="display:flex;align-items:center;gap:5px;padding:5px 12px 2px;font-size:var(--text-xs-size);color:var(--color-text-tertiary);font-style:italic;line-height:1.5;word-break:break-word">
+    html += `<div style="display:flex;align-items:center;gap:5px;padding:5px var(--space-4) 2px var(--space-4);font-size:var(--text-xs-size);color:var(--color-text-tertiary);font-style:italic;line-height:1.5;word-break:break-word">
       <i class="ph ph-book-open" style="font-size:10px;flex-shrink:0"></i>
       ${esc(rx.source)}
     </div>`;
@@ -13813,16 +13814,23 @@ let _lbZoomReset = function() {};
     img.style.transform     = `translate(${_tx}px,${_ty}px) scale(${_scale})`;
   }
 
-  /** Animated zoom-out (double-tap). Sets transition BEFORE clearing transform. */
+  /** Animated zoom-out (double-tap). Double-rAF ensures transition is registered
+   *  before the transform changes — void offsetWidth is unreliable on some WebKit builds. */
   function _animatedReset() {
     _scale = 1; _tx = 0; _ty = 0;
     const img = _currentImg();
     if (!img) return;
-    img.style.transition = `transform ${EASE}`;
-    // Force the browser to register the transition before we change the value
-    void img.offsetWidth;
-    img.style.transform       = 'translate(0px,0px) scale(1)';
-    img.style.transformOrigin = '50% 50%';
+    // Step 1: stamp the current transform with NO transition so browser has a "from" state
+    img.style.transition   = 'none';
+    img.style.transform    = img.style.transform || `translate(0px,0px) scale(1)`;
+    // Step 2: in the next two frames, set transition then the target transform
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        img.style.transition     = `transform 0.32s cubic-bezier(.25,.46,.45,.94)`;
+        img.style.transform      = 'translate(0px,0px) scale(1)';
+        img.style.transformOrigin = '50% 50%';
+      });
+    });
     requestAnimationFrame(_cacheMeasurements);
   }
 
