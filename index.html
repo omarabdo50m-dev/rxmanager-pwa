@@ -1050,16 +1050,23 @@ html.theme-transitioning .spec-scrollable-mask::after,
 html.theme-transitioning .rv-wrap::after {
   transition: background-color 180ms ease-in-out !important;
 }
-/* Lib + Fav: cover ALL child elements including anonymous JS-rendered divs
-   that have inline style background:var(--color-surface/bg).
-   Without this, brand sub-rows and other generated nodes snap instantly. */
-html.theme-transitioning #libScr *,
-html.theme-transitioning #favsScr * {
+/* Lib/fav specific elements — same named approach as home screen.
+   lib-brand-row: brand sub-rows in search results (JS-generated, was anonymous).
+   lib-cat-bar + buttons: category bar has var(--color-surface) background.
+   lib-scroll-body, favs-scroll-body: scroll containers. */
+html.theme-transitioning .lib-brand-row,
+html.theme-transitioning .lib-cat-bar,
+html.theme-transitioning .lib-cat-dropdown-btn,
+html.theme-transitioning .lib-cat-settings-btn,
+html.theme-transitioning .lib-filter-active-strip,
+html.theme-transitioning .lib-search-row,
+html.theme-transitioning .fav-body {
   transition:
     background-color 180ms ease-in-out,
     background       180ms ease-in-out,
     color            150ms ease-in-out,
-    border-color     180ms ease-in-out !important;
+    border-color     180ms ease-in-out,
+    box-shadow       180ms ease-in-out !important;
 }
 /* ── SEARCH HERO ENTRANCE — subtle scale-up + fade-in ──────────
    Triggers once on load to draw the doctor's eye to the search
@@ -14868,7 +14875,7 @@ async function renderLib() {
         ${_libSelectMode ? '' : matchingProds.map(function(p){
           var fTag = p.formula ? '<span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;background:var(--color-brand-light);color:var(--color-brand);margin-left:6px">' + esc(p.formula) + '</span>' : '';
           var arLine = p.brandAr ? '<div style="font-size:11px;color:var(--color-text-tertiary);font-family:var(--font-ar);direction:rtl;text-align:right;margin-top:2px">' + esc(p.brandAr) + '</div>' : '';
-          return '<div style="display:flex;align-items:center;gap:10px;padding:8px 14px 8px 17px;cursor:pointer;border-bottom:1px solid var(--color-border);background:var(--color-surface)" onclick="openDrugViewer(\'' + d.id + '\')">' 
+          return '<div class="lib-brand-row" style="display:flex;align-items:center;gap:10px;padding:8px 14px 8px 17px;cursor:pointer;border-bottom:1px solid var(--color-border);background:var(--color-surface)" onclick="openDrugViewer(\'' + d.id + '\')">' 
             + '<div style="flex:1;min-width:0">'
             + '<div style="display:flex;align-items:center">' + '<span style="font-size:14px;font-weight:600;color:var(--color-text-primary)">' + libHighlight(p.brand, q) + '</span>' + fTag + '</div>'
             + arLine
