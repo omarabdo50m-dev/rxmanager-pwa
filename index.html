@@ -79,15 +79,26 @@
   --color-bg:               #111214;  /* page background — warm charcoal */
   --color-surface:          #202124;  /* card surfaces — lifted for visibility against bg */
   --color-surface-2:        #18191c;  /* secondary surfaces, input bg */
-  --color-surface-elevated: #fefffe;  /* bottom nav near-white — unchanged */
+  --color-surface-search:   #2c2d31;  /* search pill — brightest chrome, clearly interactive */
+  --color-surface-nav:      #1e1f22;  /* bottom nav — mid chrome, above bg, below cards */
+  --color-surface-elevated: #1e1f22;  /* alias → nav surface (legacy token kept) */
   --color-border:           #2a2b2e;  /* card borders — neutral, no blue cast (was #243040) */
   --color-border-strong:    #3a3b3f;  /* stronger dividers — neutral grey (was #344d66 blue-shifted) */
 
   /* ── TEXT TOKENS ────────────────────────────────────────── */
-  --color-text-primary:   #e6e8eb;  /* headings — warm off-white (was #f0f6ff too blue-white) */
-  --color-text-secondary: #9b9ea4;  /* body text — muted mid-grey (was #c0d4e4 too bright+blue) */
-  --color-text-tertiary:  #55575c;  /* placeholder, inactive — deeper muted (was #5a7a90 blue-tinted) */
+  --color-text-primary:   #e6e8eb;  /* headings — warm off-white */
+  --color-text-secondary: #9b9ea4;  /* body text — muted mid-grey */
+  --color-text-tertiary:  #55575c;  /* placeholder, inactive — deeper muted */
   --color-text-inverse:   #e6e8eb;  /* white-on-dark text/icons */
+
+  /* ── SEARCH & NAV SURFACE TEXT TOKENS ──────────────────────
+     Dedicated so each chrome layer has its own internal contrast.
+     --color-surface-search is brighter than cards → placeholder
+     needs to be brighter than --color-text-tertiary to maintain
+     the same perceptual contrast ratio on its specific bg.        */
+  --color-search-text:         #e6e8eb;  /* typed text — same as text-primary */
+  --color-search-placeholder:  #6e7075;  /* idle icon + placeholder — mid between tertiary and secondary */
+  --color-nav-icon:            #6e7075;  /* inactive nav icons/labels — same mid tier */
 
   /* ── BRAND TOKENS ───────────────────────────────────────── */
   /* Muted steel blue — readable but not electric. Raycast/Linear style. */
@@ -221,7 +232,9 @@
   --color-bg:               #F4F6F9;   /* soft cool-white page background */
   --color-surface:          #FFFFFF;   /* card surfaces — pure white */
   --color-surface-2:        #EEF1F5;   /* secondary surfaces, input bg */
-  --color-surface-elevated: #FFFFFF;   /* bottom nav — white */
+  --color-surface-search:   #FFFFFF;   /* search pill — white in light mode */
+  --color-surface-nav:      #FFFFFF;   /* bottom nav — white in light mode */
+  --color-surface-elevated: #FFFFFF;   /* legacy alias — white */
   --color-border:           #D1D9E6;   /* card borders, dividers */
   --color-border-strong:    #A8B8CE;   /* stronger dividers */
 
@@ -230,6 +243,11 @@
   --color-text-secondary:   #3D5A7A;   /* mid-blue secondary */
   --color-text-tertiary:    #7A95AE;   /* muted blue-grey — placeholders */
   --color-text-inverse:     #FFFFFF;   /* white text on dark-colored surfaces */
+
+  /* ── SEARCH & NAV TEXT TOKENS — light mode ─────────────── */
+  --color-search-text:         #0F1C2E;
+  --color-search-placeholder:  rgba(15,43,74,.55);
+  --color-nav-icon:            #7A95AE;   /* same as text-tertiary in light mode */
 
   /* ── RGB CHANNEL TOKENS — match the light bg ────────────── */
   --color-bg-rgb:      244, 246, 249; /* #F4F6F9 decomposed — light mode bg */
@@ -368,78 +386,90 @@ html:not([data-theme="dark"]):not([data-theme="light"]) body {
 
 /* search-hero-label light mode override removed — element no longer rendered */
 
-/* ── DARK MODE — search box & bottom nav surface overrides ──────
-   The base .search-inp rules use hardcoded #ffffff (light-mode
-   correct). In dark mode we override to a warm lifted surface so
-   the pill doesn't flash white against the charcoal background.
-   --color-surface-elevated also controls .bnav / .cc-bottom-nav.
-   Light mode keeps #fefffe / #ffffff — no changes there.        */
+/* ── SEARCH & NAV SURFACE TOKENS — dark mode defaults ───────────
+   Dedicated tokens so search pill and bottom nav are never
+   conflated with card surfaces or each other.
 
-/* Override the hardcoded #ffffff on all search input variants */
+   Token hierarchy (dark mode, lightest → darkest):
+     --color-surface-search  #2c2d31  search pill   — brightest chrome
+     --color-surface-nav     #1e1f22  bottom nav    — mid chrome
+     --color-bg              #111214  page bg       — darkest
+
+   Matching text/icon tokens keep each surface internally consistent.
+   ──────────────────────────────────────────────────────────────── */
+
+/* ── 1. SEARCH PILL — .search-inp + .cc-search-bar ───────────── */
 :root .search-inp,
 :root .search-inp:focus {
-  background: var(--color-surface);     /* #202124 — matches card surface */
-  color: var(--color-text-primary);
+  background: var(--color-surface-search);
+  color: var(--color-search-text);
   border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-search);
 }
 :root .search-inp:focus {
   border-color: var(--color-brand);
   box-shadow: var(--shadow-search-focus);
 }
 :root .search-inp::placeholder {
-  color: var(--color-text-tertiary);
+  color: var(--color-search-placeholder);
+  font-weight: 500;
 }
 :root .search-ico {
-  color: var(--color-text-tertiary);
+  color: var(--color-search-placeholder);
 }
 :root .search-wrap:focus-within .search-ico {
   color: var(--color-brand);
 }
 
-/* cc-search-bar (canonical component variant) */
-:root .cc-search-bar__wrap {
-  background: var(--color-surface);
+/* cc-search-bar canonical variant */
+:root .cc-search-bar__input {
+  background: var(--color-surface-search);
+  color: var(--color-search-text);
   border-color: var(--color-border-strong);
 }
-:root .cc-search-bar__input {
-  color: var(--color-text-primary);
-}
 :root .cc-search-bar__input::placeholder {
-  color: var(--color-text-tertiary);
+  color: var(--color-search-placeholder);
 }
 :root .cc-search-bar__icon {
-  color: var(--color-text-tertiary);
+  color: var(--color-search-placeholder);
+}
+:root .cc-search-bar__wrap:focus-within .cc-search-bar__icon {
+  color: var(--color-brand);
 }
 
-/* Bottom nav — lifted charcoal, not white */
-:root {
-  --color-surface-elevated: #252628;   /* dark mode: warm charcoal lift (was #fefffe) */
+/* ── 2. BOTTOM NAV — .bnav + .cc-bottom-nav ──────────────────── */
+/* Inactive icons/labels use dedicated nav token, not text-tertiary */
+:root .bnav-btn,
+:root .cc-bottom-nav__btn {
+  color: var(--color-nav-icon);
 }
 
-/* Light mode — restore white for both search and bottom nav */
+/* ── 3. LIGHT MODE RESTORES ──────────────────────────────────── */
+[data-theme="light"] {
+  --color-surface-search:      #ffffff;
+  --color-surface-nav:         #ffffff;
+  --color-search-text:         #0F1C2E;
+  --color-search-placeholder:  rgba(15,43,74,.55);
+  --color-nav-icon:            #7A95AE;    /* light-mode mid-blue muted */
+  --color-surface-elevated:    #ffffff;
+}
 [data-theme="light"] .search-inp,
 [data-theme="light"] .search-inp:focus {
   background: #ffffff;
   color: #0F1C2E;
   border-color: var(--color-brand);
 }
-[data-theme="light"] .search-inp::placeholder {
-  color: rgba(15,43,74,.62);
-}
+[data-theme="light"] .search-inp::placeholder,
 [data-theme="light"] .search-ico {
-  color: rgba(15,43,74,.62);
-}
-[data-theme="light"] .cc-search-bar__wrap {
-  background: #ffffff;
+  color: rgba(15,43,74,.55);
 }
 [data-theme="light"] .cc-search-bar__input {
+  background: #ffffff;
   color: #0F1C2E;
 }
-[data-theme="light"] .cc-search-bar__input::placeholder {
-  color: rgba(15,43,74,.62);
-}
-[data-theme="light"] {
-  --color-surface-elevated: #ffffff;   /* light mode: pure white bottom nav — correct */
+[data-theme="light"] .cc-search-bar__input::placeholder,
+[data-theme="light"] .cc-search-bar__icon {
+  color: rgba(15,43,74,.55);
 }
 /* ────────────────────────────────────────────────────────────── */
 
@@ -2126,7 +2156,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   max-width: 480px;
   margin: 0 auto;
   height: 56px;
-  background: var(--color-surface-elevated);
+  background: var(--color-surface-nav);
   border-top: 1px solid var(--color-border);
   border-radius: 18px 18px 0 0;
   display: flex;
@@ -2925,7 +2955,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   position:fixed;bottom:0;left:0;right:0;
   max-width:480px;margin:0 auto;
   height:56px;
-  background:var(--color-surface-elevated);
+  background:var(--color-surface-nav);
   border-top:1px solid var(--color-border);
   border-radius:18px 18px 0 0;
   display:flex;
