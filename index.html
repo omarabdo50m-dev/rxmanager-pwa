@@ -12734,10 +12734,31 @@ function renderConditionViewer(data) {
   // ── Build Clinical Tab content — Phase 11 redesign ───────────────────
   let clinHtml = '';
 
-  // ── Overview — white surface card ──────────────────────────────────────
+  // ── Definition — flat non-collapsible card ────────────────────────────
   if (condition.overview) {
-    clinHtml += `<div class="cv-overview-card-p11">
-      <p class="cv-overview-text-p11" dir="auto">${esc(condition.overview)}</p>
+    const defBlocks = condition.overview.split(/\n\n+/).map(b => b.trim()).filter(Boolean);
+    clinHtml += `<div class="cv-depth-card-p11">
+      <div class="cv-depth-card-hdr-p11">
+        <div class="cv-depth-card-icon-p11" style="background:rgba(99,102,241,.10)">
+          <i class="ph ph-book-open" style="font-size:15px;color:#6366F1"></i>
+        </div>
+        <span class="cv-depth-card-title-p11">Definition</span>
+      </div>
+      <div class="cv-depth-card-body-p11">
+        ${defBlocks.map(block => {
+          const lines = block.split('\n');
+          const heading = lines[0].replace(/^#+\s*/, '').trim();
+          const body = lines.slice(1).join('\n').trim();
+          return body
+            ? `<div class="cv-depth-block-p11">
+                <div class="cv-depth-heading-p11">${esc(heading)}</div>
+                <div class="cv-depth-body-p11" dir="auto">${esc(body)}</div>
+               </div>`
+            : `<div class="cv-depth-block-p11">
+                <div class="cv-depth-body-p11" dir="auto">${esc(heading)}</div>
+               </div>`;
+        }).join('')}
+      </div>
     </div>`;
   }
 
@@ -12782,35 +12803,44 @@ function renderConditionViewer(data) {
     </div>`;
   }
 
-  // ── How to Diagnose — collapsible, Phosphor icons ──────────────────────
+  // ── Examination — flat non-collapsible card ────────────────────────────
   const htdSections = [
     { key: 'how_to_diagnose', lbl: 'Clinical Diagnosis', icon: 'ph-stethoscope' },
     { key: 'exam_pearls',     lbl: 'Examination Pearls', icon: 'ph-magnifying-glass' },
   ].filter(s => condition[s.key]);
 
   if (htdSections.length) {
-    const htdId = 'cvp11_htd_body';
-    const htdArrowId = 'cvp11_htd_arrow';
-    clinHtml += `<div class="cv-collapsible" style="margin:var(--space-3) var(--space-4) 0">
-      <div class="cv-coll-hdr" onclick="cvToggleCollP11('${htdId}','${htdArrowId}')">
-        <div class="cv-coll-hdr-icon-wrap" style="background:rgba(2,132,199,.1)">
+    clinHtml += `<div class="cv-depth-card-p11">
+      <div class="cv-depth-card-hdr-p11">
+        <div class="cv-depth-card-icon-p11" style="background:rgba(2,132,199,.10)">
           <i class="ph ph-stethoscope" style="font-size:15px;color:var(--color-info)"></i>
         </div>
-        <span class="cv-coll-hdr-title">How to Diagnose</span>
-        <div class="cv-coll-hdr-arrow" id="${htdArrowId}">
-          <i class="ph ph-caret-right"></i>
-        </div>
+        <span class="cv-depth-card-title-p11">Examination</span>
       </div>
-      <div class="cv-coll-body" id="${htdId}">
-        <div class="cv-coll-inner-p11">
-          ${htdSections.map(s => `<div class="cv-coll-sub-p11">
-            <div class="cv-coll-sub-label-p11">
+      <div class="cv-depth-card-body-p11">
+        ${htdSections.map((s, si) => {
+          const blocks = condition[s.key].split(/\n\n+/).map(b => b.trim()).filter(Boolean);
+          const blocksHtml = blocks.map(block => {
+            const lines = block.split('\n');
+            const heading = lines[0].replace(/^#+\s*/, '').trim();
+            const body = lines.slice(1).join('\n').trim();
+            return body
+              ? `<div class="cv-depth-block-p11">
+                  <div class="cv-depth-heading-p11">${esc(heading)}</div>
+                  <div class="cv-depth-body-p11" dir="auto">${esc(body)}</div>
+                 </div>`
+              : `<div class="cv-depth-block-p11">
+                  <div class="cv-depth-body-p11" dir="auto">${esc(heading)}</div>
+                 </div>`;
+          }).join('');
+          const divider = si > 0 ? '<hr style="border:none;border-top:1px solid var(--color-border);margin:var(--space-3) 0"/>' : '';
+          return `${divider}
+            <div class="cv-coll-sub-label-p11" style="margin-bottom:var(--space-3)">
               <i class="ph ${esc(s.icon)}" style="font-size:10px"></i>
               ${esc(s.lbl)}
             </div>
-            <div class="cv-coll-sub-text-p11" dir="auto">${esc(condition[s.key])}</div>
-          </div>`).join('')}
-        </div>
+            ${blocksHtml}`;
+        }).join('')}
       </div>
     </div>`;
   }

@@ -1915,9 +1915,10 @@ function _checkGatePassword() {
             </div>
           </div>
 
-          <!-- 1. Overview — appears first on Clinical tab -->
+          <!-- 1. Overview → Definition -->
           <div class="form-row">
-            <label class="form-label">Overview</label>
+            <label class="form-label">Definition</label>
+            <p class="form-hint">One block per blank line — first line is the heading, rest is body text. Single block with no blank line renders as plain paragraph.</p>
             <textarea id="cf-overview" rows="4" style="resize:vertical" onblur="condSave('overview',this.value)"></textarea>
           </div>
 
@@ -1943,13 +1944,15 @@ function _checkGatePassword() {
             <textarea id="cf-referral" rows="3" style="resize:vertical" onblur="condSave('referral',this.value)"></textarea>
           </div>
 
-          <!-- 4. How to Diagnose -->
+          <!-- 4. Examination -->
           <div class="form-row">
-            <label class="form-label">How to Diagnose</label>
+            <label class="form-label">Examination — Clinical Diagnosis</label>
+            <p class="form-hint">One block per blank line — first line is the heading, rest is body text.</p>
             <textarea id="cf-how_to_diagnose" rows="4" style="resize:vertical" onblur="condSave('how_to_diagnose',this.value)"></textarea>
           </div>
           <div class="form-row">
-            <label class="form-label">Exam Pearls</label>
+            <label class="form-label">Examination — Pearls</label>
+            <p class="form-hint">One block per blank line — first line is the heading, rest is body text.</p>
             <textarea id="cf-exam_pearls" rows="4" style="resize:vertical" onblur="condSave('exam_pearls',this.value)"></textarea>
           </div>
 
