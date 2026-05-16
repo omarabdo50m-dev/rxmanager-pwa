@@ -1883,28 +1883,23 @@ function _checkGatePassword() {
         <!-- FORM CARD -->
         <div class="card" style="max-width:var(--admin-panel-max)">
 
-          <!-- Row 1: name / name_ar -->
-          <div class="form-row-inline">
-            <div class="form-row">
-              <label class="form-label">Name (EN)</label>
-              <input type="text" id="cf-name" onblur="condSave('name',this.value)"/>
-            </div>
-            <div class="form-row">
-              <label class="form-label">Name (AR)</label>
-              <input type="text" id="cf-name_ar" dir="rtl" onblur="condSave('name_ar',this.value)"/>
-            </div>
+          <!-- Identity -->
+          <div class="form-row">
+            <label class="form-label">Name (EN)</label>
+            <input type="text" id="cf-name" onblur="condSave('name',this.value)"/>
           </div>
-
-          <!-- Row 2: specialty only -->
+          <div class="form-row">
+            <label class="form-label">Name (AR)</label>
+            <input type="text" id="cf-name_ar" dir="rtl" onblur="condSave('name_ar',this.value)"/>
+          </div>
           <div class="form-row">
             <label class="form-label">Specialty</label>
             <select id="cf-specialty" onchange="condSave('specialty',this.value);condBuildSpecialtySelect(this.value)">
               <option value="">— None —</option>
-              <!-- populated dynamically by condBuildSpecialtySelect() from _SPECIALTIES -->
             </select>
           </div>
 
-          <!-- Row 3: age_group / urgency_level / sibling -->
+          <!-- Metadata row: age / urgency / sibling -->
           <div class="form-row-3">
             <div class="form-row">
               <label class="form-label">Age Group</label>
@@ -1920,80 +1915,66 @@ function _checkGatePassword() {
             </div>
           </div>
 
-          <!-- overview -->
+          <!-- 1. Overview — appears first on Clinical tab -->
           <div class="form-row">
             <label class="form-label">Overview</label>
-            <textarea id="cf-overview" rows="4" onblur="condSave('overview',this.value)"></textarea>
+            <textarea id="cf-overview" rows="4" style="resize:vertical" onblur="condSave('overview',this.value)"></textarea>
           </div>
 
-          <!-- patient picture en/ar -->
-          <div class="form-row-inline">
-            <div class="form-row">
-              <label class="form-label">Patient Picture URL (EN)</label>
-              <input type="url" id="cf-patient_picture_en" onblur="condSave('patient_picture_en',this.value); condPreviewImg('en')"/>
-              <img id="cf-img-en" src="" alt="" class="img-preview" style="display:none"/>
-            </div>
-            <div class="form-row">
-              <label class="form-label">Patient Picture URL (AR)</label>
-              <input type="url" id="cf-patient_picture_ar" onblur="condSave('patient_picture_ar',this.value); condPreviewImg('ar')"/>
-              <img id="cf-img-ar" src="" alt="" class="img-preview" style="display:none"/>
-            </div>
+          <!-- 2. Patient Presentation -->
+          <div class="form-row">
+            <label class="form-label">Patient Picture URL (EN)</label>
+            <input type="url" id="cf-patient_picture_en" onblur="condSave('patient_picture_en',this.value); condPreviewImg('en')"/>
+            <img id="cf-img-en" src="" alt="" class="img-preview" style="display:none"/>
+          </div>
+          <div class="form-row">
+            <label class="form-label">Patient Picture URL (AR)</label>
+            <input type="url" id="cf-patient_picture_ar" onblur="condSave('patient_picture_ar',this.value); condPreviewImg('ar')"/>
+            <img id="cf-img-ar" src="" alt="" class="img-preview" style="display:none"/>
           </div>
 
-          <!-- clinical textareas -->
-          <div class="form-row">
-            <label class="form-label">How to Diagnose</label>
-            <textarea id="cf-how_to_diagnose" rows="3" onblur="condSave('how_to_diagnose',this.value)"></textarea>
-          </div>
-          <div class="form-row">
-            <label class="form-label">Exam Pearls</label>
-            <textarea id="cf-exam_pearls" rows="3" onblur="condSave('exam_pearls',this.value)"></textarea>
-          </div>
+          <!-- 3. Red Flags & Referral -->
           <div class="form-row">
             <label class="form-label">Red Flags</label>
-            <textarea id="cf-red_flags" rows="3" onblur="condSave('red_flags',this.value)"></textarea>
+            <textarea id="cf-red_flags" rows="3" style="resize:vertical" onblur="condSave('red_flags',this.value)"></textarea>
           </div>
           <div class="form-row">
             <label class="form-label">Referral</label>
-            <textarea id="cf-referral" rows="2" onblur="condSave('referral',this.value)"></textarea>
+            <textarea id="cf-referral" rows="3" style="resize:vertical" onblur="condSave('referral',this.value)"></textarea>
           </div>
 
-          <!-- Key Investigations -->
+          <!-- 4. How to Diagnose -->
+          <div class="form-row">
+            <label class="form-label">How to Diagnose</label>
+            <textarea id="cf-how_to_diagnose" rows="4" style="resize:vertical" onblur="condSave('how_to_diagnose',this.value)"></textarea>
+          </div>
+          <div class="form-row">
+            <label class="form-label">Exam Pearls</label>
+            <textarea id="cf-exam_pearls" rows="4" style="resize:vertical" onblur="condSave('exam_pearls',this.value)"></textarea>
+          </div>
+
+          <!-- 5. Key Investigations -->
           <div class="form-row">
             <label class="form-label">Key Investigations</label>
-            <p class="form-hint">One block per blank line. First line = heading, following lines = body text.
-Example:
-FBC
-Look for neutrophilia in bacterial infection; lymphocytosis in viral.
-
-CRP / ESR
-Elevated in bacterial causes; may be normal in early viral infection.</p>
-            <textarea id="cf-key_investigations" rows="8" onblur="condSave('key_investigations',this.value)" placeholder="FBC&#10;Look for neutrophilia in bacterial, lymphocytosis in viral.&#10;&#10;CRP / ESR&#10;Elevated in bacterial causes; normal in early viral."></textarea>
+            <p class="form-hint">One block per blank line — first line is the heading, rest is body text.</p>
+            <textarea id="cf-key_investigations" rows="6" style="resize:vertical" onblur="condSave('key_investigations',this.value)" placeholder="FBC&#10;Look for neutrophilia in bacterial, lymphocytosis in viral.&#10;&#10;CRP / ESR&#10;Elevated in bacterial causes; may be normal in early viral."></textarea>
           </div>
 
-          <!-- Clinical Depth -->
+          <!-- 6. Clinical Depth -->
           <div class="form-row">
             <label class="form-label">Clinical Depth</label>
-            <p class="form-hint">One block per blank line. First line = heading, following lines = body text.
-Example:
-Pathophysiology
-Acute cough is triggered by inflammatory mediators acting on airway receptors...
-
-Diagnostic Approach
-Start with duration and character of cough to distinguish infectious from non-infectious causes...</p>
-            <textarea id="cf-clinical_depth" rows="10" onblur="condSave('clinical_depth',this.value)" placeholder="Pathophysiology&#10;Enter body text here...&#10;&#10;Diagnostic Approach&#10;Enter body text here..."></textarea>
+            <p class="form-hint">One block per blank line — first line is the heading, rest is body text.</p>
+            <textarea id="cf-clinical_depth" rows="8" style="resize:vertical" onblur="condSave('clinical_depth',this.value)" placeholder="Pathophysiology&#10;Enter body text here...&#10;&#10;Diagnostic Approach&#10;Enter body text here..."></textarea>
           </div>
 
-          <!-- patient instructions en/ar -->
-          <div class="form-row-inline">
-            <div class="form-row">
-              <label class="form-label">Patient Instructions (EN)</label>
-              <textarea id="cf-patient_instructions" rows="4" onblur="condSave('patient_instructions',this.value)"></textarea>
-            </div>
-            <div class="form-row">
-              <label class="form-label">Patient Instructions (AR)</label>
-              <textarea id="cf-patient_instructions_ar" dir="rtl" rows="4" onblur="condSave('patient_instructions_ar',this.value)"></textarea>
-            </div>
+          <!-- 7. Patient Instructions -->
+          <div class="form-row">
+            <label class="form-label">Patient Instructions (EN)</label>
+            <textarea id="cf-patient_instructions" rows="4" style="resize:vertical" onblur="condSave('patient_instructions',this.value)"></textarea>
+          </div>
+          <div class="form-row">
+            <label class="form-label">Patient Instructions (AR)</label>
+            <textarea id="cf-patient_instructions_ar" dir="rtl" rows="4" style="resize:vertical" onblur="condSave('patient_instructions_ar',this.value)"></textarea>
           </div>
 
           <!-- source / last_updated -->
