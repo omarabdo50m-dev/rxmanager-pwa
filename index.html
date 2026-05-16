@@ -6824,11 +6824,11 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   word-break:break-word;
 }
 .cv-rx-brand-name.linked {
-  color:var(--color-brand);
-  cursor:pointer;
+  color: var(--color-text-primary);   /* black in light mode, white in dark — not blue */
+  cursor: pointer;
   text-decoration: underline;
   text-decoration-style: dotted;
-  text-decoration-color: rgba(59,130,246,.5);
+  text-decoration-color: var(--color-brand);  /* blue dotted underline in both modes */
   text-underline-offset: 3px;
 }
 .cv-rx-brand-name.linked::after {
@@ -13050,10 +13050,13 @@ function _cvRenderPrescription(rx, agePrefix) {
         ${d.dose_ar ? `<div class="cv-dose-ar" dir="rtl" style="padding-left:26px;text-align:right">${esc(d.dose_ar)}</div>` : ''}
         ${d.dose    ? `<div class="cv-dose-en" style="padding-left:26px">${esc(d.dose)}</div>` : ''}
         <!-- Line 2b: Drug note — inside the row, no bg/border, auto bidi -->
-        ${d.drug_note ? `<div class="cv-rx-drug-note${isArabicQuery(d.drug_note) ? ' rtl' : ''}">
-          <i class="ph ph-note-pencil cv-rx-drug-note-ico"></i>
-          <span class="cv-rx-drug-note-text" dir="auto">${esc(d.drug_note)}</span>
-        </div>` : ''}
+        ${d.drug_note ? (() => {
+          const isAr = isArabicQuery(d.drug_note);
+          const ico = `<i class="ph ph-note-pencil cv-rx-drug-note-ico"></i>`;
+          const txt = `<span class="cv-rx-drug-note-text" dir="auto">${esc(d.drug_note)}</span>`;
+          // For RTL: render text first, icon second — then row-reverse puts icon on the right
+          return `<div class="cv-rx-drug-note${isAr ? ' rtl' : ''}">${isAr ? txt + ico : ico + txt}</div>`;
+        })() : ''}
         <!-- Line 3: class tag › generic name — indented to align with brand name -->
         ${(tagLabel || isBrandDifferentFromGeneric) ? `<div style="margin-top:3px;line-height:1.4;padding-left:26px">
           <span class="cv-rx-class-tag">${esc(tagLabel || '')}</span>${tagLabel && isBrandDifferentFromGeneric ? `<span style="font-size:10px;color:var(--color-text-tertiary);margin:0 3px">›</span>` : ''}${isBrandDifferentFromGeneric ? `<span style="font-size:var(--text-xs-size);color:var(--color-text-tertiary);font-style:italic">${esc(d.resolvedGeneric)}</span>` : ''}
