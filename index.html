@@ -13417,7 +13417,7 @@ function _lbBuildStrip() {
   const strip = _lbStrip();
   const stage = _lbStage();
   if (!strip || !stage) return;
-  const slideW = stage.clientWidth;
+  const slideW = stage.clientWidth || window.innerWidth;
   strip.innerHTML = _lbPhotos.map((entry, i) => {
     const src = typeof entry === 'string' ? entry : (entry.url || '');
     return `<div class="lb-slide" data-idx="${i}" style="width:${slideW}px"><img src="${src}" alt="" draggable="false" loading="lazy"/></div>`;
@@ -13430,7 +13430,7 @@ function _lbSetPosition(animated) {
   const strip = _lbStrip();
   const stage = _lbStage();
   if (!strip || !stage) return;
-  const slideW = stage.clientWidth;
+  const slideW = stage.clientWidth || window.innerWidth;
   if (animated) {
     strip.classList.add('lb-animating');
     const cleanup = () => { strip.classList.remove('lb-animating'); strip.removeEventListener('transitionend', cleanup); };
@@ -13476,12 +13476,14 @@ function openLightbox(idx, readonly = false, thumbEl = null) {
     _lbHistoryPushed = true;
   }
 
-  _lbBuildStrip();         // build DOM first so _lbZoomReset can find the img
-  _lbZoomReset();          // reset zoom state + clear any stale img transform
-  _lbSetPosition(false);   // instant jump to correct slide — no animation on open
+  // Show overlay first so the stage has real dimensions before we measure it
+  overlay.classList.add('open');
+
+  _lbBuildStrip();         // stage.clientWidth is now valid
+  _lbZoomReset();
+  _lbSetPosition(false);   // instant jump — no animation on open
   _lbUpdateUI();
 
-  overlay.classList.add('open');
   requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('lb-visible')));
 }
 
