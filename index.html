@@ -9388,7 +9388,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   </div>
 
   <!-- Scrollable body -->
-  <div class="favs-scroll-body" style="padding:0 var(--space-3) 80px">
+  <div class="favs-scroll-body" style="padding:var(--space-2) var(--space-4) 80px">
 
     <!-- Tab: Conditions -->
     <div class="fav-tab-panel active" id="favPanelConditions">
@@ -11043,13 +11043,13 @@ async function renderFavourites() {
       </div>`;
     } else {
       condList.innerHTML = condItems.map(item => `
-        <div class="fav-item" onclick="openConditionViewer('${esc(item.id)}');document.getElementById('favsScr').classList.remove('peer-open')">
-          <div class="fav-item-ico brand">
+        <div class="lib-drug-card" onclick="openConditionViewer('${esc(item.id)}');document.getElementById('favsScr').classList.remove('peer-open')">
+          <div class="rx-icon-circle" style="background:rgba(59,130,246,.12);color:var(--color-brand)">
             <i class="ph ph-prescription"></i>
           </div>
-          <div style="flex:1;min-width:0">
-            <div class="fav-item-name" dir="auto">${esc(item.name)}</div>
-            ${item.spec ? `<div class="fav-item-sub">${esc(item.spec)}</div>` : ''}
+          <div class="lib-drug-body">
+            <div class="lib-drug-name" dir="auto">${esc(item.name)}</div>
+            ${item.spec ? `<div class="lib-drug-meta"><span class="lib-drug-group-label">${esc(item.spec)}</span></div>` : ''}
           </div>
           <button class="fav-item-del" onclick="event.stopPropagation();removeFavCondition('${esc(item.id)}')" aria-label="Remove from favourites" title="Remove from favourites">
             <i class="ph-fill ph-star"></i>
@@ -11081,13 +11081,13 @@ async function renderFavourites() {
         const subLabel = item.subgroup
           ? `${esc(item.group)} · ${esc(item.subgroup)}`
           : esc(item.group);
-        return `<div class="fav-item" onclick="openDrugViewer('${esc(item.id)}');document.getElementById('favsScr').classList.remove('peer-open')">
-          <div class="fav-item-ico safe">
+        return `<div class="lib-drug-card" onclick="openDrugViewer('${esc(item.id)}');document.getElementById('favsScr').classList.remove('peer-open')">
+          <div class="rx-icon-circle" style="background:${clr.s}18;color:${clr.s}">
             <i class="ph ph-pill"></i>
           </div>
-          <div style="flex:1;min-width:0">
-            <div class="fav-item-name">${esc(item.name)}</div>
-            ${item.group ? `<div class="fav-item-sub">${subLabel}</div>` : ''}
+          <div class="lib-drug-body">
+            <div class="lib-drug-name">${esc(item.name)}</div>
+            ${item.group ? `<div class="lib-drug-meta"><span class="lib-drug-group-label">${subLabel}</span></div>` : ''}
           </div>
           <button class="fav-item-del" onclick="event.stopPropagation();removeFavDrug('${esc(item.id)}')" aria-label="Remove from favourites" title="Remove from favourites">
             <i class="ph-fill ph-star"></i>
