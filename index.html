@@ -4558,15 +4558,17 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .lightbox-overlay{
   display:none;position:fixed;inset:0;background:rgba(0,0,0,0);z-index:800;
   flex-direction:column;align-items:stretch;justify-content:stretch;
-  transition:background .28s ease;
+  transition:background .3s ease, opacity .3s ease;
+  opacity:0;
 }
 .lightbox-overlay.open{display:flex}
-.lightbox-overlay.lb-visible{background:rgba(0,0,0,1)}
+.lightbox-overlay.lb-visible{background:#000;opacity:1}
 .lightbox-toolbar{
   display:flex;align-items:center;justify-content:space-between;
   padding:12px 14px;background:rgba(0,0,0,.55);backdrop-filter:blur(12px);
   flex-shrink:0;z-index:10;
-  opacity:0;transform:translateY(-8px);transition:opacity .25s ease,transform .25s ease;
+  opacity:0;transform:translateY(-8px);
+  transition:opacity .25s .05s ease,transform .25s .05s ease;
 }
 .lightbox-overlay.lb-visible .lightbox-toolbar{opacity:1;transform:translateY(0)}
 .lightbox-counter{color:rgba(255,255,255,.80);font-size:13px;font-weight:700}
@@ -4577,60 +4579,71 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   display:flex;align-items:center;justify-content:center;font-size:17px;
   transition:background .15s,transform .1s;-webkit-tap-highlight-color:transparent;
 }
-.lb-btn:active{background:rgba(255,255,255,.22);transform:scale(.93)}
-/* Stage — main image area */
+.lb-btn:active{background:rgba(255,255,255,.25);transform:scale(.92)}
+/* ── Stage: two-slot cross-fade slide system ── */
 .lightbox-stage{
   flex:1;position:relative;overflow:hidden;
   display:flex;align-items:center;justify-content:center;
   touch-action:none;
 }
-.lightbox-stage img{
+/* Both slots absolutely fill the stage */
+.lb-img-slot{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:none;
+}
+.lb-img-slot img{
   max-width:100%;max-height:100%;object-fit:contain;
   user-select:none;-webkit-user-select:none;
   will-change:transform;
-  transition:transform .22s cubic-bezier(.25,.46,.45,.94);
+  display:block;
 }
-.lightbox-stage img.lb-no-transition{transition:none}
-/* ── Opening animation: thumbnail-rect → full ── */
-.lightbox-stage img.lb-opening{
-  transform-origin:var(--lb-origin-x,50%) var(--lb-origin-y,50%);
-  animation:lb-open-in .3s cubic-bezier(.22,.68,0,1.2) forwards;
-}
-@keyframes lb-open-in{
-  from{opacity:0;transform:scale(.55) translate(var(--lb-dx,0px),var(--lb-dy,0px))}
-  to  {opacity:1;transform:scale(1) translate(0,0)}
-}
-/* ── Image slide transition ── */
-.lightbox-stage img.lb-slide-left{animation:lb-from-right .28s cubic-bezier(.25,.46,.45,.94) forwards}
-.lightbox-stage img.lb-slide-right{animation:lb-from-left .28s cubic-bezier(.25,.46,.45,.94) forwards}
-@keyframes lb-from-right{from{opacity:0;transform:translateX(60px) scale(.96)}to{opacity:1;transform:translateX(0) scale(1)}}
-@keyframes lb-from-left {from{opacity:0;transform:translateX(-60px) scale(.96)}to{opacity:1;transform:translateX(0) scale(1)}}
-/* prev/next: subtle frosted pill — NOT a solid dark block */
+/* Active slot — receives touches */
+.lb-img-slot.lb-active{ pointer-events:auto; z-index:2; }
+.lb-img-slot.lb-behind{ z-index:1; }
+/* Slide-in animations for the incoming slot */
+.lb-img-slot.lb-in-right{ animation:lb-slide-in-right .32s cubic-bezier(.32,.72,0,1) both }
+.lb-img-slot.lb-in-left { animation:lb-slide-in-left  .32s cubic-bezier(.32,.72,0,1) both }
+/* Slide-out for the outgoing slot */
+.lb-img-slot.lb-out-left { animation:lb-slide-out-left  .32s cubic-bezier(.32,.72,0,1) both }
+.lb-img-slot.lb-out-right{ animation:lb-slide-out-right .32s cubic-bezier(.32,.72,0,1) both }
+@keyframes lb-slide-in-right { from{transform:translateX(100%)} to{transform:translateX(0)} }
+@keyframes lb-slide-in-left  { from{transform:translateX(-100%)} to{transform:translateX(0)} }
+@keyframes lb-slide-out-left  { from{transform:translateX(0)} to{transform:translateX(-100%)} }
+@keyframes lb-slide-out-right { from{transform:translateX(0)} to{transform:translateX(100%)} }
+/* Opening-from-thumbnail animation on the active slot */
+.lb-img-slot.lb-opening{ animation:lb-open-in .3s cubic-bezier(.22,.68,0,1.15) both }
+@keyframes lb-open-in{ from{opacity:0;transform:scale(.6)} to{opacity:1;transform:scale(1)} }
+/* zoom state lives on the img inside the active slot */
+.lb-img-slot.lb-active img{ transition:transform .22s cubic-bezier(.25,.46,.45,.94) }
+.lb-img-slot.lb-active img.lb-no-transition{ transition:none !important }
+/* ── Prev / Next: clean dark pill, always readable on any image colour ── */
 .lightbox-nav{
   position:absolute;top:50%;transform:translateY(-50%);
-  background:rgba(255,255,255,.13);
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  border:1.5px solid rgba(255,255,255,.28);
+  background:rgba(0,0,0,.48);
+  border:1.5px solid rgba(255,255,255,.22);
   color:#fff;
-  font-size:24px;width:44px;height:44px;border-radius:50%;
+  font-size:22px;width:42px;height:42px;border-radius:50%;
   cursor:pointer;display:flex;align-items:center;justify-content:center;
-  transition:background .18s,transform .12s;z-index:5;
-  box-shadow:0 2px 16px rgba(0,0,0,.35);
+  z-index:5;
+  box-shadow:0 2px 12px rgba(0,0,0,.5);
   -webkit-tap-highlight-color:transparent;
   opacity:0;
+  transition:opacity .2s .1s, background .15s, transform .12s;
 }
-.lightbox-overlay.lb-visible .lightbox-nav{opacity:1;transition:background .18s,transform .12s,opacity .25s .1s}
-.lightbox-nav:active{background:rgba(255,255,255,.28);transform:translateY(-50%) scale(.91)}
+.lightbox-overlay.lb-visible .lightbox-nav{opacity:.85}
+.lightbox-nav:active{background:rgba(0,0,0,.75);opacity:1;transform:translateY(-50%) scale(.90)}
 .lightbox-nav.prev{left:10px}
 .lightbox-nav.next{right:10px}
-/* Bottom bar — caption + dot navigation */
+/* Bottom bar */
 .lightbox-bottom{
   flex-shrink:0;
   background:rgba(0,0,0,.60);
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   padding:10px 16px 14px;
   display:flex;flex-direction:column;align-items:center;gap:8px;min-height:52px;
-  opacity:0;transform:translateY(8px);transition:opacity .25s ease,transform .25s ease;
+  opacity:0;transform:translateY(8px);
+  transition:opacity .25s .05s ease,transform .25s .05s ease;
 }
 .lightbox-overlay.lb-visible .lightbox-bottom{opacity:1;transform:translateY(0)}
 .lightbox-caption{
@@ -4642,7 +4655,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   width:7px;height:7px;border-radius:50%;
   background:rgba(255,255,255,.35);
   border:none;padding:0;cursor:pointer;
-  transition:background .22s,transform .22s,width .22s;flex-shrink:0;
+  transition:background .22s,transform .22s;flex-shrink:0;
 }
 .lightbox-dot.active{background:#fff;transform:scale(1.35)}
 
@@ -8180,9 +8193,14 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
       <button class="lb-btn" onclick="closeLightbox()" title="Close"><i class="ph ph-x" style="font-size:16px"></i></button>
     </div>
   </div>
-  <!-- Image stage with prev/next overlaid -->
+  <!-- Image stage: two slots for cross-slide transitions -->
   <div class="lightbox-stage" id="lightboxStage">
-    <img id="lightboxImg" src="" alt="" draggable="false"/>
+    <div class="lb-img-slot lb-active" id="lbSlotA">
+      <img id="lightboxImg" src="" alt="" draggable="false"/>
+    </div>
+    <div class="lb-img-slot lb-behind" id="lbSlotB">
+      <img id="lightboxImgB" src="" alt="" draggable="false"/>
+    </div>
     <button class="lightbox-nav prev" id="lbPrev" onclick="lightboxNav(-1)">‹</button>
     <button class="lightbox-nav next" id="lbNext" onclick="lightboxNav(1)">›</button>
   </div>
@@ -13384,126 +13402,153 @@ function cvToggleInlineNotesEdit() {
 
 
 /* ── LIGHTBOX — full-screen image viewer ──────────────────────────────── */
-// _lbPhotos: array of { url, caption } objects
 let _lbPhotos = [];
-// Stub — overwritten by initLightboxGestures IIFE below
-function _lbZoomReset() {}
+let _lbZoomReset = function(){}; // overwritten by gesture IIFE
 let _lbIdx    = 0;
 let _lbCtx    = 'cv';
-let _lbHistoryPushed = false;  // tracks whether we pushed a history entry
+let _lbHistoryPushed = false;
+let _lbActiveSlot = 'A'; // 'A' or 'B' — which slot is currently on top
 
-// Open lightbox with optional thumbnail rect for origin animation
+function _lbGetSlots() {
+  return {
+    active: document.getElementById(_lbActiveSlot === 'A' ? 'lbSlotA' : 'lbSlotB'),
+    behind: document.getElementById(_lbActiveSlot === 'A' ? 'lbSlotB' : 'lbSlotA'),
+    activeImg: document.getElementById(_lbActiveSlot === 'A' ? 'lightboxImg' : 'lightboxImgB'),
+    behindImg: document.getElementById(_lbActiveSlot === 'A' ? 'lightboxImgB' : 'lightboxImg'),
+  };
+}
+
 function openLightbox(idx, readonly = false, thumbEl = null) {
   _lbIdx = Math.max(0, Math.min(idx || 0, _lbPhotos.length - 1));
   const overlay = document.getElementById('lightboxOverlay');
   if (!overlay) return;
 
-  // Push history so back gesture closes gallery
+  // Push history entry so back gesture closes the gallery
   if (!_lbHistoryPushed) {
     history.pushState({ lightbox: true }, '');
     _lbHistoryPushed = true;
   }
 
+  // Reset slots to known state
+  _lbActiveSlot = 'A';
+  const slotA = document.getElementById('lbSlotA');
+  const slotB = document.getElementById('lbSlotB');
+  slotA.className = 'lb-img-slot lb-active';
+  slotB.className = 'lb-img-slot lb-behind';
+
   overlay.classList.add('open');
   _lbZoomReset();
-  _lbRender(null, thumbEl);   // pass thumbEl for opening animation
+  _lbRender(null, thumbEl);
 
-  // Trigger fade-in of chrome on next frame
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => overlay.classList.add('lb-visible'));
-  });
+  requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('lb-visible')));
 }
 
 function closeLightbox() {
   const overlay = document.getElementById('lightboxOverlay');
   if (!overlay) return;
-  overlay.classList.remove('lb-visible');
-  setTimeout(() => {
-    overlay.classList.remove('open');
-    _lbZoomReset();
-  }, 280);
-
-  // Pop the history entry we pushed (if still ours)
+  _lbDoClose(overlay);
   if (_lbHistoryPushed) {
     _lbHistoryPushed = false;
     history.back();
   }
 }
 
-// Called by browser back gesture / button — close without re-calling history.back()
 function _closeLightboxSilent() {
   const overlay = document.getElementById('lightboxOverlay');
   if (!overlay) return;
   _lbHistoryPushed = false;
+  _lbDoClose(overlay);
+}
+
+function _lbDoClose(overlay) {
   overlay.classList.remove('lb-visible');
+  // Wait for opacity transition to finish, then hide
   setTimeout(() => {
     overlay.classList.remove('open');
     _lbZoomReset();
-  }, 280);
+    // Clear both slots
+    const imgA = document.getElementById('lightboxImg');
+    const imgB = document.getElementById('lightboxImgB');
+    if (imgA) imgA.src = '';
+    if (imgB) imgB.src = '';
+  }, 310);
 }
 
 function _lbRender(slideDir = null, thumbEl = null) {
-  const img     = document.getElementById('lightboxImg');
+  const { active, behind, activeImg } = _lbGetSlots();
   const counter = document.getElementById('lightboxCounter');
   const prev    = document.getElementById('lbPrev');
   const next    = document.getElementById('lbNext');
   const captEl  = document.getElementById('lightboxCaption');
   const dotsEl  = document.getElementById('lightboxDots');
-  if (!img) return;
+  if (!activeImg) return;
 
   const entry   = _lbPhotos[_lbIdx] || {};
   const src     = typeof entry === 'string' ? entry : (entry.url || '');
   const caption = typeof entry === 'string' ? '' : (entry.caption || '');
   const total   = _lbPhotos.length;
 
-  // Remove any stale animation classes
-  img.classList.remove('lb-opening','lb-slide-left','lb-slide-right','lb-no-transition');
+  if (slideDir !== null) {
+    // ── Two-slot cross-slide ──
+    // Load new image into the BEHIND slot, then animate both
+    const { behindImg } = _lbGetSlots();
+    behindImg.src = src;
+    behindImg.classList.remove('lb-no-transition');
 
-  img.src = src;
-  _lbZoomReset();
+    // Clear stale animation classes
+    behind.className = 'lb-img-slot lb-behind';
+    active.className = 'lb-img-slot lb-active';
+    void behind.offsetWidth; // reflow
 
-  // ── Opening animation from thumbnail ──
-  if (thumbEl) {
-    const tr = thumbEl.getBoundingClientRect();
-    const stage = document.getElementById('lightboxStage');
-    const sr = stage ? stage.getBoundingClientRect() : { left:0, top:0, width:window.innerWidth, height:window.innerHeight };
-    // Origin as percentage of stage
-    const ox = ((tr.left + tr.width/2  - sr.left) / sr.width  * 100).toFixed(1) + '%';
-    const oy = ((tr.top  + tr.height/2 - sr.top)  / sr.height * 100).toFixed(1) + '%';
-    img.style.setProperty('--lb-origin-x', ox);
-    img.style.setProperty('--lb-origin-y', oy);
-    img.style.setProperty('--lb-dx', '0px');
-    img.style.setProperty('--lb-dy', '0px');
-    void img.offsetWidth; // reflow
-    img.classList.add('lb-opening');
-  } else if (slideDir === 1) {
-    void img.offsetWidth;
-    img.classList.add('lb-slide-left');
-  } else if (slideDir === -1) {
-    void img.offsetWidth;
-    img.classList.add('lb-slide-right');
+    // Incoming: behind slides in from the direction of travel
+    // Outgoing: active slides out the other way
+    if (slideDir > 0) {
+      // going forward (next): new comes from right, old exits left
+      behind.classList.add('lb-in-right');
+      active.classList.add('lb-out-left');
+    } else {
+      // going back (prev): new comes from left, old exits right
+      behind.classList.add('lb-in-left');
+      active.classList.add('lb-out-right');
+    }
+
+    // Promote behind → active after animation duration
+    const SLIDE_MS = 320;
+    setTimeout(() => {
+      // Swap role
+      _lbActiveSlot = _lbActiveSlot === 'A' ? 'B' : 'A';
+      const { active: newActive, behind: newBehind } = _lbGetSlots();
+      newActive.className = 'lb-img-slot lb-active';
+      newBehind.className = 'lb-img-slot lb-behind';
+      _lbZoomReset();
+    }, SLIDE_MS);
+
+  } else {
+    // ── Direct set (open or first render) ──
+    activeImg.classList.remove('lb-no-transition');
+    activeImg.src = src;
+    _lbZoomReset();
+
+    if (thumbEl) {
+      // Opening animation: pop in from centre
+      void active.offsetWidth;
+      active.className = 'lb-img-slot lb-active lb-opening';
+    }
   }
 
-  // Counter (top toolbar)
+  // Counter
   if (counter) counter.textContent = total > 1 ? `${_lbIdx + 1} / ${total}` : '';
-
-  // Prev / Next buttons
+  // Prev / Next
   if (prev) prev.style.display = _lbIdx > 0       ? '' : 'none';
   if (next) next.style.display = _lbIdx < total-1 ? '' : 'none';
-
-  // Caption — always rendered, empty string = invisible but no layout shift
+  // Caption
   if (captEl) captEl.textContent = caption;
-
-  // Dot strip — show only when >1 image
+  // Dots
   if (dotsEl) {
-    if (total > 1) {
-      dotsEl.innerHTML = _lbPhotos.map((_, i) =>
-        `<button class="lightbox-dot${i === _lbIdx ? ' active' : ''}"
-          onclick="lightboxNav(${i - _lbIdx})" aria-label="Image ${i+1}"></button>`
-      ).join('');
-    } else {
-      dotsEl.innerHTML = '';
-    }
+    dotsEl.innerHTML = total > 1 ? _lbPhotos.map((_, i) =>
+      `<button class="lightbox-dot${i === _lbIdx ? ' active' : ''}"
+        onclick="lightboxNav(${i - _lbIdx})" aria-label="Image ${i+1}"></button>`
+    ).join('') : '';
   }
 }
 
@@ -13511,7 +13556,7 @@ function lightboxNav(dir) {
   const next = _lbIdx + dir;
   if (next < 0 || next >= _lbPhotos.length) return;
   _lbIdx = next;
-  _lbRender(dir > 0 ? 1 : -1);
+  _lbRender(dir);
 }
 
 function lightboxDownload() {
@@ -13519,24 +13564,17 @@ function lightboxDownload() {
   const src   = typeof entry === 'string' ? entry : (entry?.url || '');
   if (!src) return;
   const a = document.createElement('a');
-  a.href = src;
-  a.download = 'clinical-image-' + (_lbIdx + 1) + '.jpg';
-  a.target = '_blank';
-  a.rel = 'noopener';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  a.href = src; a.download = 'clinical-image-' + (_lbIdx + 1) + '.jpg';
+  a.target = '_blank'; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
-// Open the lightbox for admin-managed gallery images (readonly — no delete)
 function cvGalleryView(idx, thumbEl = null) {
   const condition = (_cvAdultData?.condition) || (_cvPaedsData?.condition) || null;
   if (!condition) return;
   const images = Array.isArray(condition.images)
-    ? condition.images.filter(img => img.is_published)
-    : [];
+    ? condition.images.filter(img => img.is_published) : [];
   if (!images[idx]) return;
-  // Store full {url, caption} objects
   _lbPhotos = images.map(img => ({ url: img.url, caption: img.caption || '' }));
   _lbCtx = 'cv';
   openLightbox(idx, true, thumbEl);
@@ -13546,74 +13584,65 @@ function cvGalleryView(idx, thumbEl = null) {
 // LIGHTBOX PINCH-ZOOM + DOUBLE-TAP-ZOOM + SWIPE-TO-NAVIGATE
 // ─────────────────────────────────────────────────────────────────
 (function initLightboxGestures() {
-  // ── Zoom state ──────────────────────────────────────────────────
-  let _scale     = 1;
-  let _translateX = 0;
-  let _translateY = 0;
-  const MIN_SCALE = 1;
-  const MAX_SCALE = 5;
+  let _scale = 1, _tx = 0, _ty = 0;
+  const MIN_SCALE = 1, MAX_SCALE = 5;
 
-  function _applyZoom(animated = false) {
-    const img = document.getElementById('lightboxImg');
-    if (!img) return;
-    img.classList.toggle('lb-no-transition', !animated);
-    img.style.transformOrigin = '0 0';
-    img.style.transform = `translate(${_translateX}px,${_translateY}px) scale(${_scale})`;
+  function _activeImg() {
+    const slot = document.getElementById(_lbActiveSlot === 'A' ? 'lbSlotA' : 'lbSlotB');
+    return slot ? slot.querySelector('img') : null;
   }
 
-  function _lbZoomResetInternal() {
-    _scale = 1; _translateX = 0; _translateY = 0;
-    const img = document.getElementById('lightboxImg');
+  function _applyZoom(animated) {
+    const img = _activeImg();
+    if (!img) return;
+    if (animated) {
+      img.classList.remove('lb-no-transition');
+    } else {
+      img.classList.add('lb-no-transition');
+    }
+    img.style.transformOrigin = '0 0';
+    img.style.transform = `translate(${_tx}px,${_ty}px) scale(${_scale})`;
+  }
+
+  function _resetZoom() {
+    _scale = 1; _tx = 0; _ty = 0;
+    const img = _activeImg();
     if (img) {
       img.classList.remove('lb-no-transition');
       img.style.transform = '';
       img.style.transformOrigin = '';
     }
   }
+  // Update both window and the module-level let binding
+  window._lbZoomReset = _resetZoom;
+  _lbZoomReset = _resetZoom;
 
-  // exposed globally so _lbRender can call it
-  window._lbZoomReset = _lbZoomResetInternal;
-
-  // ── Pinch helpers ──────────────────────────────────────────────
-  function _pinchDist(touches) {
-    const dx = touches[0].clientX - touches[1].clientX;
-    const dy = touches[0].clientY - touches[1].clientY;
-    return Math.sqrt(dx*dx + dy*dy);
+  // Pinch helpers
+  function _dist(t) {
+    return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
   }
-  function _pinchMid(touches, rect) {
-    return {
-      x: ((touches[0].clientX + touches[1].clientX) / 2) - rect.left,
-      y: ((touches[0].clientY + touches[1].clientY) / 2) - rect.top,
-    };
+  function _mid(t, r) {
+    return { x:(t[0].clientX+t[1].clientX)/2 - r.left, y:(t[0].clientY+t[1].clientY)/2 - r.top };
   }
 
-  // ── Touch state ────────────────────────────────────────────────
-  let _t         = null;  // single-touch: { x0, y0, t0, tx0, ty0 }
-  let _pinch     = null;  // two-finger:   { dist0, scale0, mid, tx0, ty0 }
-  let _lastTap   = 0;     // timestamp of last tap (for double-tap detection)
-  let _lastTapX  = 0;
-  let _lastTapY  = 0;
-  let _panning   = false;
-
-  const SWIPE_PX  = 40;
-  const SWIPE_VEL = 0.2;
-  const DBL_TAP_MS = 320;
-  const DBL_TAP_PX = 35;
+  let _t = null, _pinch = null, _panning = false;
+  let _lastTap = 0, _lastTapX = 0, _lastTapY = 0;
+  const SWIPE_PX = 40, SWIPE_VEL = 0.2, DBL_MS = 320, DBL_PX = 36;
 
   function _onStart(e) {
     if (e.touches.length === 2) {
+      // Must preventDefault to enable pinch — registered as non-passive below
       e.preventDefault();
       const stage = document.getElementById('lightboxStage');
-      const rect  = stage ? stage.getBoundingClientRect() : { left:0, top:0 };
-      const mid   = _pinchMid(e.touches, rect);
-      _pinch = { dist0: _pinchDist(e.touches), scale0: _scale, mid, tx0: _translateX, ty0: _translateY };
+      const r = stage.getBoundingClientRect();
+      _pinch = { d0: _dist(e.touches), s0: _scale, mid: _mid(e.touches, r), tx0: _tx, ty0: _ty };
       _t = null;
       return;
     }
     if (e.touches.length === 1) {
       const t = e.touches[0];
-      _t = { x0: t.clientX, y0: t.clientY, t0: Date.now(), tx0: _translateX, ty0: _translateY };
-      _panning = _scale > 1;
+      _t = { x0: t.clientX, y0: t.clientY, t0: Date.now(), tx0: _tx, ty0: _ty };
+      _panning = _scale > 1.05;
       _pinch = null;
     }
   }
@@ -13622,68 +13651,61 @@ function cvGalleryView(idx, thumbEl = null) {
     if (e.touches.length === 2 && _pinch) {
       e.preventDefault();
       const stage = document.getElementById('lightboxStage');
-      const rect  = stage ? stage.getBoundingClientRect() : { left:0, top:0 };
-      const dist  = _pinchDist(e.touches);
-      const mid   = _pinchMid(e.touches, rect);
-      let newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, _pinch.scale0 * (dist / _pinch.dist0)));
-      const ratio = newScale / _pinch.scale0;
-      // Translate so pinch midpoint stays fixed on screen
-      _translateX = _pinch.tx0 * ratio + (mid.x - rect.width/2)  * (1 - ratio) + (mid.x - _pinch.mid.x);
-      _translateY = _pinch.ty0 * ratio + (mid.y - rect.height/2) * (1 - ratio) + (mid.y - _pinch.mid.y);
+      const r = stage.getBoundingClientRect();
+      const d = _dist(e.touches);
+      const mid = _mid(e.touches, r);
+      const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, _pinch.s0 * (d / _pinch.d0)));
+      const ratio = newScale / _pinch.s0;
+      // Keep pinch midpoint anchored
+      _tx = _pinch.tx0 * ratio + (mid.x - r.width/2)  * (1 - ratio) + (mid.x - _pinch.mid.x);
+      _ty = _pinch.ty0 * ratio + (mid.y - r.height/2) * (1 - ratio) + (mid.y - _pinch.mid.y);
       _scale = newScale;
       _applyZoom(false);
       return;
     }
-    if (e.touches.length === 1 && _t && _panning && _scale > 1) {
+    if (e.touches.length === 1 && _t && _panning) {
       e.preventDefault();
       const t = e.touches[0];
-      _translateX = _t.tx0 + (t.clientX - _t.x0);
-      _translateY = _t.ty0 + (t.clientY - _t.y0);
+      _tx = _t.tx0 + (t.clientX - _t.x0);
+      _ty = _t.ty0 + (t.clientY - _t.y0);
       _applyZoom(false);
     }
   }
 
   function _onEnd(e) {
     if (_pinch) {
-      if (_scale <= 1.05) _lbZoomResetInternal();
+      if (_scale < 1.08) _resetZoom();
       _pinch = null; _t = null;
       return;
     }
     if (!_t) return;
 
     const touch = e.changedTouches[0];
-    const dx  = touch.clientX - _t.x0;
-    const dy  = touch.clientY - _t.y0;
-    const dt  = Math.max(1, Date.now() - _t.t0);
+    const dx = touch.clientX - _t.x0, dy = touch.clientY - _t.y0;
+    const dt = Math.max(1, Date.now() - _t.t0);
     const adx = Math.abs(dx), ady = Math.abs(dy);
     const now = Date.now();
 
-    // ── Double-tap to zoom/reset at tap point ──
-    if (adx < 14 && ady < 14 && dt < 260) {
-      const tapDist = Math.hypot(touch.clientX - _lastTapX, touch.clientY - _lastTapY);
-      if (now - _lastTap < DBL_TAP_MS && tapDist < DBL_TAP_PX) {
-        if (_scale > 1) {
-          // Animate back to reset
-          const img = document.getElementById('lightboxImg');
-          if (img) { img.classList.remove('lb-no-transition'); }
-          _lbZoomResetInternal();
+    // Double-tap detection
+    if (adx < 14 && ady < 14 && dt < 250) {
+      const dist = Math.hypot(touch.clientX - _lastTapX, touch.clientY - _lastTapY);
+      if (now - _lastTap < DBL_MS && dist < DBL_PX) {
+        // DOUBLE TAP
+        if (_scale > 1.05) {
+          // Zoom out: animate back to fit
+          _scale = 1; _tx = 0; _ty = 0;
+          _applyZoom(true);
         } else {
-          // Zoom 2.5× centred exactly on tap point
-          const stage = document.getElementById('lightboxStage');
-          const img   = document.getElementById('lightboxImg');
-          if (stage && img) {
-            const sr = stage.getBoundingClientRect();
+          // Zoom in 2.5× centred on tap
+          const img = _activeImg();
+          if (img) {
             const ir = img.getBoundingClientRect();
-            // tap position relative to image centre
+            // Tap position relative to image natural centre
             const tapX = touch.clientX - (ir.left + ir.width  / 2);
             const tapY = touch.clientY - (ir.top  + ir.height / 2);
-            const newScale = 2.5;
-            // After scaling, we want the tap point to stay where it is:
-            // new_pos = tap * newScale, we want it at tap on screen → shift = tap*(1-newScale)
-            _scale = newScale;
-            _translateX = -tapX * (newScale - 1);
-            _translateY = -tapY * (newScale - 1);
-            img.classList.remove('lb-no-transition'); // animate the zoom
+            _scale = 2.5;
+            _tx = -tapX * (_scale - 1);
+            _ty = -tapY * (_scale - 1);
             _applyZoom(true);
           }
         }
@@ -13697,22 +13719,22 @@ function cvGalleryView(idx, thumbEl = null) {
       _lastTap = 0;
     }
 
-    // ── Swipe to navigate (only when not zoomed) ──
+    // Swipe to navigate — only when not zoomed
     if (_scale <= 1 && adx > ady && (adx > SWIPE_PX || adx / dt > SWIPE_VEL)) {
       lightboxNav(dx < 0 ? 1 : -1);
     }
-
     _t = null;
   }
 
   function _onCancel() { _t = null; _pinch = null; }
 
+  // CRITICAL: touchstart must be non-passive so we can preventDefault for pinch
   const stage = document.getElementById('lightboxStage');
   if (stage) {
-    stage.addEventListener('touchstart',  _onStart,  { passive: true });
+    stage.addEventListener('touchstart',  _onStart,  { passive: false });
     stage.addEventListener('touchmove',   _onMove,   { passive: false });
-    stage.addEventListener('touchend',    _onEnd,    { passive: true });
-    stage.addEventListener('touchcancel', _onCancel, { passive: true });
+    stage.addEventListener('touchend',    _onEnd,    { passive: true  });
+    stage.addEventListener('touchcancel', _onCancel, { passive: true  });
   }
 }());
 
