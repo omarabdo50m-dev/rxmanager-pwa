@@ -13480,7 +13480,7 @@ function openLightbox(idx, readonly = false, thumbEl = null) {
   overlay.classList.add('open');
 
   _lbBuildStrip();         // stage.clientWidth is now valid
-  _lbZoomReset();
+  _lbZoomReset();          // resets state + schedules _cacheMeasurements via rAF
   _lbSetPosition(false);   // instant jump — no animation on open
   _lbUpdateUI();
 
@@ -13551,10 +13551,15 @@ let _lbZoomReset = function() {};
 // ─────────────────────────────────────────────────────────────────────
 (function initLightboxGestures() {
   const MIN_SCALE = 1, MAX_SCALE = 5;
-  const ZOOM_DURATION = '0.25s cubic-bezier(.25,.46,.45,.94)';
+  const EASE = '0.22s cubic-bezier(.25,.46,.45,.94)';
 
-  // Per-image zoom state
+  // Zoom state
   let _scale = 1, _tx = 0, _ty = 0;
+
+  // Cached measurements — set once per image open, not per frame.
+  // Avoids getBoundingClientRect / layout reflow inside touchmove.
+  let _stageW = 0, _stageH = 0;  // stage pixel size
+  let _imgW   = 0, _imgH   = 0;  // rendered img size at scale=1 (object-fit:contain)
 
   function _currentImg() {
     const strip = document.getElementById('lbStrip');
@@ -13563,68 +13568,90 @@ let _lbZoomReset = function() {};
     return slide ? slide.querySelector('img') : null;
   }
 
-  function _clampPan(scale, tx, ty) {
-    // Clamp pan so the zoomed image never shows blank space inside the stage.
-    // Use the img's actual rendered rect (after object-fit:contain) for accuracy.
+  /** Call after each navigation / open to cache stable layout values. */
+  function _cacheMeasurements() {
     const stage = document.getElementById('lightboxStage');
     const img   = _currentImg();
-    if (!stage || !img) return { tx, ty };
-    const sw = stage.clientWidth,  sh = stage.clientHeight;
-    // getBoundingClientRect gives the rendered size before our transform
-    // Temporarily clear transform to measure natural rendered size
-    const prev = img.style.transform;
-    img.style.transform = 'none';
+    if (!stage || !img) { _stageW = window.innerWidth; _stageH = window.innerHeight; _imgW = _stageW; _imgH = _stageH; return; }
+    _stageW = stage.clientWidth  || window.innerWidth;
+    _stageH = stage.clientHeight || window.innerHeight;
+    // Measure rendered image size without transform interference
+    const savedT = img.style.transition;
+    const savedX = img.style.transform;
+    img.style.transition = 'none';
+    img.style.transform  = 'none';
     const r = img.getBoundingClientRect();
-    img.style.transform = prev;
-    const rw = r.width, rh = r.height;
-    // How much the zoomed image overflows each axis
-    const overW = Math.max(0, (rw * scale - sw) / 2);
-    const overH = Math.max(0, (rh * scale - sh) / 2);
+    img.style.transform  = savedX;
+    img.style.transition = savedT;
+    _imgW = r.width  || _stageW;
+    _imgH = r.height || _stageH;
+  }
+
+  /** Clamp translation so zoomed image never shows blank inside stage.
+   *  Pure math — zero DOM reads. */
+  function _clamp(scale, tx, ty) {
+    const overW = Math.max(0, (_imgW * scale - _stageW) / 2);
+    const overH = Math.max(0, (_imgH * scale - _stageH) / 2);
     return {
       tx: Math.max(-overW, Math.min(overW, tx)),
       ty: Math.max(-overH, Math.min(overH, ty)),
     };
   }
 
+  /** Write transform to img — no DOM reads. */
   function _applyZoom(animated) {
     const img = _currentImg();
     if (!img) return;
-    img.style.transition = animated ? `transform ${ZOOM_DURATION}` : 'none';
+    img.style.transition    = animated ? `transform ${EASE}` : 'none';
     img.style.transformOrigin = '50% 50%';
-    img.style.transform = `translate(${_tx}px,${_ty}px) scale(${_scale})`;
+    img.style.transform     = `translate(${_tx}px,${_ty}px) scale(${_scale})`;
   }
 
   function _resetZoom() {
-    const img = _currentImg();
     _scale = 1; _tx = 0; _ty = 0;
+    const img = _currentImg();
     if (img) {
-      img.style.transition = `transform ${ZOOM_DURATION}`;
-      img.style.transform  = '';
+      img.style.transition    = `transform ${EASE}`;
+      img.style.transform     = '';
       img.style.transformOrigin = '';
     }
+    // Re-cache after reset so next gesture has fresh measurements
+    requestAnimationFrame(_cacheMeasurements);
   }
-  // Expose globally
   window._lbZoomReset = _resetZoom;
   _lbZoomReset = _resetZoom;
 
-  // ── Gesture state ─────────────────────────────────────────────────
-  let _t       = null;   // single-touch state
-  let _pinch   = null;   // two-finger pinch state
+  // ── Gesture state ──────────────────────────────────────────────────
+  let _t     = null;   // single-touch tracking
+  let _pinch = null;   // two-finger pinch tracking
   let _lastTap = 0, _lastTapX = 0, _lastTapY = 0;
-  const DBL_MS = 280, DBL_PX = 40, SWIPE_PX = 42, SWIPE_VEL = 0.25;
+  const DBL_MS = 280, DBL_PX = 44, SWIPE_PX = 42, SWIPE_VEL = 0.25;
 
-  function _dist(t) { return Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY); }
-  function _midStage(t) {
+  function _dist(t) {
+    return Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  }
+
+  // Midpoint of two touches relative to stage centre — uses cached _stageW/H
+  function _mid(t) {
     const stage = document.getElementById('lightboxStage');
-    const r = stage ? stage.getBoundingClientRect() : {left:0,top:0,width:window.innerWidth,height:window.innerHeight};
-    return { x: (t[0].clientX+t[1].clientX)/2 - r.left - r.width/2,
-             y: (t[0].clientY+t[1].clientY)/2 - r.top  - r.height/2 };
+    const r = stage ? stage.getBoundingClientRect() : { left:0, top:0 };
+    return {
+      x: (t[0].clientX + t[1].clientX) / 2 - r.left - _stageW / 2,
+      y: (t[0].clientY + t[1].clientY) / 2 - r.top  - _stageH / 2,
+    };
   }
 
   function _onStart(e) {
     if (e.touches.length === 2) {
       e.preventDefault();
-      _pinch = { d0: _dist(e.touches), s0: _scale, mid0: _midStage(e.touches), tx0: _tx, ty0: _ty };
+      // Snapshot everything needed for the whole pinch gesture — no per-frame DOM reads
+      _pinch = {
+        d0:   _dist(e.touches),
+        s0:   _scale,
+        mid0: _mid(e.touches),
+        tx0:  _tx,
+        ty0:  _ty,
+      };
       _t = null;
       return;
     }
@@ -13638,32 +13665,37 @@ let _lbZoomReset = function() {};
   function _onMove(e) {
     if (e.touches.length === 2 && _pinch) {
       e.preventDefault();
-      const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, _pinch.s0 * (_dist(e.touches) / _pinch.d0)));
-      const mid = _midStage(e.touches);
-      // Anchor pinch midpoint: scale around it
-      const ratio = newScale / _pinch.s0;
-      let tx = _pinch.tx0 * ratio + (_pinch.mid0.x * (1 - ratio)) + (mid.x - _pinch.mid0.x);
-      let ty = _pinch.ty0 * ratio + (_pinch.mid0.y * (1 - ratio)) + (mid.y - _pinch.mid0.y);
-      const c = _clampPan(newScale, tx, ty);
+      const dNow    = _dist(e.touches);
+      const midNow  = _mid(e.touches);
+      const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, _pinch.s0 * (dNow / _pinch.d0)));
+      const ratio   = newScale / _pinch.s0;
+      // Scale around pinch midpoint + translate for midpoint drift
+      let tx = _pinch.tx0 * ratio + _pinch.mid0.x * (1 - ratio) + (midNow.x - _pinch.mid0.x);
+      let ty = _pinch.ty0 * ratio + _pinch.mid0.y * (1 - ratio) + (midNow.y - _pinch.mid0.y);
+      const c = _clamp(newScale, tx, ty);
       _scale = newScale; _tx = c.tx; _ty = c.ty;
       _applyZoom(false);
       return;
     }
     if (e.touches.length === 1 && _t && _scale > 1.02) {
-      // Panning while zoomed — prevent page scroll
       e.preventDefault();
       const t = e.touches[0];
-      const c = _clampPan(_scale, _t.tx0 + (t.clientX - _t.x0), _t.ty0 + (t.clientY - _t.y0));
+      const c = _clamp(_scale, _t.tx0 + (t.clientX - _t.x0), _t.ty0 + (t.clientY - _t.y0));
       _tx = c.tx; _ty = c.ty;
       _applyZoom(false);
     }
   }
 
   function _onEnd(e) {
-    // Finish pinch
     if (_pinch) {
-      if (_scale < 1.1) _resetZoom();
-      else { const c = _clampPan(_scale, _tx, _ty); _tx = c.tx; _ty = c.ty; _applyZoom(true); }
+      // Snap back to fit if barely pinched; otherwise settle with clamp
+      if (_scale < 1.1) {
+        _resetZoom();
+      } else {
+        const c = _clamp(_scale, _tx, _ty);
+        _tx = c.tx; _ty = c.ty;
+        _applyZoom(true);
+      }
       _pinch = null; _t = null;
       return;
     }
@@ -13675,23 +13707,21 @@ let _lbZoomReset = function() {};
     const adx = Math.abs(dx), ady = Math.abs(dy);
     const now = Date.now();
 
-    // Double-tap to zoom / unzoom
-    if (adx < 14 && ady < 14 && dt < 260) {
-      const dist = Math.hypot(touch.clientX - _lastTapX, touch.clientY - _lastTapY);
-      if (now - _lastTap < DBL_MS && dist < DBL_PX) {
+    // Double-tap
+    if (adx < 16 && ady < 16 && dt < 260) {
+      const tapDist = Math.hypot(touch.clientX - _lastTapX, touch.clientY - _lastTapY);
+      if (now - _lastTap < DBL_MS && tapDist < DBL_PX) {
         if (_scale > 1.05) {
           _resetZoom();
         } else {
-          // Zoom 2.8× centred on tap point, relative to stage centre
+          // Zoom 2.8× centred on tap — uses cached stage size, zero reflow
           const stage = document.getElementById('lightboxStage');
-          const r = stage ? stage.getBoundingClientRect() : {left:0,top:0,width:window.innerWidth,height:window.innerHeight};
-          const tapX = touch.clientX - r.left - r.width  / 2;
-          const tapY = touch.clientY - r.top  - r.height / 2;
-          const newScale = 2.8;
-          let tx = -tapX * (newScale - 1);
-          let ty = -tapY * (newScale - 1);
-          const c = _clampPan(newScale, tx, ty);
-          _scale = newScale; _tx = c.tx; _ty = c.ty;
+          const r = stage ? stage.getBoundingClientRect() : { left:0, top:0 };
+          const tapX = touch.clientX - r.left - _stageW / 2;
+          const tapY = touch.clientY - r.top  - _stageH / 2;
+          const ns = 2.8;
+          const c = _clamp(ns, -tapX * (ns - 1), -tapY * (ns - 1));
+          _scale = ns; _tx = c.tx; _ty = c.ty;
           _applyZoom(true);
         }
         _lastTap = 0; _t = null;
@@ -13711,10 +13741,13 @@ let _lbZoomReset = function() {};
 
   function _onCancel() { _t = null; _pinch = null; }
 
-  // Attach directly — DOMContentLoaded has already fired by the time
-  // this script runs (inline script at bottom of body).
-  // Use event delegation on document so it still works even if the
-  // lightbox overlay is rebuilt/re-inserted into the DOM.
+  // Cache measurements whenever a new image becomes active
+  // lightboxNav / openLightbox both call _lbZoomReset which ends with requestAnimationFrame(_cacheMeasurements)
+  // Also cache on image load in case natural size wasn't available yet
+  document.addEventListener('load', (e) => {
+    if (e.target.tagName === 'IMG' && e.target.closest('#lbStrip')) _cacheMeasurements();
+  }, true);
+
   document.addEventListener('touchstart',  (e) => { if (e.target.closest('#lightboxStage')) _onStart(e);  }, { passive: false });
   document.addEventListener('touchmove',   (e) => { if (e.target.closest('#lightboxStage')) _onMove(e);   }, { passive: false });
   document.addEventListener('touchend',    (e) => { if (e.target.closest('#lightboxStage')) _onEnd(e);    }, { passive: true  });
