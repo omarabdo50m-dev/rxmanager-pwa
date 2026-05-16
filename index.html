@@ -3860,7 +3860,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   border: none;
   box-shadow: var(--shadow-sm);
   margin-bottom: var(--space-2);
-  padding: 13px var(--space-4) 13px var(--space-4);
+  padding: 17px var(--space-4) 17px var(--space-4);
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -3893,7 +3893,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   display: none;
 }
 
-/* Colored dot — replaces stripe, subtle category identifier */
+/* Colored dot — stays same size */
 .lib-cat-tile__dot {
   width: 8px;
   height: 8px;
@@ -3905,11 +3905,11 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 
 /* Category name */
 .lib-cat-tile__name {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
   color: var(--color-text-primary);
   line-height: 1.3;
-  letter-spacing: -.1px;
+  letter-spacing: -.2px;
   flex: 1;
   min-width: 0;
   white-space: nowrap;
@@ -3922,20 +3922,20 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 
 /* Drug count badge */
 .lib-cat-tile__count {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--color-text-tertiary);
   background: var(--color-border);
   border-radius: 20px;
-  padding: 2px 9px;
+  padding: 3px 11px;
   flex-shrink: 0;
 }
 
 /* Chevron caret */
 .lib-cat-tile::after {
   content: '';
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-right: 1.5px solid var(--color-text-tertiary);
   border-top: 1.5px solid var(--color-text-tertiary);
   transform: rotate(45deg);
