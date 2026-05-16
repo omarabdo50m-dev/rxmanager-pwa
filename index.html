@@ -5761,10 +5761,12 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 /* ── Phase 12: Generic adult dose highlight box ──────── */
 .dv-generic-dose-p12 {
   background: var(--color-brand-light);
-  border: 1.5px solid rgba(0,133,254,.18);
-  border-radius: var(--radius-sm);
+  border: none;
+  border-top: 1px solid rgba(0,133,254,.18);
+  border-bottom: 1px solid rgba(0,133,254,.18);
+  border-radius: 0;
   padding: var(--space-3) var(--space-4);
-  margin: 0 var(--space-4) var(--space-3);
+  margin: 0;
 }
 .dv-generic-dose-lbl-p12 {
   font-size: 9px;
@@ -16292,7 +16294,7 @@ async function openDrugViewer(id) {
         <span class="cv-depth-card-title-p11" style="flex:1">Brands &amp; Formulas</span>
         ${fmtFilterBtn}
       </div>
-      <div class="cv-depth-card-body-p11" style="padding-top:var(--space-2)">
+      <div class="cv-depth-card-body-p11" style="padding:0">
         ${brandsBodyHtml}
       </div>
     </div>`;
@@ -17481,8 +17483,8 @@ function _renderDvFormulaPanelOnly(drugId, availableFormulas) {
       <span style="font-size:11px">${fd.ico}</span><span>${esc(fd.lbl)}</span>
     </div>`;
   }).join('');
-  return `<div class="formula-filter-panel" id="dvFormulaPanel_${drugId}" style="border:none;border-top:1px solid var(--color-border);border-radius:0;background:transparent;margin-bottom:10px">
-    <div class="formula-filter-inner" style="padding:8px var(--space-4) 4px">
+  return `<div class="formula-filter-panel" id="dvFormulaPanel_${drugId}" style="border:none;border-top:1px solid var(--color-border);border-radius:0;background:transparent;">
+    <div class="formula-filter-inner" style="padding:var(--space-2) var(--space-4) var(--space-3)">
       <div class="formula-filter-title">
         <span>Filter by Formula</span>
         <button class="formula-filter-clear" onclick="clearDvFormulaFilter('${drugId}')"><i class="ph ph-x" style="font-size:10px;vertical-align:0;margin-right:2px"></i>Clear</button>
