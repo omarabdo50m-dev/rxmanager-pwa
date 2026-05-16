@@ -3801,6 +3801,11 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
    Label: text-sm (13px) color-text-secondary.
    Chevron: ph-caret-right color-text-tertiary.
    ─────────────────────────────────────────────────────────────── */
+.lib-drug-card--search-brand{
+  flex-direction:column !important;
+  align-items:stretch !important;
+  padding:0 !important;
+}
 .lib-drug-card{
   background:var(--color-surface);
   border-radius:var(--radius-lg);    /* 14px — matches condition card */
@@ -14818,8 +14823,8 @@ async function renderLib() {
       const cardClickAction = _libSelectMode ? `toggleLibDrugSelect('${d.id}', event)` : '';
       const innerClickAction = _libSelectMode ? `toggleLibDrugSelect('${d.id}', event)` : `openDrugViewer('${d.id}')`;
 
-      html += `<div class="lib-drug-card${_libSelectMode?' selectable':''}${isSelected?' selected':''}" id="libcard_${d.id}" data-drugid="${d.id}"${_libSelectMode?` onclick="${cardClickAction}"`:''}}>
-        <div style="display:flex;align-items:center;gap:var(--space-3);padding:0;flex:1;cursor:pointer" onclick="${innerClickAction}">
+      html += `<div class="lib-drug-card lib-drug-card--search-brand${_libSelectMode?' selectable':''}${isSelected?' selected':''}" id="libcard_${d.id}" data-drugid="${d.id}"${_libSelectMode?` onclick="${cardClickAction}"`:''}}>
+        <div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);flex:1;cursor:pointer" onclick="${innerClickAction}">
           ${_libSelectMode
             ? `<div class="lib-sel-check${isSelected?' checked':''}"></div>`
             : `<div class="rx-icon-circle" style="background:${clr.s}18;color:${clr.s}"><i class="ph ph-pill"></i></div>`}
