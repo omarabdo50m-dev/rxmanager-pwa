@@ -13607,15 +13607,28 @@ let _lbZoomReset = function() {};
     img.style.transform     = `translate(${_tx}px,${_ty}px) scale(${_scale})`;
   }
 
+  /** Animated zoom-out (double-tap). Sets transition BEFORE clearing transform. */
+  function _animatedReset() {
+    _scale = 1; _tx = 0; _ty = 0;
+    const img = _currentImg();
+    if (!img) return;
+    img.style.transition = `transform ${EASE}`;
+    // Force the browser to register the transition before we change the value
+    void img.offsetWidth;
+    img.style.transform       = 'translate(0px,0px) scale(1)';
+    img.style.transformOrigin = '50% 50%';
+    requestAnimationFrame(_cacheMeasurements);
+  }
+
+  /** Instant reset — used by navigation / close where animation would look wrong. */
   function _resetZoom() {
     _scale = 1; _tx = 0; _ty = 0;
     const img = _currentImg();
     if (img) {
-      img.style.transition    = `transform ${EASE}`;
-      img.style.transform     = '';
+      img.style.transition      = 'none';
+      img.style.transform       = '';
       img.style.transformOrigin = '';
     }
-    // Re-cache after reset so next gesture has fresh measurements
     requestAnimationFrame(_cacheMeasurements);
   }
   window._lbZoomReset = _resetZoom;
@@ -13690,7 +13703,7 @@ let _lbZoomReset = function() {};
     if (_pinch) {
       // Snap back to fit if barely pinched; otherwise settle with clamp
       if (_scale < 1.1) {
-        _resetZoom();
+        _animatedReset();
       } else {
         const c = _clamp(_scale, _tx, _ty);
         _tx = c.tx; _ty = c.ty;
@@ -13712,7 +13725,7 @@ let _lbZoomReset = function() {};
       const tapDist = Math.hypot(touch.clientX - _lastTapX, touch.clientY - _lastTapY);
       if (now - _lastTap < DBL_MS && tapDist < DBL_PX) {
         if (_scale > 1.05) {
-          _resetZoom();
+          _animatedReset();
         } else {
           // Zoom 2.8× centred on tap — uses cached stage size, zero reflow
           const stage = document.getElementById('lightboxStage');
