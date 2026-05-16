@@ -3836,6 +3836,221 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
    Label: text-sm (13px) color-text-secondary.
    Chevron: ph-caret-right color-text-tertiary.
    ─────────────────────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════
+   PHASE 2 — DRUG LIBRARY CATEGORY GRID
+   ════════════════════════════════════════════════════════════ */
+
+/* Grid container — 2-column layout, full bleed inside lib-scroll-body */
+.lib-cat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4) 80px;
+}
+
+/* "All Drugs" tile — spans both columns */
+.lib-cat-tile--all {
+  grid-column: 1 / -1;
+}
+
+/* Base tile */
+.lib-cat-tile {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-4) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .12s ease, box-shadow .12s ease, background .15s;
+  min-height: 104px;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.lib-cat-tile:active {
+  transform: scale(.97);
+  box-shadow: none;
+}
+
+/* Left accent strip — 3px using category colour */
+.lib-cat-tile::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--tile-accent);
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+}
+
+/* Icon bubble */
+.lib-cat-tile__ico {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  background: var(--tile-ico-bg);
+}
+.lib-cat-tile--all .lib-cat-tile__ico {
+  width: 44px;
+  height: 44px;
+  font-size: 24px;
+}
+
+/* Category name */
+.lib-cat-tile__name {
+  font-size: var(--text-sm-size);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+  letter-spacing: -.1px;
+}
+.lib-cat-tile--all .lib-cat-tile__name {
+  font-size: var(--text-base-size);
+}
+
+/* Drug count */
+.lib-cat-tile__count {
+  font-size: var(--text-xs-size);
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  letter-spacing: .01em;
+}
+
+/* Staggered entrance animation */
+@keyframes lib-tile-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.lib-cat-tile {
+  animation: lib-tile-in .22s cubic-bezier(.22,.68,0,1.2) both;
+}
+
+/* Light mode */
+[data-theme="light"] .lib-cat-tile {
+  background: #ffffff;
+  border-color: var(--color-border);
+}
+@media (prefers-color-scheme: light) {
+  html:not([data-theme="dark"]) .lib-cat-tile {
+    background: #ffffff;
+    border-color: var(--color-border);
+  }
+}
+
+/* ── end PHASE 2 grid styles ── */
+
+/* ════════════════════════════════════════════════════════════
+   PHASE 5 — POLISH & CLEANUP
+   ════════════════════════════════════════════════════════════ */
+
+/* 5.5 — Hide legacy category dropdown button (replaced by grid nav) */
+#libCatDropdownBtn {
+  display: none !important;
+}
+
+/* 5.6 — Keyboard focus ring for category tiles (role=button + tabindex=0) */
+.lib-cat-tile:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+/* 5.6 — Keyboard focus ring for lib back button */
+.lib-back-btn:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  background: rgba(59,130,246,.08);
+}
+
+/* ════════════════════════════════════════════════════════════
+   PHASE 3 — BACK BUTTON + SLIDE TRANSITION
+   ════════════════════════════════════════════════════════════ */
+
+/* Back chevron — hidden by default, shown when libView === 'list' */
+.lib-back-btn {
+  width: 36px;
+  height: 36px;
+  display: none;               /* _updateLibBackBtn() switches to flex */
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: var(--color-brand);
+  font-size: 22px;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-right: var(--space-1);
+  -webkit-tap-highlight-color: transparent;
+  transition: background .15s, transform .10s;
+}
+.lib-back-btn:active {
+  background: rgba(59,130,246,.12);
+  transform: scale(.90);
+}
+
+/* ── LIB SCOPE CHIP (Phase 4) ───────────────────────────────── */
+.lib-scope-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 4px 12px 8px;
+  flex-shrink: 0;
+}
+.lib-scope-chip__ico {
+  font-size: 13px;
+}
+.lib-scope-chip__name {
+  font-size: var(--text-xs-size);
+  font-weight: 700;
+  color: var(--color-brand);
+  flex: 1;
+}
+.lib-scope-chip__clear {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-border-strong);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.lib-scope-chip__clear:active {
+  opacity: .7;
+}
+
+/* #libItems — transition layer for grid ↔ list swap */
+#libItems {
+  transition: opacity .16s ease, transform .16s cubic-bezier(.22,.68,0,1);
+}
+#libItems.lib-view-out {
+  opacity: 0;
+  transform: translateX(-14px);
+  pointer-events: none;
+}
+#libItems.lib-view-in {
+  opacity: 0;
+  transform: translateX(14px);
+  pointer-events: none;
+}
+
+/* ── end PHASE 3 styles ── */
+
 .lib-drug-card--search-brand{
   flex-direction:column !important;
   align-items:stretch !important;
@@ -8440,6 +8655,13 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   <div class="lib-fixed-header">
     <div class="hdr">
       <div class="hdr-top">
+        <!-- Phase 3: back button — hidden in grid view, shown in list view -->
+        <button
+          class="lib-back-btn"
+          id="libBackBtn"
+          onclick="exitToGrid()"
+          aria-label="Back to categories"
+        ><i class="ph ph-caret-left"></i></button>
         <div class="hdr-title-block">
           <span class="hdr-app-name">RxManager Pro</span>
         </div>
@@ -8467,6 +8689,14 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
           </button>
         </div>
       </div>
+    </div>
+    <!-- Phase 4: Category scope chip — shown when libView==='list' + search active -->
+    <div class="lib-scope-chip" id="libScopeChip" style="display:none">
+      <span class="lib-scope-chip__ico" id="libScopeChipIco"></span>
+      <span class="lib-scope-chip__name" id="libScopeChipName"></span>
+      <button class="lib-scope-chip__clear" onclick="exitToGrid();document.getElementById('libSearch').value='';debouncedRenderLib();" aria-label="Clear category filter">
+        <i class="ph ph-x" style="font-size:10px"></i>
+      </button>
     </div>
     <!-- Active filter summary strip -->
     <div class="lib-filter-active-strip" id="libFilterStrip">
@@ -9629,6 +9859,44 @@ const TYPE_MIGRATION_MAP = {
   'Other':                         {group:'Miscellaneous',          subgroup:''},
 };
 
+// ═══════════════════════════════════════════════════════
+// PHASE 1 — buildCategoryGridData
+// Builds the ordered category array for the lib grid.
+// "All" is always first with a live drug count.
+// Categories with 0 drugs are excluded.
+// ═══════════════════════════════════════════════════════
+async function buildCategoryGridData() {
+  const lib = await DB.getAll('library');
+  // Count drugs per top-level group
+  const counts = {};
+  lib.forEach(d => {
+    const g = d.group || d.type || 'Miscellaneous';
+    counts[g] = (counts[g] || 0) + 1;
+  });
+  // Build ordered list — DRUG_GROUPS defines canonical order
+  const groups = Object.keys(DRUG_GROUPS).filter(g => (counts[g] || 0) > 0);
+  return [
+    {
+      id:    'All',
+      name:  'All Drugs',
+      ico:   '📚',
+      s:     'var(--color-brand)',
+      bg:    'var(--color-brand-light)',
+      t:     'var(--color-brand)',
+      count: lib.length,
+    },
+    ...groups.map(g => ({
+      id:    g,
+      name:  g,
+      ico:   DRUG_GROUPS[g].ico,
+      s:     DRUG_GROUPS[g].s,
+      bg:    DRUG_GROUPS[g].bg,
+      t:     DRUG_GROUPS[g].t,
+      count: counts[g] || 0,
+    })),
+  ];
+}
+
 // Helper: resolve group/subgroup from a drug record (supports old type field)
 function resolveGroupSub(drug) {
   if (drug.group && DRUG_GROUPS[drug.group]) return {group: drug.group, subgroup: drug.subgroup || ''};
@@ -10350,6 +10618,7 @@ const S = {
   currentDrugEditId: null,
   pendingDrug: null,     // drug from lib to add to entry
   confirmAction: null,
+  libView: 'grid',       // 'grid' | 'list' — Drug Library view mode
 };
 
 // Global viewer language: 'ar' (default) or 'en'
@@ -10479,6 +10748,11 @@ window.addEventListener('popstate', () => {
     _closeLightboxSilent();
     return;
   }
+  // Phase 3: if Drug Library is open in list view, back = return to grid
+  if (S.view === 'lib' && S.libView === 'list') {
+    exitToGrid();
+    return;
+  }
   // Only close true overlay screens — lib/fav are peer nav tabs, not history entries
   const open = document.querySelector('.screen.open');
   if (open && open.id !== 'libScr' && open.id !== 'favsScr') open.classList.remove('open');
@@ -10539,6 +10813,11 @@ function setView(view) {
   } else if (view === 'fav') {
     renderFavourites();
   } else {
+    // Always land on the category grid when opening the Drugs tab
+    S.libView = 'grid';
+    S.activeLibCat = 'All';
+    _updateLibBackBtn();
+    _updateLibSearchPlaceholder();
     renderLib();
   }
 }
@@ -13599,7 +13878,68 @@ function setCvTab(tab, animate) {
   }
 }());
 
-// ── Collapsible sections ─────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+// PHASE 3 — LIB SCREEN SWIPE GESTURE
+// Left-to-right swipe on #libScr triggers exitToGrid() when in list view.
+// Only captures clearly horizontal gestures; never hijacks vertical scroll.
+// ═══════════════════════════════════════════════════════════════════
+(function initLibSwipe() {
+  const DEAD_ZONE_PX       = 12;   // ignore sub-threshold movements
+  const VELOCITY_THRESHOLD = 0.25; // px/ms — fast flick triggers back
+  const DISTANCE_MIN_PX    = 48;   // minimum drag distance to trigger back
+
+  let _t = null; // touch state
+
+  function _onTouchStart(e) {
+    if (e.touches.length !== 1) return;
+    // Only active in list view
+    if (S.libView !== 'list') return;
+    const t = e.touches[0];
+    _t = { x0: t.clientX, y0: t.clientY, t0: Date.now(), captured: false };
+  }
+
+  function _onTouchMove(e) {
+    if (!_t) return;
+    const t   = e.touches[0];
+    const dx  = t.clientX - _t.x0;
+    const dy  = t.clientY - _t.y0;
+    const adx = Math.abs(dx);
+    const ady = Math.abs(dy);
+    if (!_t.captured) {
+      if (adx < DEAD_ZONE_PX && ady < DEAD_ZONE_PX) return;
+      // Vertical dominant → let scroll happen
+      if (ady > adx * 1.2) { _t = null; return; }
+      // Only capture left-to-right (positive dx) — right-to-left is normal scrolling
+      if (dx < 0) { _t = null; return; }
+      _t.captured = true;
+    }
+    // Don't prevent default — let the scroll container decide;
+    // we only act on touchend so vertical scroll is never blocked.
+  }
+
+  function _onTouchEnd(e) {
+    if (!_t || !_t.captured) { _t = null; return; }
+    const t        = e.changedTouches[0];
+    const dx       = t.clientX - _t.x0;
+    const dt       = Math.max(1, Date.now() - _t.t0);
+    const velocity = dx / dt;
+    // Trigger back if fast flick OR dragged far enough rightward
+    if (velocity > VELOCITY_THRESHOLD || dx > DISTANCE_MIN_PX) {
+      exitToGrid();
+    }
+    _t = null;
+  }
+
+  function _onTouchCancel() { _t = null; }
+
+  const scr = document.getElementById('libScr');
+  if (scr) {
+    scr.addEventListener('touchstart',  _onTouchStart,  { passive: true });
+    scr.addEventListener('touchmove',   _onTouchMove,   { passive: true });
+    scr.addEventListener('touchend',    _onTouchEnd,    { passive: true });
+    scr.addEventListener('touchcancel', _onTouchCancel, { passive: true });
+  }
+}());
 function cvToggleColl(hdr) {
   const body  = hdr.nextElementSibling;
   const arrow = hdr.querySelector('.cv-coll-hdr-arrow');
@@ -14633,6 +14973,93 @@ function setLibCat(c) {
   renderLib();
 }
 
+// ═══════════════════════════════════════════════════════
+// PHASE 1 — Category grid navigation
+// ═══════════════════════════════════════════════════════
+
+// Enter a category: switch from grid view to drug list view for that group.
+// 'All' is a valid groupName — shows the full drug list with no category filter.
+function enterCategory(groupName) {
+  _libSlideTransition(() => {
+    S.activeLibCat = groupName;
+    S.libView = 'list';
+    _updateLibBackBtn();
+    _updateLibSearchPlaceholder();
+  });
+}
+
+// Return to the category grid from any list view.
+function exitToGrid() {
+  _libSlideTransition(() => {
+    S.activeLibCat = 'All';
+    S.libView = 'grid';
+    _updateLibBackBtn();
+    _updateLibSearchPlaceholder();
+  });
+}
+
+// Shared slide transition for grid ↔ list swap.
+// Accepts a state-mutation callback; runs it between the out and in phases.
+function _libSlideTransition(mutate) {
+  const cont = document.getElementById('libItems');
+  if (!cont) { mutate(); renderLib(); return; }
+
+  // Phase out: fade + slide left
+  cont.classList.add('lib-view-out');
+
+  setTimeout(() => {
+    cont.classList.remove('lib-view-out');
+    // Apply state changes while content is invisible
+    mutate();
+    // Position the new content off-screen right before revealing
+    cont.classList.add('lib-view-in');
+    renderLib().then(() => {
+      // Force a reflow so the browser registers lib-view-in before removing it
+      cont.getBoundingClientRect();
+      cont.classList.remove('lib-view-in');
+    });
+  }, 160); // matches transition duration
+}
+
+// Show/hide the back button and update the screen title to reflect current view.
+// Called whenever libView changes.
+function _updateLibBackBtn() {
+  const btn   = document.getElementById('libBackBtn');
+  const title = document.getElementById('libScrTitle');
+  if (!btn || !title) return;
+  if (S.libView === 'list') {
+    btn.style.display = 'flex';
+    title.textContent = S.activeLibCat === 'All' ? 'All Drugs' : S.activeLibCat;
+  } else {
+    btn.style.display = 'none';
+    title.textContent = 'Drug Library';
+  }
+  // Phase 4: show/hide the category scope chip
+  const chip     = document.getElementById('libScopeChip');
+  const chipIco  = document.getElementById('libScopeChipIco');
+  const chipName = document.getElementById('libScopeChipName');
+  if (!chip || !chipIco || !chipName) return;
+  if (S.libView === 'list' && S.activeLibCat && S.activeLibCat !== 'All') {
+    const catData = DRUG_GROUPS[S.activeLibCat];
+    chipIco.textContent  = catData ? catData.ico : '📁';
+    chipName.textContent = `Searching in: ${S.activeLibCat}`;
+    chip.style.display   = 'flex';
+  } else {
+    chip.style.display = 'none';
+  }
+  _updateLibSearchPlaceholder();
+}
+
+// Update search bar placeholder to hint at current scope.
+// Called whenever libView changes.
+function _updateLibSearchPlaceholder() {
+  const inp = document.getElementById('libSearch');
+  if (!inp) return;
+  inp.placeholder = (S.libView === 'list' && S.activeLibCat !== 'All')
+    ? 'Search all drugs\u2026'
+    : 'Search drugs, class, use\u2026';
+}
+
 // 250ms debounced wrapper for lib search — avoids hitting DB on every keystroke
 let _libSearchTimer;
 function debouncedRenderLib() {
@@ -14706,9 +15133,64 @@ function _scheduleLibSearchLog(q) {
   }, 600);
 }
 
+// ═══════════════════════════════════════════════════════
+// PHASE 2 — renderCategoryGrid
+// Renders the 2-column category tile grid inside #libItems.
+// Only called when libView === 'grid' and search is empty.
+// ═══════════════════════════════════════════════════════
+async function renderCategoryGrid() {
+  const cont = document.getElementById('libItems');
+  if (!cont) return;
+
+  // Clear any leftover padding from list-view renders
+  cont.style.paddingBottom = '';
+
+  const categories = await buildCategoryGridData();
+
+  if (!categories.length) {
+    cont.innerHTML = `<div class="empty-state">
+      <div class="empty-icon"><i class="ph ph-books"></i></div>
+      <div class="empty-title">Library is empty</div>
+      <div class="empty-body">Add drugs using the <strong>+</strong> button</div>
+    </div>`;
+    return;
+  }
+
+  cont.innerHTML = `<div class="lib-cat-grid">${
+    categories.map((cat, i) => {
+      const isAll  = cat.id === 'All';
+      // Stagger: 30ms per tile, capped at 180ms so last tile still feels instant
+      const delay  = Math.min(i * 30, 180);
+      const action = isAll
+        ? `enterCategory('All')`
+        : `enterCategory('${esc(cat.id)}')`;
+      return `<div
+        class="lib-cat-tile${isAll ? ' lib-cat-tile--all' : ''}"
+        style="--tile-accent:${cat.s};--tile-ico-bg:${cat.bg};animation-delay:${delay}ms"
+        onclick="${action}"
+        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${action}}"
+        role="button"
+        tabindex="0"
+        aria-label="${esc(cat.name)}, ${cat.count} drug${cat.count !== 1 ? 's' : ''}"
+      >
+        <div class="lib-cat-tile__ico">${cat.ico}</div>
+        <div class="lib-cat-tile__name">${esc(cat.name)}</div>
+        <div class="lib-cat-tile__count">${cat.count} drug${cat.count !== 1 ? 's' : ''}</div>
+      </div>`;
+    }).join('')
+  }</div>`;
+}
+
 async function renderLib() {
   renderLibCats();
   const q = (document.getElementById('libSearch')?.value || '').toLowerCase().trim();
+
+  // ── PHASE 2: show category grid when no search and grid view is active ──
+  if (!q && S.libView === 'grid') {
+    await renderCategoryGrid();
+    return;
+  }
+
   const [lib, allProducts] = await Promise.all([DB.getAll('library'), DB.getAll('products')]);
 
   const cont = document.getElementById('libItems');
