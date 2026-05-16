@@ -6131,7 +6131,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .cv-hdr-specialty-tag {
    2px stroke + --color-brand = exact match with search-inp border.
    Width: calc(100% - 32px) centred → outer edge sits 16px from
    the tab's own edge, aligning it with the first iteration pill
-   below (.cv-iter-tabs-wrap has padding: 0 var(--space-4) = 16px).
+   below (.cv-iter-tabs-wrap has padding: 0 var(--space-3) = 12px).
    Top two corners rounded, bottom flush with the strip.
    ──────────────────────────────────────────────────────────────── */
 .cv-tab-btn::after {
@@ -6524,7 +6524,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 /* Inactive: rgba white bg + border on dark bg. Active: chip-active */
 /* tokens so light/dark mode flips automatically.                   */
 .cv-iter-tabs-wrap {
-  padding:var(--space-2) var(--space-4) 0;
+  padding:var(--space-2) var(--space-3) 0;
   background:transparent;
   border-bottom:none;
   /* Critical: prevent the chip strip from causing horizontal overflow on the panel */
@@ -6584,7 +6584,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   border-radius:var(--radius-md);
   border:1px solid var(--color-border);
   box-shadow:var(--shadow-sm);
-  margin:0 var(--space-4) 0;
+  margin:0 var(--space-3) 0;
   overflow:hidden;
   /* Ensure block never exceeds panel width */
   max-width: 100%;
@@ -6733,11 +6733,11 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 
 /* Brand name — prominent */
 .cv-rx-brand-name {
-  font-size:var(--text-lg-size);
-  font-weight:700;
+  font-size:var(--text-md-size);
+  font-weight:600;
   color:var(--color-text-primary);
-  line-height:var(--text-lg-height);
-  letter-spacing:-.2px;
+  line-height:var(--text-md-height);
+  letter-spacing:-.1px;
   word-break:break-word;
 }
 .cv-rx-brand-name.linked {
@@ -6968,10 +6968,10 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   display:flex;
   gap:var(--space-3);
   align-items:flex-start;
-  margin:var(--space-2) var(--space-4) 0;
+  margin:var(--space-2) var(--space-3) 0;
   padding:var(--space-3) var(--space-4);
-  background:var(--color-caution-light);
-  border:1px solid rgba(217,119,6,.2);
+  background:var(--color-info-light);
+  border:1px solid rgba(0,133,254,.20);
   border-radius:var(--radius-md);
 }
 .cv-iter-note-ico { font-size:var(--text-base-size); flex-shrink:0; margin-top:1px; }
@@ -7264,7 +7264,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   text-transform:uppercase;
   letter-spacing:.08em;
   color:var(--color-text-tertiary);
-  padding:var(--space-3) var(--space-4) var(--space-1);
+  padding:var(--space-3) var(--space-3) var(--space-1);
   display:flex;
   align-items:center;
   gap:var(--space-2);
@@ -12868,7 +12868,7 @@ function _cvRenderPrescription(rx, agePrefix) {
   // Iteration note card (outside the white block, below it)
   if (rx.iteration_note_ar || rx.iteration_note) {
     html += `<div class="cv-iter-note-card">
-      <span class="cv-iter-note-ico"><i class="ph ph-lightbulb" style="color:var(--color-caution)"></i></span>
+      <span class="cv-iter-note-ico"><i class="ph ph-lightbulb" style="color:var(--color-brand)"></i></span>
       <div style="flex:1;min-width:0">
         ${rx.iteration_note_ar ? `<div class="cv-iter-note-ar" dir="rtl">${esc(rx.iteration_note_ar)}</div>` : ''}
         ${rx.iteration_note    ? `<div class="cv-iter-note-en">${esc(rx.iteration_note)}</div>`             : ''}
