@@ -5290,6 +5290,31 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   background: var(--color-bg);
   padding: var(--space-4) var(--space-4) var(--space-4);
 }
+/* Group › subgroup breadcrumb — sits above the drug name */
+.dv-hero-p12-breadcrumb-line {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255,255,255,.38);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin-bottom: var(--space-2);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dv-hero-p12-breadcrumb-sep {
+  color: rgba(255,255,255,.22);
+}
+/* App name in drug viewer header — matches other screens' hdr-app-name */
+.dv-hdr-app-name {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+  color: var(--color-text-secondary) !important;
+  white-space: nowrap;
+}
 .dv-hero-p12-breadcrumb {
   display: flex;
   align-items: center;
@@ -9615,7 +9640,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
     <button class="cc-screen-header__back" onclick="_dvFormulaFilter.clear();_dvFormulaPanelOpen=false;_closeDrugViewer()" aria-label="Back">
       <i class="ph ph-arrow-left"></i>
     </button>
-    <span class="cc-screen-header__title" id="dvScrTitle">Drug Info</span>
+    <span class="cc-screen-header__title dv-hdr-app-name">RxManager Pro</span>
     <button class="cc-screen-header__action" id="dvFavBtn" onclick="toggleFavDrugViewer()" title="Favourite" style="background:none;border:none;padding:3px;font-size:20px;">
       <i class="ph ph-star" style="font-size:20px"></i>
     </button>
@@ -15955,7 +15980,7 @@ async function openDrugViewer(id) {
   const clr = catClr(gs.group);
 
   // ── Header ───────────────────────────────────────────────────
-  document.getElementById('dvScrTitle').textContent = drug.name;
+  // Header now shows app name — dvScrTitle not used
   const favDrugs = JSON.parse(localStorage.getItem('rxmgr_fav_drugs') || '[]');
   document.getElementById('dvFavBtn').innerHTML = favDrugs.includes(id) ? '<i class="ph-fill ph-star" style="font-size:20px;color:var(--color-caution)"></i>' : '<i class="ph ph-star" style="font-size:20px"></i>';
 
@@ -15976,6 +16001,10 @@ async function openDrugViewer(id) {
   // Breadcrumb (group › subgroup), combo tags, and source citation collapse into
   // the first "Drug Details" collapsible section immediately below the hero.
   html += `<div class="dv-hero-p12">
+    <!-- Group › subgroup breadcrumb — muted, above drug name -->
+    ${(gs.group || gs.subgroup) ? `<div class="dv-hero-p12-breadcrumb-line">
+      ${esc(gs.group||'')}${gs.subgroup ? `<span class="dv-hero-p12-breadcrumb-sep"> › </span>${esc(gs.subgroup)}` : ''}
+    </div>` : ''}
     <!-- Drug name — always visible -->
     <div class="dv-hero-p12-name">${esc(drug.name)}</div>
 
@@ -15993,21 +16022,13 @@ async function openDrugViewer(id) {
   </div>`;
 
   // ══ DRUG DETAILS collapsible — breadcrumb, combo tags, source (collapsed by default) ══
-  const hasDetails = !!(gs.group || gs.subgroup || combos.length || drug.source);
+  const hasDetails = !!(combos.length || drug.source); // group/subgroup moved to hero breadcrumb
   if (hasDetails) {
     const detailsPreview = gs.subgroup
       ? gs.group + ' › ' + gs.subgroup
       : (gs.group || '');
     const detailsContent = `<div class="dv-coll-inner-p12">
-      ${(gs.group || gs.subgroup) ? `<div class="dv-p12-sub" style="margin-bottom:${combos.length||drug.source?'var(--space-3)':'0'}">
-        <div class="dv-p12-sub-label">
-          <i class="ph ph-tag" style="font-size:10px"></i>
-          Category
-        </div>
-        <div style="font-size:var(--text-sm-size);color:var(--color-text-secondary);line-height:1.5">
-          ${esc(gs.group||'')}${gs.subgroup ? `<span style="color:var(--color-text-tertiary)"> › </span>${esc(gs.subgroup)}` : ''}
-        </div>
-      </div>` : ''}
+      <!-- Category row removed — breadcrumb now shown in hero above drug name -->
       ${combos.length ? `<div class="dv-p12-sub" style="margin-bottom:${drug.source?'var(--space-3)':'0'}">
         <div class="dv-p12-sub-label">
           <i class="ph ph-plus-circle" style="font-size:10px"></i>
