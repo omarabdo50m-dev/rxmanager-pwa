@@ -6135,23 +6135,29 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 }
 
 /* ── Phase 12: Safety section blocks ─────────────────── */
+/* ── Safety block: no box bg/border, flat layout ── */
 .dv-contra-block-p12 {
-  background: var(--color-danger-light);
-  border: 1.5px solid rgba(220,38,38,.2);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-3);
-  margin-bottom: var(--space-2);
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  margin-bottom: var(--space-3);
 }
 .dv-contra-lbl-p12 {
+  /* Pill label — matches pregnancy FDA category style */
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid rgba(220,38,38,.35);
+  background: var(--color-danger-light);
   font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: .08em;
+  letter-spacing: .07em;
   color: var(--color-danger);
-  margin-bottom: var(--space-1);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 .dv-contra-text-p12 {
   font-size: var(--text-base-size);
@@ -6162,21 +6168,26 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   white-space: pre-wrap;
 }
 .dv-se-block-p12 {
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-3);
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
 }
 .dv-se-lbl-p12 {
+  /* Pill label — matches pregnancy FDA category style */
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--color-border-strong);
+  background: var(--color-surface-2);
   font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: .08em;
+  letter-spacing: .07em;
   color: var(--color-text-secondary);
-  margin-bottom: var(--space-1);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
+  margin-bottom: var(--space-2);
 }
 .dv-se-text-p12 {
   font-size: var(--text-base-size);
@@ -6186,26 +6197,33 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   white-space: pre-wrap;
 }
 
-/* ── Phase 12: PK grid ───────────────────────────────── */
+/* ── Phase 12: PK grid — single column, flat rows ───────────────── */
 .dv-pk-grid-p12 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-2);
-  margin-bottom: var(--space-2);
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
 }
 .dv-pk-cell-p12 {
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: var(--space-1) var(--space-2);
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
 }
 .dv-pk-cell-lbl-p12 {
-  font-size: 8.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--color-border-strong);
+  background: var(--color-surface-2);
+  font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: .07em;
-  color: var(--color-text-tertiary);
-  margin-bottom: 2px;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-2);
 }
 .dv-pk-cell-val-p12 {
   font-size: var(--text-base-size);
@@ -6216,106 +6234,47 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   white-space: pre-wrap;
 }
 .dv-pk-interactions-p12 {
-  background: var(--color-danger-light);
-  border: 1.5px solid rgba(220,38,38,.18);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-3);
-  margin-bottom: var(--space-2);
-}
-.dv-pk-interactions-lbl-p12 {
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  color: var(--color-danger);
-  margin-bottom: var(--space-1);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-.dv-pk-adjust-p12 {
-  background: var(--color-caution-light);
-  border: 1.5px solid rgba(217,119,6,.18);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-3);
-}
-.dv-pk-adjust-lbl-p12 {
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  color: var(--color-caution);
-  margin-bottom: var(--space-1);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-.dv-pk-adjust-text-p12 {
-  font-size: var(--text-base-size);
-  line-height: 1.5;
-  color: var(--color-text-secondary);
-  font-weight: 400;
-  word-break: break-word;
-  white-space: pre-wrap;
-}
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
   margin-bottom: var(--space-3);
 }
-.dv-pk-cell-p12 {
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-3);
-}
-.dv-pk-cell-lbl-p12 {
-  font-size: 8.5px;
+.dv-pk-interactions-lbl-p12 {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid rgba(220,38,38,.35);
+  background: var(--color-danger-light);
+  font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: .07em;
-  color: var(--color-text-tertiary);
-  margin-bottom: 3px;
-}
-.dv-pk-cell-val-p12 {
-  font-size: var(--text-base-size);
-  line-height: 1.5;
-  color: var(--color-text-secondary);
-  font-weight: 400;
-  word-break: break-word;
-  white-space: pre-wrap;
-}
-.dv-pk-interactions-p12 {
-  background: var(--color-danger-light);
-  border: 1.5px solid rgba(220,38,38,.18);
-  border-radius: var(--radius-sm);
-  padding: var(--space-3) var(--space-4);
-  margin-bottom: var(--space-3);
-}
-.dv-pk-interactions-lbl-p12 {
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .08em;
   color: var(--color-danger);
   margin-bottom: var(--space-2);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
 }
 .dv-pk-adjust-p12 {
-  background: var(--color-caution-light);
-  border: 1.5px solid rgba(217,119,6,.18);
-  border-radius: var(--radius-sm);
-  padding: var(--space-3) var(--space-4);
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
 }
 .dv-pk-adjust-lbl-p12 {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid rgba(217,119,6,.35);
+  background: var(--color-caution-light);
   font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: .08em;
+  letter-spacing: .07em;
   color: var(--color-caution);
   margin-bottom: var(--space-2);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
 }
 .dv-pk-adjust-text-p12 {
   font-size: var(--text-base-size);
@@ -6489,13 +6448,13 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .safety-se-lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-bottom:7px;display:flex;align-items:center;gap:5px}
 .safety-se-text{font-size:13.5px;line-height:1.75;color:var(--text2);font-weight:400;word-break:break-word;white-space:pre-wrap}
 /* SE chips — parse "Common: ... Serious: ..." into styled segments */
-.se-segment{margin-bottom:8px}
+.se-segment{margin-bottom:var(--space-3)}
 .se-segment:last-child{margin-bottom:0}
-.se-segment-lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;padding:2px 7px;border-radius:4px;display:inline-block;margin-bottom:4px}
-.se-segment-lbl.common{background:#fff7ed;color:#c2410c}
-.se-segment-lbl.serious{background:var(--color-danger-light);color:var(--color-danger)}
-.se-segment-lbl.monitor{background:var(--color-brand-light);color:var(--color-brand)}
-.se-segment-text{font-size:13px;line-height:1.65;color:var(--text2);word-break:break-word}
+.se-segment-lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;padding:3px 10px;border-radius:var(--radius-full);border:1.5px solid;display:inline-flex;align-items:center;margin-bottom:var(--space-2)}
+.se-segment-lbl.common{background:#fff7ed;color:#c2410c;border-color:rgba(194,65,12,.35)}
+.se-segment-lbl.serious{background:var(--color-danger-light);color:var(--color-danger);border-color:rgba(220,38,38,.35)}
+.se-segment-lbl.monitor{background:var(--color-brand-light);color:var(--color-brand);border-color:rgba(59,130,246,.35)}
+.se-segment-text{font-size:var(--text-base-size);line-height:1.5;color:var(--color-text-secondary);word-break:break-word}
 
 /* ── PHARMACOKINETICS SECTION ─────────────────────── */
 /* Clean card rows replacing dv-row for PK */
@@ -16631,13 +16590,13 @@ async function openDrugViewer(id) {
         </div>
         <div class="dv-se-text-p12" dir="auto">${esc(drug.sideEffects)}</div>
       </div>`) : ''}`;
-    html += _dvFlatCard({iconBg:'rgba(220,38,38,.10)', iconColor:'var(--color-danger)', iconName:'ph-warning', title:'Safety — Side Effects &amp; Contraindications', content:safetyContent});
+    html += _dvFlatCard({iconBg:'rgba(220,38,38,.10)', iconColor:'var(--color-danger)', iconName:'ph-warning', title:'Safety', content:safetyContent});
   }
 
   // ══ PHARMACOKINETICS — Phase 12 ═════════════════════════════
   if (drug.metabolism || drug.elimination || drug.interactions || drug.doseAdjustments) {
     const pkContent = `
-      ${(drug.metabolism || drug.elimination) ? `<div class="dv-pk-grid-p12" style="${drug.metabolism && drug.elimination ? '' : 'grid-template-columns:1fr'}">
+      ${(drug.metabolism || drug.elimination) ? `<div class="dv-pk-grid-p12">
         ${drug.metabolism ? `<div class="dv-pk-cell-p12">
           <div class="dv-pk-cell-lbl-p12"><i class="ph ph-test-tube" style="font-size:9px"></i> Metabolism</div>
           <div class="dv-pk-cell-val-p12" dir="auto">${esc(drug.metabolism)}</div>
