@@ -15993,6 +15993,22 @@ function _dvCollapsible(opts) {
   </div>`;
 }
 
+// ── Flat non-collapsible card — matches MOA / cv-depth-card-p11 style ──
+// iconBg / iconColor: raw CSS values, e.g. 'rgba(99,102,241,.10)' / '#6366F1'
+function _dvFlatCard({iconBg, iconColor, iconName, title, content}) {
+  return `<div class="cv-depth-card-p11" style="margin-top:var(--space-3)">
+    <div class="cv-depth-card-hdr-p11">
+      <div class="cv-depth-card-icon-p11" style="background:${iconBg}">
+        <i class="ph ${iconName}" style="font-size:15px;color:${iconColor}"></i>
+      </div>
+      <span class="cv-depth-card-title-p11">${esc(title)}</span>
+    </div>
+    <div class="cv-depth-card-body-p11">
+      ${content}
+    </div>
+  </div>`;
+}
+
 async function openDrugViewer(id) {
   if (!id) { openDrugEditor(null); return; }
   await ensureSearchIndex(); // Phase 05: ensure drug → condition links resolve correctly
@@ -16068,7 +16084,7 @@ async function openDrugViewer(id) {
     const detailsPreview = gs.subgroup
       ? gs.group + ' › ' + gs.subgroup
       : (gs.group || '');
-    const detailsContent = `<div class="dv-coll-inner-p12">
+    const detailsContent = `
       <!-- Category row removed — breadcrumb now shown in hero above drug name -->
       ${combos.length ? `<div class="dv-p12-sub" style="margin-bottom:${drug.source?'var(--space-3)':'0'}">
         <div class="dv-p12-sub-label">
@@ -16085,32 +16101,33 @@ async function openDrugViewer(id) {
           Source
         </div>
         <div style="font-size:var(--text-xs-size);color:var(--color-text-tertiary);font-style:italic;line-height:1.55">${esc(drug.source)}</div>
-      </div>` : ''}
-    </div>`;
-    html += _dvCollapsible({id: 'details_' + id, iconClass: 'navy', iconName: 'ph-info', title: 'Drug Details', preview: detailsPreview || undefined, content: detailsContent, defaultOpen: false});
+      </div>` : ''}`;
+    html += _dvFlatCard({iconBg:'rgba(59,130,246,.10)', iconColor:'var(--color-brand)', iconName:'ph-info', title:'Drug Details', content:detailsContent});
   }
 
   // ══ MECHANISM OF ACTION — flat card, cv-depth-card style ═══════════════
   if (mechBody) {
-    html += `<div class="cv-depth-card-p11" style="margin-top:var(--space-3)">
-      <div class="cv-depth-card-hdr-p11">
-        <div class="cv-depth-card-icon-p11" style="background:rgba(20,184,166,.10)">
-          <i class="ph ph-flask" style="font-size:15px;color:#14b8a6"></i>
-        </div>
-        <span class="cv-depth-card-title-p11">Mechanism of Action</span>
-      </div>
-      <div class="cv-depth-card-body-p11">
-        <div class="cv-depth-block-p11">
-          <div class="cv-depth-body-p11" dir="auto">${esc(mechBody)}</div>
-        </div>
-      </div>
-    </div>`;
+    const moaBody = `
+      ${hasClass ? `<div class="dv-moa-class-strip">
+        ${cls.therapeutic ? `<div class="dv-moa-class-cell">
+          <div class="dv-moa-class-cell-lbl">Drug Group</div>
+          <div class="dv-moa-class-cell-val">${esc(cls.therapeutic)}</div>
+        </div>` : ''}
+        ${cls.pharmacological ? `<div class="dv-moa-class-cell">
+          <div class="dv-moa-class-cell-lbl">Drug Class</div>
+          <div class="dv-moa-class-cell-val secondary">${esc(cls.pharmacological)}</div>
+        </div>` : ''}
+      </div>` : ''}
+      <div class="cv-depth-block-p11" style="${hasClass ? 'margin-top:var(--space-3)' : ''}">
+        <div class="cv-depth-body-p11" dir="auto">${esc(mechBody)}</div>
+      </div>`;
+    html += _dvFlatCard({iconBg:'rgba(20,184,166,.10)', iconColor:'#14b8a6', iconName:'ph-flask', title:'Mechanism of Action', content:moaBody});
   }
 
   // ══ COMMON USES — Phase 12 ══════════════════════════════════
   if (drug.commonUses) {
-    const usesContent = `<div class="dv-coll-inner-p12">${renderNumberedList(drug.commonUses)}</div>`;
-    html += _dvCollapsible({id: 'uses_' + id, iconClass: 'brand', iconName: 'ph-clipboard-text', title: 'Common Uses', content: usesContent});
+    const usesContent = `<div class="cv-depth-block-p11">${renderNumberedList(drug.commonUses)}</div>`;
+    html += _dvFlatCard({iconBg:'rgba(0,133,254,.10)', iconColor:'var(--color-brand)', iconName:'ph-clipboard-text', title:'Common Uses', content:usesContent});
   }
 
   // ══ MY NOTES — Phase 12 ════════════════════════════════════
@@ -16148,7 +16165,7 @@ async function openDrugViewer(id) {
         ${myNotesVal ? 'Edit Notes' : 'Add Notes'}
       </button>
     </div>`;
-    html += _dvCollapsible({id: 'mynotes_' + id, iconClass: 'amber', iconName: 'ph-note-pencil', title: 'My Notes', preview: preview || undefined, content: notesContent});
+    html += _dvFlatCard({iconBg:'rgba(245,158,11,.10)', iconColor:'var(--color-caution)', iconName:'ph-note-pencil', title:'My Notes', content:notesContent});
   }
 
   // ══ BRANDS & FORMULAS — Phase 12 / 4.7 ══════════════════════════
@@ -16205,19 +16222,15 @@ async function openDrugViewer(id) {
          </button>`
       : '';
 
-    html += `<div class="dv-collapsible" style="overflow:visible">
-      <div class="dv-coll-hdr-p12" onclick="dvCollToggle('${brandBodyId}','${brandArrowId}')">
-        <div class="dv-coll-icon-wrap brand">
-          <i class="ph ph-tag"></i>
+    html += `<div class="cv-depth-card-p11" style="margin-top:var(--space-3);overflow:visible">
+      <div class="cv-depth-card-hdr-p11">
+        <div class="cv-depth-card-icon-p11" style="background:rgba(0,133,254,.10)">
+          <i class="ph ph-tag" style="font-size:15px;color:var(--color-brand)"></i>
         </div>
-        <span class="dv-coll-hdr-title-p12">Brands &amp; Formulas</span>
-        ${brandPreview ? `<span class="dv-coll-preview-p12">${esc(brandPreview)}</span>` : ''}
+        <span class="cv-depth-card-title-p11" style="flex:1">Brands &amp; Formulas</span>
         ${fmtFilterBtn}
-        <div class="dv-coll-arrow-p12 open" id="${brandArrowId}">
-          <i class="ph ph-caret-right"></i>
-        </div>
       </div>
-      <div class="dv-coll-body open" id="${brandBodyId}" style="max-height:none;opacity:1">
+      <div class="cv-depth-card-body-p11" style="padding-top:var(--space-2)">
         ${brandsBodyHtml}
       </div>
     </div>`;
@@ -16227,7 +16240,7 @@ async function openDrugViewer(id) {
   if (drug.pedDose || drug.pedAgeLimit) {
     const pedParsed = parsePedDose(drug.pedDose);
     const hasCalc   = !!pedParsed;
-    const pedContent = `<div class="dv-coll-inner-p12">
+    const pedContent = `
       ${drug.pedAgeLimit ? `<div class="dv-ped-age-pill-p12">
         <i class="ph ph-shield-check" style="font-size:13px"></i>
         Age restriction: ${esc(drug.pedAgeLimit)}
@@ -16250,9 +16263,8 @@ async function openDrugViewer(id) {
         <div class="dv-calc-result-p12" id="dvPedResult_${id}">
           <div class="dv-calc-result-lbl-p12">Enter weight above to calculate dose</div>
         </div>
-      </div>` : ''}
-    </div>`;
-    html += _dvCollapsible({id: 'ped_' + id, iconClass: 'purple', iconName: 'ph-baby', title: 'Paediatric Dosing', content: pedContent});
+      </div>` : ''}`;
+    html += _dvFlatCard({iconBg:'rgba(99,102,241,.10)', iconColor:'#6366F1', iconName:'ph-baby', title:'Paediatric Dosing', content:pedContent});
   }
 
   // ══ PREGNANCY & LACTATION — Phase 12 ════════════════════════
@@ -16287,7 +16299,7 @@ async function openDrugViewer(id) {
       </div>`);
     }
 
-    const pregContent = `<div class="dv-coll-inner-p12">
+    const pregContent = `
       <div style="font-size:9px;font-weight:800;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.07em;margin-bottom:var(--space-2)">FDA Pregnancy Categories</div>
       <div class="dv-preg-grid-p12">
         ${_dvPregCellP12('1st Trimester', drug.pregnancyT1||'N')}
@@ -16299,9 +16311,8 @@ async function openDrugViewer(id) {
         <strong>C</strong> Caution &nbsp;·&nbsp; <strong>D</strong> Risk evidence &nbsp;·&nbsp;
         <strong>X</strong> Contraindicated &nbsp;·&nbsp; <strong>—</strong> Not rated
       </div>
-      ${safetyItems.length ? `<div class="dv-safety-row-p12${safetyItems.length === 3 ? ' trio' : ''}">${safetyItems.join('')}</div>` : ''}
-    </div>`;
-    html += _dvCollapsible({id: 'preg_' + id, iconClass: 'pink', iconName: 'ph-heartbeat', title: 'Pregnancy & Lactation', content: pregContent});
+      ${safetyItems.length ? `<div class="dv-safety-row-p12${safetyItems.length === 3 ? ' trio' : ''}">${safetyItems.join('')}</div>` : ''}`;
+    html += _dvFlatCard({iconBg:'rgba(236,72,153,.10)', iconColor:'#EC4899', iconName:'ph-heartbeat', title:'Pregnancy &amp; Lactation', content:pregContent});
   }
 
   // ══ SAFETY — Phase 12 ═══════════════════════════════════════
@@ -16318,7 +16329,7 @@ async function openDrugViewer(id) {
     };
     const seSegments = parseSideEffects(drug.sideEffects);
 
-    const safetyContent = `<div class="dv-coll-inner-p12">
+    const safetyContent = `
       ${drug.contra ? `<div class="dv-contra-block-p12">
         <div class="dv-contra-lbl-p12">
           <i class="ph ph-prohibit" style="font-size:11px"></i>
@@ -16340,14 +16351,13 @@ async function openDrugViewer(id) {
           Side Effects
         </div>
         <div class="dv-se-text-p12" dir="auto">${esc(drug.sideEffects)}</div>
-      </div>`) : ''}
-    </div>`;
-    html += _dvCollapsible({id: 'safety_' + id, iconClass: 'danger', iconName: 'ph-warning', title: 'Safety — Side Effects & Contraindications', content: safetyContent});
+      </div>`) : ''}`;
+    html += _dvFlatCard({iconBg:'rgba(220,38,38,.10)', iconColor:'var(--color-danger)', iconName:'ph-warning', title:'Safety — Side Effects &amp; Contraindications', content:safetyContent});
   }
 
   // ══ PHARMACOKINETICS — Phase 12 ═════════════════════════════
   if (drug.metabolism || drug.elimination || drug.interactions || drug.doseAdjustments) {
-    const pkContent = `<div class="dv-coll-inner-p12">
+    const pkContent = `
       ${(drug.metabolism || drug.elimination) ? `<div class="dv-pk-grid-p12" style="${drug.metabolism && drug.elimination ? '' : 'grid-template-columns:1fr'}">
         ${drug.metabolism ? `<div class="dv-pk-cell-p12">
           <div class="dv-pk-cell-lbl-p12"><i class="ph ph-test-tube" style="font-size:9px"></i> Metabolism</div>
@@ -16371,9 +16381,8 @@ async function openDrugViewer(id) {
           Dose Adjustments
         </div>
         <div class="dv-pk-adjust-text-p12" dir="auto">${esc(drug.doseAdjustments)}</div>
-      </div>` : ''}
-    </div>`;
-    html += _dvCollapsible({id: 'pk_' + id, iconClass: 'caution', iconName: 'ph-graph', title: 'Pharmacokinetics & Interactions', content: pkContent});
+      </div>` : ''}`;
+    html += _dvFlatCard({iconBg:'rgba(217,119,6,.10)', iconColor:'var(--color-caution)', iconName:'ph-graph', title:'Pharmacokinetics &amp; Interactions', content:pkContent});
   }
 
   // ══ Empty state — Phase 12 ══════════════════════════════════
