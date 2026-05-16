@@ -7525,26 +7525,11 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   letter-spacing: .1em;
   opacity: .85;
 }
-/* Arabic text in patient presentation */
-.cv-pp-card-p11 .cv-pp-ar {
-  font-family: 'IBM Plex Sans Arabic', 'IBM Plex Sans', system-ui, sans-serif;
-  font-size: var(--text-base-size);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  direction: rtl;
-  text-align: right;
-  line-height: 1.9;
-  display: none;
+/* Arabic text in patient presentation — removed bold title style, now uses cv-depth-* classes */
+.cv-pp-body-p11 {
+  /* inherits cv-depth-block-p11 / cv-depth-heading-p11 / cv-depth-body-p11 */
 }
-/* English text */
-.cv-pp-card-p11 .cv-pp-en {
-  font-size: var(--text-sm-size);
-  font-weight: 400;
-  color: var(--color-text-secondary);
-  line-height: 1.75;
-  display: none;
-}
-/* Language toggle visibility */
+/* Language toggle visibility — kept for backward compat but no longer used for display */
 #condViewerScr.lang-ar .cv-pp-ar { display: block; }
 #condViewerScr.lang-en .cv-pp-en { display: block; }
 
@@ -12751,7 +12736,7 @@ function renderConditionViewer(data) {
           const body = lines.slice(1).join('\n').trim();
           return body
             ? `<div class="cv-depth-block-p11">
-                <div class="cv-depth-heading-p11">${esc(heading)}</div>
+                <div class="cv-depth-heading-p11" dir="auto">${esc(heading)}</div>
                 <div class="cv-depth-body-p11" dir="auto">${esc(body)}</div>
                </div>`
             : `<div class="cv-depth-block-p11">
@@ -12762,8 +12747,30 @@ function renderConditionViewer(data) {
     </div>`;
   }
 
-  // ── Patient Presentation — deep navy gradient callout ──────────────────
+  // ── Patient Presentation — block-parsed, dir=auto per element ────────
   if (condition.patient_picture_ar || condition.patient_picture_en) {
+    const ppFields = [
+      condition.patient_picture_en,
+      condition.patient_picture_ar,
+    ].filter(Boolean);
+
+    const ppBlocksHtml = ppFields.map(text => {
+      const blocks = text.split(/\n\n+/).map(b => b.trim()).filter(Boolean);
+      return blocks.map(block => {
+        const lines = block.split('\n');
+        const heading = lines[0].replace(/^#+\s*/, '').trim();
+        const body = lines.slice(1).join('\n').trim();
+        return body
+          ? `<div class="cv-depth-block-p11">
+              <div class="cv-depth-heading-p11" dir="auto">${esc(heading)}</div>
+              <div class="cv-depth-body-p11" dir="auto">${esc(body)}</div>
+             </div>`
+          : `<div class="cv-depth-block-p11">
+              <div class="cv-depth-body-p11" dir="auto">${esc(heading)}</div>
+             </div>`;
+      }).join('');
+    }).join('<hr style="border:none;border-top:1px solid var(--color-border);margin:var(--space-3) 0"/>');
+
     clinHtml += `<div class="cv-pp-card-p11">
       <div class="cv-pp-header-row">
         <div class="cv-pp-header-icon">
@@ -12771,8 +12778,7 @@ function renderConditionViewer(data) {
         </div>
         <span class="cv-pp-header-label">Patient Presentation</span>
       </div>
-      <div class="cv-pp-ar" dir="rtl">${esc(condition.patient_picture_ar || '')}</div>
-      <div class="cv-pp-en" dir="auto">${esc(condition.patient_picture_en || '')}</div>
+      <div class="cv-pp-body-p11">${ppBlocksHtml}</div>
     </div>`;
   }
 
