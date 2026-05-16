@@ -8797,46 +8797,31 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
       <button onclick="closeModal('libFilterSheet')" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--color-text-tertiary);display:flex;align-items:center;justify-content:center;width:32px;height:32px"><i class="ph ph-x" style="font-size:16px"></i></button>
     </div>
 
-    <!-- ① Drug Category -->
+    <!-- ① Formula / Route — single flat layer -->
     <div class="lib-filter-sheet-section">
       <div class="lib-filter-sheet-label">
-        <i class="ph ph-folders" style="font-size:11px"></i>
-        Drug Category
+        <i class="ph ph-pill" style="font-size:11px"></i>
+        Form / Route
       </div>
-      <button class="lib-filter-cat-btn" id="libSheetCatBtn" onclick="openLibCatSheet()">
-        <span class="lib-filter-cat-ico" id="libSheetCatIco">📚</span>
-        <span class="lib-filter-cat-name" id="libSheetCatName">All Categories</span>
-        <i class="ph ph-caret-right" style="font-size:13px;color:var(--color-text-tertiary);flex-shrink:0"></i>
-      </button>
-    </div>
-
-    <!-- ② Route -->
-    <div class="lib-filter-sheet-section">
-      <div class="lib-filter-sheet-label">
-        <i class="ph ph-path" style="font-size:11px"></i>
-        Route of Administration
-      </div>
-      <div class="lib-filter-route-pills">
+      <div class="lib-filter-route-pills" style="flex-wrap:wrap">
         <button class="lib-filter-route-pill active" id="lfs_All" onclick="libSheetSetRoute('All')">🔬 All</button>
-        <button class="lib-filter-route-pill" id="lfs_Oral" onclick="libSheetSetRoute('Oral')">💊 Oral</button>
-        <button class="lib-filter-route-pill" id="lfs_Injectable" onclick="libSheetSetRoute('Injectable')">💉 Injectable</button>
-        <button class="lib-filter-route-pill" id="lfs_Topical" onclick="libSheetSetRoute('Topical')">🩹 Topical</button>
+        <button class="lib-filter-route-pill" id="lfs_Tab_Cap" onclick="libSheetSetRoute('Tab/Cap')">💊 Tab / Cap</button>
+        <button class="lib-filter-route-pill" id="lfs_Syrup_Susp_Drops" onclick="libSheetSetRoute('Syrup/Susp/Drops')">🥄 Syrup / Susp / Drops</button>
+        <button class="lib-filter-route-pill" id="lfs_Injections" onclick="libSheetSetRoute('Injections')">💉 Injections</button>
+        <button class="lib-filter-route-pill" id="lfs_Suppositories" onclick="libSheetSetRoute('Suppositories')">🔹 Suppositories</button>
+        <button class="lib-filter-route-pill" id="lfs_Sachets" onclick="libSheetSetRoute('Sachets')">🧂 Sachets</button>
         <button class="lib-filter-route-pill" id="lfs_Inhaled" onclick="libSheetSetRoute('Inhaled')">🫁 Inhaled</button>
+        <button class="lib-filter-route-pill" id="lfs_Topical" onclick="libSheetSetRoute('Topical')">🩹 Topical</button>
         <button class="lib-filter-route-pill" id="lfs_Other" onclick="libSheetSetRoute('Other')">📋 Other</button>
       </div>
     </div>
 
-    <!-- ③ Formula (shown when route ≠ All) -->
-    <div class="lib-filter-sheet-section" id="libSheetFormulaSection" style="display:none">
-      <div class="lib-filter-sheet-label">
-        <i class="ph ph-pill" style="font-size:11px"></i>
-        <span id="libSheetFormulaSectionTitle">Formula</span>
-        <button class="formula-filter-clear" onclick="libClearFormulas()" style="margin-left:auto;font-size:10px"><i class="ph ph-x" style="font-size:9px;vertical-align:0;margin-right:2px"></i>Clear</button>
-      </div>
+    <!-- Formula sub-section hidden — no longer used -->
+    <div id="libSheetFormulaSection" style="display:none">
       <div class="formula-chips-grid" id="libSheetFormulaChips"></div>
     </div>
 
-    <!-- ④ Safety: Pregnancy -->
+    <!-- ② Safety: Pregnancy -->
     <div class="lib-filter-sheet-section">
       <div class="lib-filter-sheet-label">
         <i class="ph ph-heartbeat" style="font-size:11px"></i>
@@ -8851,7 +8836,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
       </div>
     </div>
 
-    <!-- ⑤ Safety: Lactation -->
+    <!-- ③ Safety: Lactation -->
     <div class="lib-filter-sheet-section">
       <div class="lib-filter-sheet-label">
         <i class="ph ph-baby" style="font-size:11px"></i>
@@ -10649,7 +10634,7 @@ function makeFilterState() {
 const _libFilterState    = makeFilterState();
 const _pickerFilterState = makeFilterState();
 
-let _libActiveRoute = 'All';   // 'All'|'Oral'|'Injectable'|'Topical'|'Inhaled'|'Other'
+let _libActiveRoute = 'All';   // 'All'|'Tab/Cap'|'Syrup/Susp/Drops'|'Injections'|'Suppositories'|'Sachets'|'Inhaled'|'Topical'|'Other'
 let _libSafetyPanelOpen  = false;
 let _libFormulaPanelOpen = false;
 // Alias — Drug Viewer reads _libFormulaFilter directly; bridge to new state
@@ -14471,6 +14456,21 @@ const FORMULAS = [
 // ═══════════════════════════════════════════════════════
 // ROUTE GROUPS — maps Route → Formula list
 // ═══════════════════════════════════════════════════════
+// Flat single-level formula groups — replaces the old two-level Route → Formula system.
+// Keys are the filter group labels shown in the UI; values are the actual DB formula strings.
+const FORMULA_GROUPS = {
+  'Tab/Cap':          ['Tablet','Capsule','Lozenge','Powder'],
+  'Syrup/Susp/Drops': ['Syrup','Suspension','Solution','Drops'],
+  'Injections':       ['Injection (IV)','Injection (IM)','Injection (SC)','Infusion'],
+  'Suppositories':    ['Suppository','Rectal','Vaginal'],
+  'Sachets':          ['Sachet'],
+  'Inhaled':          ['Inhaler (MDI)','Inhaler (DPI)','Nebuliser'],
+  'Topical':          ['Cream','Ointment','Gel','Lotion','Patch','Spray'],
+  'Other':            ['Nasal Spray','Eye Drops','Ear Drops','Other'],
+};
+
+// Legacy alias — keeps any remaining code that references ROUTE_GROUPS working.
+// Maps old route names to the new flat groups that cover them.
 const ROUTE_GROUPS = {
   'Oral':       ['Tablet','Capsule','Syrup','Suspension','Solution','Drops','Sachet','Powder','Lozenge'],
   'Injectable': ['Injection (IV)','Injection (IM)','Injection (SC)','Infusion'],
@@ -14502,13 +14502,15 @@ function applyFilters(drugIds, filterState) {
     const rec = SEARCH_INDEX.get(id);
     if (!rec) return true; // index not built yet — don't hide it
 
-    // Route filter — drug must have at least one product in a selected route group
+    // Formula group filter — drug must have at least one product matching the selected group's formulas
+    // routes.size is used when a flat group is selected (stored as group name in routes set)
     if (routes.size) {
-      const hasRoute = [...routes].some(r => rec.routeSet.has(r));
-      if (!hasRoute) return false;
+      const groupFormulas = [...routes].flatMap(r => FORMULA_GROUPS[r] || ROUTE_GROUPS[r] || [r]);
+      const hasFormula = groupFormulas.some(f => rec.formulaSet.has(f));
+      if (!hasFormula) return false;
     }
 
-    // Formula filter — drug must have at least one product with a selected formula
+    // Legacy formula filter (individual formula strings)
     if (formulas.size) {
       const hasFormula = [...formulas].some(f => rec.formulaSet.has(f));
       if (!hasFormula) return false;
@@ -15293,7 +15295,10 @@ async function renderLib() {
                          (p.brandAr && p.brandAr.includes(q));
       if (!brandMatch) return false;
       if (_lhf.size) return _lhf.has(p.formula);
-      if (_lhr.size) return [..._lhr].some(r => (ROUTE_GROUPS[r]||[]).includes(p.formula));
+      if (_lhr.size) {
+        const groupFormulas = [..._lhr].flatMap(r => FORMULA_GROUPS[r] || ROUTE_GROUPS[r] || [r]);
+        return groupFormulas.includes(p.formula);
+      }
       return true;
     });
     if (!brandHitMap.has(d.id)) {
@@ -15351,7 +15356,10 @@ async function renderLib() {
       const otherBrands = hasLibFormulaFilter
         ? otherBrandsAll.filter(b => _libFilterState.formulas.has(b.formula))
         : hasLibRouteFilter
-          ? otherBrandsAll.filter(b => [..._libFilterState.routes].some(r => (ROUTE_GROUPS[r]||[]).includes(b.formula)))
+          ? otherBrandsAll.filter(b => {
+              const groupFormulas = [..._libFilterState.routes].flatMap(r => FORMULA_GROUPS[r] || ROUTE_GROUPS[r] || [r]);
+              return groupFormulas.includes(b.formula);
+            })
           : otherBrandsAll;
 
       const isSelected = _libSelected.has(d.id);
@@ -15487,7 +15495,10 @@ function libGenericCard(d, allProducts, _unused) {
   if (hasFilter) {
     const filteredProds = hasFormulaFilter
       ? products.filter(p => _libFilterState.formulas.has(p.formula))
-      : products.filter(p => [..._libFilterState.routes].some(r => (ROUTE_GROUPS[r]||[]).includes(p.formula)));
+      : products.filter(p => {
+          const groupFormulas = [..._libFilterState.routes].flatMap(r => FORMULA_GROUPS[r] || ROUTE_GROUPS[r] || [r]);
+          return groupFormulas.includes(p.formula);
+        });
     filteredFormulaCount = [...new Set(filteredProds.map(p => p.formula).filter(Boolean))].length;
   }
 
@@ -16659,39 +16670,17 @@ const FORMULA_DISPLAY = {
 
 function libSetRoute(route) {
   _libActiveRoute = route;
-  // Sync route into filterState
+  // Sync group into filterState.routes (group name, not individual formula)
   _libFilterState.routes.clear();
+  _libFilterState.formulas.clear(); // always clear legacy formula filter
   if (route !== 'All') _libFilterState.routes.add(route);
-  // Show/hide formula sub-panel for this route
+  // No formula sub-panel in the new flat system
   const formulaPanel = document.getElementById('libFormulaPanel');
-  const chipsWrap    = document.getElementById('libFormulaChips');
-  const titleEl      = document.getElementById('libFormulaPanelTitle');
-  if (formulaPanel) {
-    if (route !== 'All' && route !== 'Safety') {
-      const routeFormulas = ROUTE_GROUPS[route] || [];
-      formulaPanel.style.display = 'block';
-      if (titleEl) titleEl.textContent = route;
-      // Render formula chips for this route
-      _libFilterState.formulas.clear(); // clear old formula selection on route change
-      if (chipsWrap) {
-        chipsWrap.innerHTML = routeFormulas.map(f => {
-          const fd = FORMULA_DISPLAY[f] || {ico:'💊', lbl:f};
-          return `<div class="formula-chip" id="lfc_${f.replace(/\W/g,'_')}" onclick="libToggleFormula('${esc(f)}')">
-            <span class="fc-check"></span><span style="font-size:11px">${fd.ico}</span><span>${esc(fd.lbl)}</span>
-          </div>`;
-        }).join('');
-      }
-    } else {
-      formulaPanel.style.display = 'none';
-      _libFilterState.formulas.clear();
-    }
-  }
-  // Close safety panel if switching away
-  if (route !== 'Safety') {
-    const safetyPanel = document.getElementById('libSafetyPanel');
-    if (safetyPanel) safetyPanel.style.display = 'none';
-    _libSafetyPanelOpen = false;
-  }
+  if (formulaPanel) formulaPanel.style.display = 'none';
+  // Close safety panel if open
+  const safetyPanel = document.getElementById('libSafetyPanel');
+  if (safetyPanel) safetyPanel.style.display = 'none';
+  _libSafetyPanelOpen = false;
   _updateLibRoutePills();
   _updateLibFilterSummary();
   renderLib();
@@ -16772,8 +16761,8 @@ function libClearAllFilters() {
 
 // ── Visual sync helpers ───────────────────────────────────────────
 function _updateLibRoutePills() {
-  ['All','Oral','Injectable','Topical','Inhaled','Other'].forEach(r => {
-    const el = document.getElementById('lrp_' + r);
+  ['All','Tab/Cap','Syrup/Susp/Drops','Injections','Suppositories','Sachets','Inhaled','Topical','Other'].forEach(r => {
+    const el = document.getElementById('lrp_' + r.replace(/[^a-zA-Z0-9]/g,'_'));
     if (el) el.classList.toggle('active', _libActiveRoute === r);
   });
   // Safety btn active when safety filters active OR panel open
@@ -16824,7 +16813,7 @@ function _updateLibFilterSummary() {
     if (_libFilterState.formulas.size)            parts.push([..._libFilterState.formulas].join(', '));
     if (_libFilterState.pregnancyCategories.size) parts.push(`Preg ${[..._libFilterState.pregnancyCategories].join('/')}`);
     if (_libFilterState.lactation.size)           parts.push([..._libFilterState.lactation].join('/') + ' bf');
-    stripTxt.textContent = `${n} filter${n!==1?'s':''} active — ${parts.join(' · ')}`;
+    stripTxt.textContent = `${parts.join(' · ')}`;
   }
 
   // ── New: filter button badge ────────────────────────────────────
@@ -16863,35 +16852,16 @@ function openLibFilterSheet() {
 
 // Sync the route pills inside the filter sheet to match _libActiveRoute
 function _syncLibSheetRoutePills() {
-  ['All','Oral','Injectable','Topical','Inhaled','Other'].forEach(r => {
-    const el = document.getElementById('lfs_' + r);
+  ['All','Tab/Cap','Syrup/Susp/Drops','Injections','Suppositories','Sachets','Inhaled','Topical','Other'].forEach(r => {
+    const el = document.getElementById('lfs_' + r.replace(/[^a-zA-Z0-9]/g,'_'));
     if (el) el.classList.toggle('active', _libActiveRoute === r);
   });
 }
 
-// Show/hide and populate formula chips in the sheet based on selected route
+// No-op — second-level formula section removed in favour of flat single-level groups
 function _syncLibSheetFormulaSection() {
-  const section   = document.getElementById('libSheetFormulaSection');
-  const chipsWrap = document.getElementById('libSheetFormulaChips');
-  const titleEl   = document.getElementById('libSheetFormulaSectionTitle');
-  if (!section) return;
-  const route = _libActiveRoute;
-  if (route === 'All' || route === 'Safety') {
-    section.style.display = 'none';
-    return;
-  }
-  section.style.display = 'block';
-  if (titleEl) titleEl.textContent = route + ' formulas';
-  const routeFormulas = ROUTE_GROUPS[route] || [];
-  if (chipsWrap) {
-    chipsWrap.innerHTML = routeFormulas.map(f => {
-      const fd = FORMULA_DISPLAY[f] || {ico:'💊', lbl:f};
-      const checked = _libFilterState.formulas.has(f);
-      return `<div class="formula-chip${checked?' checked':''}" id="lfc_${f.replace(/\W/g,'_')}" onclick="libToggleFormula('${esc(f)}');_syncLibSheetFormulaSection()">
-        <span class="fc-check">${checked?'✓':''}</span><span style="font-size:11px">${fd.ico}</span><span>${esc(fd.lbl)}</span>
-      </div>`;
-    }).join('');
-  }
+  const section = document.getElementById('libSheetFormulaSection');
+  if (section) section.style.display = 'none';
 }
 
 // Sync category display in both the header bar and the sheet button
