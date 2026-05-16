@@ -17537,6 +17537,17 @@ function _updatePickerFilterSummary() {
 
 // ══ DRUG VIEWER formula filter ════════════════════════════
 
+// Toggle the group-pills panel open/closed
+function toggleDvFormulaPanel(drugId) {
+  _dvFormulaPanelOpen = !_dvFormulaPanelOpen;
+  const pills = document.getElementById(`dvGroupPills_${drugId}`);
+  const clear = document.getElementById(`dvGroupPillsClear_${drugId}`);
+  if (pills) pills.style.display = _dvFormulaPanelOpen ? 'grid' : 'none';
+  if (clear) clear.style.display = (_dvFormulaPanelOpen && _dvFormulaFilter.size > 0) ? '' : 'none';
+  const btn = document.getElementById(`dvFormulaFilterBtn_${drugId}`);
+  if (btn) btn.classList.toggle('dv-formula-filter-active', _dvFormulaPanelOpen || _dvFormulaFilter.size > 0);
+}
+
 // Renders just the filter button — placed inline in the section title
 function _renderDvFormulaTitleBtn(drugId) {
   const n = _dvFormulaFilter.size;
@@ -17603,7 +17614,7 @@ function _renderDvFormulaPanelOnly(drugId, availableFormulas) {
     </button>
   </div>`;
 
-  return `<div class="dv-group-pills" id="dvGroupPills_${drugId}">${pillsHtml}</div>${clearRow}`;
+  return `<div class="dv-group-pills" id="dvGroupPills_${drugId}" style="display:none">${pillsHtml}</div>${clearRow}`;
 }
 
 // Keep old alias so any remaining callers don't break
@@ -17665,9 +17676,9 @@ async function _refreshDvBrands(drugId) {
       .filter(Boolean)
       .join('');
   }
-  // Show/hide clear row
+  // Show/hide clear row — only visible when panel is open AND filter active
   const clearRow = document.getElementById(`dvGroupPillsClear_${drugId}`);
-  if (clearRow) clearRow.style.display = n > 0 ? '' : 'none';
+  if (clearRow) clearRow.style.display = (n > 0 && _dvFormulaPanelOpen) ? '' : 'none';
 }
 
 // Build brand rows HTML (matched on top, dimmed below)
