@@ -3447,6 +3447,60 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   line-height: 1.55;
 }
 
+/* ── FAVOURITES SEGMENTED TAB BAR ─────────────────────────────── */
+.fav-tab-bar {
+  display: flex;
+  margin: var(--space-4) var(--space-4) var(--space-3);
+  background: var(--color-surface-2);
+  border-radius: var(--radius-full);
+  padding: 3px;
+  border: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+.fav-tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: transparent;
+  font-family: var(--font);
+  font-size: var(--text-sm-size);
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: color .18s, background .18s, box-shadow .18s;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  white-space: nowrap;
+}
+.fav-tab-btn.active {
+  background: var(--color-surface-elevated);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-sm);
+  font-weight: 700;
+}
+.fav-tab-btn .fav-tab-count {
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--color-border-strong);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-full);
+  padding: 1px 6px;
+  line-height: 1.5;
+  transition: background .18s, color .18s;
+}
+.fav-tab-btn.active .fav-tab-count {
+  background: var(--color-brand);
+  color: #fff;
+}
+.fav-tab-panel { display: none; }
+.fav-tab-panel.active { display: block; }
+
 /* Legacy aliases — kept so any stray JS references don't crash */
 .fav-sub-title { font-size: var(--text-xs-size); font-weight: 800; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: .06em; padding: var(--space-2) var(--space-4) var(--space-1); }
 .fav-star-btn{background:none;border:none;font-size:var(--text-lg-size);cursor:pointer;padding:3px;line-height:1;flex-shrink:0;transition:.1s}
@@ -9306,10 +9360,10 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   </div>
 </div>
 
-<!-- FAVOURITES SCREEN — Phase 4.13 redesign -->
+<!-- FAVOURITES SCREEN — segmented tabs redesign -->
 <div id="favsScr">
 
-  <!-- Header: matches home screen shell -->
+  <!-- Header -->
   <div class="hdr">
     <div class="hdr-top">
       <div class="hdr-title-block">
@@ -9327,58 +9381,47 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
     <div class="peer-scr-title">Favourites</div>
   </div>
 
+  <!-- Segmented tab bar -->
+  <div class="fav-tab-bar">
+    <button class="fav-tab-btn active" id="favTabConditions" onclick="switchFavTab('conditions')">
+      <i class="ph ph-star" style="font-size:14px"></i>
+      Conditions
+      <span class="fav-tab-count" id="favCondTabCount">0</span>
+    </button>
+    <button class="fav-tab-btn" id="favTabDrugs" onclick="switchFavTab('drugs')">
+      <i class="ph ph-star" style="font-size:14px"></i>
+      Drugs
+      <span class="fav-tab-count" id="favDrugTabCount">0</span>
+    </button>
+  </div>
+
   <!-- Scrollable body -->
-  <div class="favs-scroll-body" style="padding:var(--space-3) var(--space-3) 80px">
+  <div class="favs-scroll-body" style="padding:0 var(--space-3) 80px">
 
-    <!-- Favourite Prescriptions section -->
-    <div class="fav-section">
-      <div class="fav-hdr" onclick="toggleFavSection('favDiseasesBody','favDiseasesArr')">
-        <div class="fav-hdr-icon-wrap brand">
-          <i class="ph ph-prescription"></i>
-        </div>
-        <span class="fav-hdr-title">Favourite Prescriptions</span>
-        <span class="fav-hdr-count" id="favDiseasesCount">0</span>
-        <div class="fav-hdr-arr open" id="favDiseasesArr">
-          <i class="ph ph-caret-right"></i>
-        </div>
-      </div>
-      <div class="fav-body open" id="favDiseasesBody">
-        <div id="favDiseasesList">
-          <div class="fav-empty">
-            <div class="fav-empty-icon"><i class="ph ph-star"></i></div>
-            <div class="fav-empty-title">No favourites yet</div>
-            <div class="fav-empty-body">Tap the star on any prescription to pin it here</div>
-          </div>
+    <!-- Tab: Conditions -->
+    <div class="fav-tab-panel active" id="favPanelConditions">
+      <div id="favDiseasesList">
+        <div class="fav-empty">
+          <div class="fav-empty-icon"><i class="ph ph-star"></i></div>
+          <div class="fav-empty-title">No favourites yet</div>
+          <div class="fav-empty-body">Tap the star on any prescription to pin it here</div>
         </div>
       </div>
     </div>
 
-    <!-- Favourite Drugs section -->
-    <div class="fav-section">
-      <div class="fav-hdr" onclick="toggleFavSection('favDrugsBody','favDrugsArr')">
-        <div class="fav-hdr-icon-wrap safe">
-          <i class="ph ph-pill"></i>
-        </div>
-        <span class="fav-hdr-title">Favourite Drugs</span>
-        <span class="fav-hdr-count" id="favDrugsCount">0</span>
-        <div class="fav-hdr-arr" id="favDrugsArr">
-          <i class="ph ph-caret-right"></i>
-        </div>
-      </div>
-      <div class="fav-body" id="favDrugsBody">
-        <div id="favDrugsList">
-          <div class="fav-empty">
-            <div class="fav-empty-icon"><i class="ph ph-pill"></i></div>
-            <div class="fav-empty-title">No favourite drugs yet</div>
-            <div class="fav-empty-body">Tap the star on any drug in the library to pin it here</div>
-          </div>
+    <!-- Tab: Drugs -->
+    <div class="fav-tab-panel" id="favPanelDrugs">
+      <div id="favDrugsList">
+        <div class="fav-empty">
+          <div class="fav-empty-icon"><i class="ph ph-pill"></i></div>
+          <div class="fav-empty-title">No favourite drugs yet</div>
+          <div class="fav-empty-body">Tap the star on any drug in the library to pin it here</div>
         </div>
       </div>
     </div>
 
-  </div><!-- /.scrollable body -->
+  </div><!-- /.favs-scroll-body -->
 </div><!-- /#favsScr -->
-
 <!-- DRUG CATEGORY MANAGER -->
 <div class="screen" id="drugCatMgrScr">
   <div class="scr-hdr">
@@ -10943,6 +10986,19 @@ function setView(view) {
 }
 
 // ═══════════════════════════════════════════════════════
+// ── Favourites segmented tab switcher ───────────────────────────
+let _favActiveTab = 'conditions';
+function switchFavTab(tab) {
+  _favActiveTab = tab;
+  ['conditions','drugs'].forEach(t => {
+    const btn   = document.getElementById('favTab' + t.charAt(0).toUpperCase() + t.slice(1));
+    const panel = document.getElementById('favPanel' + t.charAt(0).toUpperCase() + t.slice(1));
+    const isActive = t === tab;
+    if (btn)   btn.classList.toggle('active', isActive);
+    if (panel) panel.classList.toggle('active', isActive);
+  });
+}
+
 // FAVOURITES — Phase 13b
 // ═══════════════════════════════════════════════════════
 
@@ -10979,7 +11035,7 @@ async function renderFavourites() {
 
   // ── Favourite Prescriptions (conditions) ───────────────────────────
   const condList   = document.getElementById('favDiseasesList');
-  const condCount  = document.getElementById('favDiseasesCount');
+  const condCount  = document.getElementById('favCondTabCount');
   if (condList) {
     const condItems = favConditionIds.map(id => {
       const cond = _CONDITIONS.find(c => c.id === id);
@@ -11013,7 +11069,7 @@ async function renderFavourites() {
 
   // ── Favourite Drugs ─────────────────────────────────────────────────
   const drugList  = document.getElementById('favDrugsList');
-  const drugCount = document.getElementById('favDrugsCount');
+  const drugCount = document.getElementById('favDrugTabCount');
   if (drugList) {
     const lib = await DB.getAll('library');
     const drugItems = favDrugIds.map(id => {
