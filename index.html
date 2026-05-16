@@ -5735,8 +5735,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .dv-brand-ar-row-p12 {
   display: block;
   width: 100%;
-  margin-top: var(--space-2);
-  padding-top: var(--space-2);
+  margin-top: 2px;
   direction: rtl;
   text-align: right;
 }
@@ -6556,6 +6555,62 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   padding: 0;
 }
 .dv-formula-filter-active { color: var(--color-brand) !important; }
+/* Drug viewer group-pill filter — same style as lib-filter-route-pill */
+.dv-group-pills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--color-border);
+}
+.dv-group-pill {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  white-space: nowrap;
+  position: relative;
+}
+.dv-group-pill:active { opacity: .75; transform: scale(.98); }
+.dv-group-pill.active {
+  background: var(--color-brand-light);
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}
+.dv-group-pill i { font-size: 14px; flex-shrink: 0; }
+/* Clear row below pills */
+.dv-group-pills-clear {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 var(--space-5) var(--space-3);
+}
+.dv-group-pills-clear-btn {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-danger);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font);
+  padding: 2px 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.dv-group-pills-clear-btn:active { opacity: .7; }
 .formula-filter-badge{background:var(--color-brand);color:var(--color-text-inverse);border-radius:10px;padding:1px 7px;font-size:10px;font-weight:800;min-width:18px;text-align:center}
 .formula-filter-panel{overflow:hidden;max-height:0;opacity:0;transition:max-height .2s ease,opacity .15s ease;background:var(--color-surface);border-bottom:1px solid var(--color-border)}
 .formula-filter-panel.open{max-height:200px;opacity:1}
@@ -7479,9 +7534,9 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 #drugViewerScr.dv-lang-en .dv-brand-dose-p12 { display: block; }
 /* AR row (name-ar + dose-ar): hide by default, show in AR mode */
 .dv-brand-ar-row-p12 { display: none; }
-#drugViewerScr.dv-lang-ar .dv-brand-ar-row-p12 { display: flex; }
+#drugViewerScr.dv-lang-ar .dv-brand-ar-row-p12 { display: block; }
 /* Default state (no class set) = AR */
-#drugViewerScr:not(.dv-lang-en) .dv-brand-ar-row-p12 { display: flex; }
+#drugViewerScr:not(.dv-lang-en) .dv-brand-ar-row-p12 { display: block; }
 
 /* Arabic brand name — hidden by default, shown in Arabic mode */
 .cv-rx-brand-ar { display:none; }
@@ -17494,42 +17549,86 @@ function _renderDvFormulaTitleBtn(drugId) {
 }
 
 // Renders just the collapsible chip panel — placed below the title row
-function _renderDvFormulaPanelOnly(drugId, availableFormulas) {
-  if (!availableFormulas.length) return '';
-  const chipsHtml = availableFormulas.map(f => {
-    const checked = _dvFormulaFilter.has(f);
-    const fd = FORMULA_DISPLAY[f] || {ico:'💊', lbl:f};
-    return `<div class="formula-chip${checked?' checked':''}" onclick="toggleDvFormula('${esc(drugId)}','${esc(f)}')">
-      <span class="fc-check">${checked?'✓':''}</span>
-      <span style="font-size:11px">${fd.ico}</span><span>${esc(fd.lbl)}</span>
-    </div>`;
-  }).join('');
-  return `<div class="formula-filter-panel" id="dvFormulaPanel_${drugId}" style="border:none;border-top:1px solid var(--color-border);border-radius:0;background:transparent;">
-    <div class="formula-filter-inner" style="padding:var(--space-2) var(--space-4) var(--space-3)">
-      <div class="formula-filter-title">
-        <span>Filter by Formula</span>
-        <button class="formula-filter-clear" onclick="clearDvFormulaFilter('${drugId}')"><i class="ph ph-x" style="font-size:10px;vertical-align:0;margin-right:2px"></i>Clear</button>
-      </div>
-      <div class="formula-chips-grid">${chipsHtml}</div>
-    </div>
-  </div>`;
+// Group-pill config — mirrors the lib filter sheet exactly
+const _DV_GROUP_ICONS = {
+  'Tab/Cap':          'ph-pill',
+  'Syrup/Susp/Drops': 'ph-flask',
+  'Injections':       'ph-syringe',
+  'Suppositories':    'ph-cylinder',
+  'Sachets':          'ph-package',
+  'Inhaled':          'ph-wind',
+  'Topical':          'ph-hand-heart',
+  'Other':            'ph-dots-three-circle',
+};
+const _DV_GROUP_LABELS = {
+  'Tab/Cap':          'Tab / Cap',
+  'Syrup/Susp/Drops': 'Syrup / Drops',
+  'Injections':       'Injection',
+  'Suppositories':    'Suppository',
+  'Sachets':          'Sachet',
+  'Inhaled':          'Inhaled',
+  'Topical':          'Topical',
+  'Other':            'Other',
+};
+
+// Build group pill HTML for a given group key + available formulas
+function _dvGroupPillHtml(drugId, groupKey, availableFormulas) {
+  const members = FORMULA_GROUPS[groupKey] || [];
+  const presentMembers = members.filter(m => availableFormulas.includes(m));
+  if (!presentMembers.length) return ''; // skip groups absent from this drug
+  const isActive = presentMembers.every(m => _dvFormulaFilter.has(m));
+  const ico = _DV_GROUP_ICONS[groupKey] || 'ph-tag';
+  const lbl = _DV_GROUP_LABELS[groupKey] || groupKey;
+  return `<button class="dv-group-pill${isActive ? ' active' : ''}"
+    onclick="toggleDvFormulaGroup('${esc(drugId)}','${esc(groupKey)}')"
+    data-group="${esc(groupKey)}">
+    <i class="ph ${ico}"></i>${esc(lbl)}
+  </button>`;
 }
 
-// Keep old function as alias so any existing callers don't break
+function _renderDvFormulaPanelOnly(drugId, availableFormulas) {
+  if (!availableFormulas.length) return '';
+
+  const pillsHtml = Object.keys(FORMULA_GROUPS)
+    .map(g => _dvGroupPillHtml(drugId, g, availableFormulas))
+    .filter(Boolean)
+    .join('');
+
+  if (!pillsHtml) return '';
+
+  const hasActive = _dvFormulaFilter.size > 0;
+  const clearRow = `<div class="dv-group-pills-clear" id="dvGroupPillsClear_${drugId}" style="${hasActive ? '' : 'display:none'}">
+    <button class="dv-group-pills-clear-btn" onclick="clearDvFormulaFilter('${esc(drugId)}')">
+      <i class="ph ph-x" style="font-size:10px"></i> Clear filter
+    </button>
+  </div>`;
+
+  return `<div class="dv-group-pills" id="dvGroupPills_${drugId}">${pillsHtml}</div>${clearRow}`;
+}
+
+// Keep old alias so any remaining callers don't break
 function _renderDvFormulaPanel(drugId, availableFormulas) {
   return _renderDvFormulaTitleBtn(drugId) + _renderDvFormulaPanelOnly(drugId, availableFormulas);
 }
 
-function toggleDvFormulaPanel(drugId) {
-  _dvFormulaPanelOpen = !_dvFormulaPanelOpen;
-  const panel = document.getElementById(`dvFormulaPanel_${drugId}`);
-  if (panel) panel.classList.toggle('open', _dvFormulaPanelOpen);
+// Toggle a whole group on/off — if all members are active, deactivate; otherwise activate all
+function toggleDvFormulaGroup(drugId, groupKey) {
+  const members = FORMULA_GROUPS[groupKey] || [];
+  // We need to know which of these members are actually present in this drug's products
+  // Use the filter badge context — simpler: toggle based on current state
+  const allActive = members.every(m => _dvFormulaFilter.has(m));
+  if (allActive) {
+    members.forEach(m => _dvFormulaFilter.delete(m));
+  } else {
+    members.forEach(m => _dvFormulaFilter.add(m));
+  }
+  _refreshDvBrands(drugId);
 }
 
+// Legacy per-formula toggle (kept for back-compat)
 function toggleDvFormula(drugId, formula) {
   if (_dvFormulaFilter.has(formula)) _dvFormulaFilter.delete(formula);
   else _dvFormulaFilter.add(formula);
-  // Re-render just the brands section
   _refreshDvBrands(drugId);
 }
 
@@ -17550,26 +17649,25 @@ async function _refreshDvBrands(drugId) {
   if (!container) return;
   container.innerHTML = _buildBrandRows(drugId, drug, displayProds);
 
-  // Update filter button badge in the collapsible header
+  // Update fader btn badge in the collapsible header
   const n = _dvFormulaFilter.size;
   const btn = document.getElementById(`dvFormulaFilterBtn_${drugId}`);
   const badge = btn?.querySelector('.lib-filter-badge');
   if (btn) btn.classList.toggle('dv-formula-filter-active', n > 0);
   if (badge) badge.style.display = n > 0 ? 'block' : 'none';
-  // Re-render chips inside panel
-  const panel = document.getElementById(`dvFormulaPanel_${drugId}`);
-  const chipsWrap = panel?.querySelector('.formula-chips-grid');
-  if (chipsWrap) {
-    const available = _formulasInProducts(displayProds);
-    chipsWrap.innerHTML = available.map(f => {
-      const checked = _dvFormulaFilter.has(f);
-      const fd = FORMULA_DISPLAY[f] || {ico:'💊', lbl:f};
-      return `<div class="formula-chip${checked?' checked':''}" onclick="toggleDvFormula('${esc(drugId)}','${esc(f)}')">
-        <span class="fc-check">${checked?'✓':''}</span>
-        <span style="font-size:11px">${fd.ico}</span><span>${esc(fd.lbl)}</span>
-      </div>`;
-    }).join('');
+
+  // Re-render group pills in place (no full panel re-render needed)
+  const available = _formulasInProducts(displayProds);
+  const pillsWrap = document.getElementById(`dvGroupPills_${drugId}`);
+  if (pillsWrap) {
+    pillsWrap.innerHTML = Object.keys(FORMULA_GROUPS)
+      .map(g => _dvGroupPillHtml(drugId, g, available))
+      .filter(Boolean)
+      .join('');
   }
+  // Show/hide clear row
+  const clearRow = document.getElementById(`dvGroupPillsClear_${drugId}`);
+  if (clearRow) clearRow.style.display = n > 0 ? '' : 'none';
 }
 
 // Build brand rows HTML (matched on top, dimmed below)
