@@ -5832,28 +5832,28 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-2) 0;
+  padding: var(--space-3) 0;
   border-bottom: 1px solid var(--color-border);
 }
 .dv-preg-row-p12:last-of-type { border-bottom: none; }
 .dv-preg-row-lbl-p12 {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: .06em;
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex-shrink: 0;
 }
-/* Single FDA category horizontal pill */
+/* Single FDA category pill — fixed square-ish size, both pills identical */
 .dv-preg-cat-single-p12 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 90px;
-  padding: 4px 0;
+  width: 110px;
+  height: 40px;
   border-radius: var(--radius-full);
   border: 1.5px solid var(--color-border);
   background: var(--color-surface-2);
@@ -5918,10 +5918,10 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 
 /* Breastfeeding note — plain text below the row */
 .dv-bf-note-p12 {
-  font-size: 11px;
-  color: var(--color-text-tertiary);
-  line-height: 1.5;
-  padding: var(--space-1) 0 var(--space-2);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  padding: var(--space-3) 0 var(--space-2);
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -5966,14 +5966,14 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .dv-barrier-cell-p12.off { background: var(--color-safe-light);    border-color: rgba(22,163,74,.3); }
 /* Question label — e.g. "Crosses BBB?" */
 .dv-barrier-question-p12 {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: .06em;
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
 }
 /* Answer row — icon circle + Yes/No text */
 .dv-barrier-answer-p12 {
@@ -8415,7 +8415,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   color: var(--color-text-primary);
 }
 .cv-depth-card-body-p11 {
-  padding: var(--space-2) var(--space-4) var(--space-3);
+  padding: var(--space-3) var(--space-5) var(--space-4);
 }
 /* Each heading+paragraph pair — no inner box, no border, no bg */
 .cv-depth-block-p11 {
@@ -16530,12 +16530,12 @@ async function openDrugViewer(id) {
     let bfRow = '';
     if (drug.lactation) {
       const lacClass = drug.lactation === 'Safe' ? 'safe' : drug.lactation === 'Unsafe' ? 'unsafe' : 'caution';
-      const lacIcon  = drug.lactation === 'Safe' ? '<i class="ph ph-check-circle" style="font-size:13px"></i>' : drug.lactation === 'Unsafe' ? '<i class="ph ph-x-circle" style="font-size:13px"></i>' : '<i class="ph ph-warning-circle" style="font-size:13px"></i>';
+      const lacIcon  = drug.lactation === 'Safe' ? '<i class="ph ph-check-circle" style="font-size:16px"></i>' : drug.lactation === 'Unsafe' ? '<i class="ph ph-x-circle" style="font-size:16px"></i>' : '<i class="ph ph-warning-circle" style="font-size:16px"></i>';
       bfRow = `<div style="border-top:1px solid var(--color-border);margin-top:var(--space-1)"></div>
       <div class="dv-preg-row-p12" style="border-bottom:none;padding-bottom:${drug.lactationNote ? '0' : 'var(--space-1)'}">
-        <div class="dv-preg-row-lbl-p12"><i class="ph ph-baby" style="font-size:10px"></i> Breastfeeding</div>
+        <div class="dv-preg-row-lbl-p12"><i class="ph ph-baby" style="font-size:13px"></i> Breastfeeding</div>
         <div class="dv-preg-cat-single-p12 ${lacClass}">
-          <span class="dv-preg-cat-letter-p12" style="font-size:12px;display:flex;align-items:center;gap:5px">${lacIcon}${esc(drug.lactation)}</span>
+          <span class="dv-preg-cat-letter-p12" style="font-size:14px;font-weight:800;display:flex;align-items:center;gap:6px">${lacIcon}${esc(drug.lactation)}</span>
         </div>
       </div>
       ${drug.lactationNote ? `<div class="dv-bf-note-p12">${esc(drug.lactationNote)}</div>` : ''}`;
@@ -16570,7 +16570,7 @@ async function openDrugViewer(id) {
     const legendId = 'pregLegend_' + id;
     const pregContent = `
       <div class="dv-preg-row-p12" style="border-bottom:none;padding-bottom:0">
-        <div class="dv-preg-row-lbl-p12"><i class="ph ph-shield-check" style="font-size:10px"></i> FDA Pregnancy Category</div>
+        <div class="dv-preg-row-lbl-p12"><i class="ph ph-shield-check" style="font-size:13px"></i> FDA Pregnancy Category</div>
         <div class="dv-preg-cat-single-p12 ${pregCatCls}">
           <span class="dv-preg-cat-letter-p12">${pregCatDisplay}</span>
         </div>
