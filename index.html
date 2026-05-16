@@ -592,26 +592,16 @@ html:not([data-theme="dark"]):not([data-theme="light"]) body {
   color: var(--color-text-secondary);
 }
 
-/* ── 13. CV PATIENT PRESENTATION dark card ── */
-/* .cv-pp-card-p11 uses --color-bg as its bg (dark navy context).
-   In light mode this becomes pale grey — adjust inner text. */
-[data-theme="light"] .cv-pp-card-p11 {
-  background: var(--color-brand-light);
-  box-shadow: var(--shadow-sm);
-}
-[data-theme="light"] .cv-pp-card-p11 .cv-pp-ar {
-  color: var(--color-brand);
-}
-[data-theme="light"] .cv-pp-card-p11 .cv-pp-en {
-  color: var(--color-text-secondary);
-}
+/* ── 13. CV PATIENT PRESENTATION — solid brand-blue card ── */
+/* Card is always --color-brand (#0085fe) in both themes.
+   Light-mode adjustments are minimal — icon/label already use black. */
 [data-theme="light"] .cv-pp-header-icon {
-  background: rgba(0,133,254,.10);
-  border-color: rgba(0,133,254,.15);
-  color: var(--color-brand);
+  background: rgba(0,0,0,.10);
+  border-color: rgba(0,0,0,.08);
+  color: #000;
 }
 [data-theme="light"] .cv-pp-header-label {
-  color: var(--color-text-tertiary);
+  color: rgba(0,0,0,.55);
 }
 
 /* ── 14. TOAST — was dark --color-header-bg ── */
@@ -755,11 +745,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .cv-hdr-specialty-tag {
   html:not([data-theme="dark"]) .dv-hero-p12-source-lbl { color: var(--color-text-tertiary); }
   html:not([data-theme="dark"]) .dv-hero-p12-source-val { color: var(--color-text-tertiary); }
   html:not([data-theme="dark"]) .dv-hero-p12-combo-tag { background: rgba(0,0,0,.07); border-color: rgba(0,0,0,.10); color: var(--color-text-secondary); }
-  html:not([data-theme="dark"]) .cv-pp-card-p11 { background: var(--color-brand-light); box-shadow: var(--shadow-sm); }
-  html:not([data-theme="dark"]) .cv-pp-card-p11 .cv-pp-ar { color: var(--color-brand); }
-  html:not([data-theme="dark"]) .cv-pp-card-p11 .cv-pp-en { color: var(--color-text-secondary); }
-  html:not([data-theme="dark"]) .cv-pp-header-icon { background: rgba(0,133,254,.10); border-color: rgba(0,133,254,.15); color: var(--color-brand); }
-  html:not([data-theme="dark"]) .cv-pp-header-label { color: var(--color-text-tertiary); }
+  html:not([data-theme="dark"]) .cv-pp-card-p11 { box-shadow: var(--shadow-sm); }
   html:not([data-theme="dark"]) .toast { background: #1a2e42; color: #E8EFF8; }
   html:not([data-theme="dark"]) .fab { background: var(--color-brand); color: #ffffff; }
   html:not([data-theme="dark"]) .cv-rx-num { background: none; color: var(--color-text-tertiary); }
@@ -6131,7 +6117,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .cv-hdr-specialty-tag {
    2px stroke + --color-brand = exact match with search-inp border.
    Width: calc(100% - 32px) centred → outer edge sits 16px from
    the tab's own edge, aligning it with the first iteration pill
-   below (.cv-iter-tabs-wrap has padding: 0 var(--space-3) = 12px).
+   below (.cv-iter-tabs-wrap has padding: 0 var(--space-4) = 16px).
    Top two corners rounded, bottom flush with the strip.
    ──────────────────────────────────────────────────────────────── */
 .cv-tab-btn::after {
@@ -6524,7 +6510,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 /* Inactive: rgba white bg + border on dark bg. Active: chip-active */
 /* tokens so light/dark mode flips automatically.                   */
 .cv-iter-tabs-wrap {
-  padding:var(--space-2) var(--space-3) 0;
+  padding:var(--space-2) var(--space-4) 0;
   background:transparent;
   border-bottom:none;
   /* Critical: prevent the chip strip from causing horizontal overflow on the panel */
@@ -6584,7 +6570,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   border-radius:var(--radius-md);
   border:1px solid var(--color-border);
   box-shadow:var(--shadow-sm);
-  margin:0 var(--space-3) 0;
+  margin:0 var(--space-4) 0;
   overflow:hidden;
   /* Ensure block never exceeds panel width */
   max-width: 100%;
@@ -6733,11 +6719,11 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 
 /* Brand name — prominent */
 .cv-rx-brand-name {
-  font-size:var(--text-md-size);
-  font-weight:600;
+  font-size:var(--text-lg-size);
+  font-weight:700;
   color:var(--color-text-primary);
-  line-height:var(--text-md-height);
-  letter-spacing:-.1px;
+  line-height:var(--text-lg-height);
+  letter-spacing:-.2px;
   word-break:break-word;
 }
 .cv-rx-brand-name.linked {
@@ -6968,10 +6954,10 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   display:flex;
   gap:var(--space-3);
   align-items:flex-start;
-  margin:var(--space-2) var(--space-3) 0;
+  margin:var(--space-2) var(--space-4) 0;
   padding:var(--space-3) var(--space-4);
-  background:var(--color-info-light);
-  border:1px solid rgba(0,133,254,.20);
+  background:var(--color-caution-light);
+  border:1px solid rgba(217,119,6,.2);
   border-radius:var(--radius-md);
 }
 .cv-iter-note-ico { font-size:var(--text-base-size); flex-shrink:0; margin-top:1px; }
@@ -7264,7 +7250,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   text-transform:uppercase;
   letter-spacing:.08em;
   color:var(--color-text-tertiary);
-  padding:var(--space-3) var(--space-3) var(--space-1);
+  padding:var(--space-3) var(--space-4) var(--space-1);
   display:flex;
   align-items:center;
   gap:var(--space-2);
@@ -7405,34 +7391,11 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 
 /* ── Phase 11: Patient Presentation — deep navy callout ── */
 .cv-pp-card-p11 {
-  background: var(--color-bg);
+  background: var(--color-brand);
   border-radius: var(--radius-md);
-  margin: var(--space-3) var(--space-4) 0;
+  margin: var(--space-3) var(--space-3) 0;
   padding: var(--space-4);
   box-shadow: var(--shadow-md);
-  position: relative;
-  overflow: hidden;
-}
-/* Decorative radial glow */
-.cv-pp-card-p11::before {
-  content: '';
-  position: absolute;
-  top: -20px;
-  right: -20px;
-  width: 100px;
-  height: 100px;
-  background: radial-gradient(circle, rgba(0,133,254,.25) 0%, transparent 70%);
-  pointer-events: none;
-}
-.cv-pp-card-p11::after {
-  content: '';
-  position: absolute;
-  bottom: -15px;
-  left: -10px;
-  width: 80px;
-  height: 80px;
-  background: radial-gradient(circle, rgba(34,197,94,.12) 0%, transparent 70%); /* --color-safe decomposed */
-  pointer-events: none;
 }
 .cv-pp-header-row {
   display: flex;
@@ -7444,19 +7407,19 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   width: 26px;
   height: 26px;
   border-radius: 6px;
-  background: rgba(255,255,255,.1);
-  border: 1px solid rgba(255,255,255,.15);
+  background: rgba(0,0,0,.12);
+  border: 1px solid rgba(0,0,0,.10);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: var(--text-sm-size);
-  color: rgba(255,255,255,.8);
+  color: #000;
   flex-shrink: 0;
 }
 .cv-pp-header-label {
   font-size: var(--text-xs-size);
   font-weight: 800;
-  color: rgba(255,255,255,.45);
+  color: rgba(0,0,0,.55);
   text-transform: uppercase;
   letter-spacing: .1em;
 }
@@ -7465,17 +7428,23 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   font-family: 'IBM Plex Sans Arabic', 'IBM Plex Sans', system-ui, sans-serif;
   font-size: var(--text-base-size);
   font-weight: 600;
-  color: rgba(255,255,255,.9);
+  color: #000;
   direction: rtl;
   text-align: right;
   line-height: 1.9;
+  display: none;
 }
 /* English text */
 .cv-pp-card-p11 .cv-pp-en {
   font-size: var(--text-sm-size);
-  color: rgba(255,255,255,.8);
+  font-weight: 500;
+  color: #000;
   line-height: 1.75;
+  display: none;
 }
+/* Language toggle visibility */
+#condViewerScr.lang-ar .cv-pp-ar { display: block; }
+#condViewerScr.lang-en .cv-pp-en { display: block; }
 
 /* ── Phase 11: Overview card — clean white surface ── */
 .cv-overview-card-p11 {
@@ -12868,7 +12837,7 @@ function _cvRenderPrescription(rx, agePrefix) {
   // Iteration note card (outside the white block, below it)
   if (rx.iteration_note_ar || rx.iteration_note) {
     html += `<div class="cv-iter-note-card">
-      <span class="cv-iter-note-ico"><i class="ph ph-lightbulb" style="color:var(--color-brand)"></i></span>
+      <span class="cv-iter-note-ico"><i class="ph ph-lightbulb" style="color:var(--color-caution)"></i></span>
       <div style="flex:1;min-width:0">
         ${rx.iteration_note_ar ? `<div class="cv-iter-note-ar" dir="rtl">${esc(rx.iteration_note_ar)}</div>` : ''}
         ${rx.iteration_note    ? `<div class="cv-iter-note-en">${esc(rx.iteration_note)}</div>`             : ''}
