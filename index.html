@@ -19655,12 +19655,12 @@ function _syncThemeToggleUI(theme) {
     hdrIcon.className = theme === 'light' ? 'ph ph-moon' : 'ph ph-sun';
   }
   // hdrBtn color now handled by CSS [data-theme] rules — no inline override needed
-  // Sync theme icons on ALL screens (home, lib, fav) — color handled by CSS [data-theme]
+  // Sync theme icons on ALL screens (home, lib, fav) — icon class only.
+  // Color is handled entirely by CSS [data-theme] + transition: color .15s
+  // — never touch btn.style.color here or it will bypass the CSS transition.
   document.querySelectorAll('.hdr-theme-btn').forEach(btn => {
     const ico = btn.querySelector('i');
     if (ico) ico.className = theme === 'light' ? 'ph ph-moon' : 'ph ph-sun';
-    // Remove any previously set inline color so CSS transition takes over
-    btn.style.color = '';
   });
 }
 
