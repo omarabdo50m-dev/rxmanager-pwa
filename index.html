@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="theme-color" content="#0d0f12"/>
+<meta name="theme-color" content="#111214"/>
 <title>Roshetta+</title>
 <!-- ═══════════════════════════════════════════════════════════
      PHASE 09 — PWA Manifest & Meta Tags
@@ -25,8 +25,8 @@
 <link rel="icon" type="image/png" sizes="72x72" href="/icons/icon-72.png"/>
 <!-- Microsoft Tiles (Edge, Windows) -->
 <meta name="msapplication-TileImage" content="/icons/icon-144.png"/>
-<meta name="msapplication-TileColor" content="#0d0f12"/>
-<meta name="msapplication-navbutton-color" content="#0d0f12"/>
+<meta name="msapplication-TileColor" content="#111214"/>
+<meta name="msapplication-navbutton-color" content="#111214"/>
 <!-- Open Graph / social sharing -->
 <meta property="og:type" content="website"/>
 <meta property="og:title" content="RxManager Pro"/>
@@ -74,43 +74,47 @@
 :root {
 
   /* ── SURFACE TOKENS ─────────────────────────────────────── */
-  --color-bg:               #0d0f12;  /* page background — near-black */
-  --color-surface:          #161c24;  /* card surfaces */
-  --color-surface-2:        #111418;  /* secondary surfaces, input bg */
-  --color-surface-elevated: #fefffe;  /* bottom nav near-white — new v1.1 */
-  --color-border:           #243040;  /* card borders, dividers */
-  --color-border-strong:    #344d66;  /* stronger dividers */
+  /* Reference: GitHub Dark (#0d1117), Linear (#0f0f10), Vercel (#000/surface #111)  */
+  /* Warm-neutral charcoal — no blue cast, not pure void-black                       */
+  --color-bg:               #111214;  /* page background — warm charcoal (was #0d0f12 too dark/blue) */
+  --color-surface:          #1a1b1e;  /* card surfaces — lifted 1 stop, warmer */
+  --color-surface-2:        #141517;  /* secondary surfaces, input bg */
+  --color-surface-elevated: #fefffe;  /* bottom nav near-white — unchanged */
+  --color-border:           #2a2b2e;  /* card borders — neutral, no blue cast (was #243040) */
+  --color-border-strong:    #3a3b3f;  /* stronger dividers — neutral grey (was #344d66 blue-shifted) */
 
   /* ── TEXT TOKENS ────────────────────────────────────────── */
-  --color-text-primary:   #f0f6ff;  /* headings, condition names — near white */
-  --color-text-secondary: #c0d4e4;  /* body text, metadata — bright & readable */
-  --color-text-tertiary:  #5a7a90;  /* placeholder text, inactive */
-  --color-text-inverse:   #f0f6ff;  /* white-on-dark text/icons */
+  --color-text-primary:   #e6e8eb;  /* headings — warm off-white (was #f0f6ff too blue-white) */
+  --color-text-secondary: #9b9ea4;  /* body text — muted mid-grey (was #c0d4e4 too bright+blue) */
+  --color-text-tertiary:  #55575c;  /* placeholder, inactive — deeper muted (was #5a7a90 blue-tinted) */
+  --color-text-inverse:   #e6e8eb;  /* white-on-dark text/icons */
 
   /* ── BRAND TOKENS ───────────────────────────────────────── */
-  --color-brand:       #0068cc;  /* toned-down blue — primary interactive */
-  --color-brand-light: #0d2035;  /* brand tint backgrounds (dark theme) */
-  --color-brand-dark:  #0058a8;  /* pressed / darker brand states */
+  /* Muted steel blue — readable but not electric. Raycast/Linear style. */
+  --color-brand:       #3b82f6;  /* steel blue-500 — interactive (was #0068cc too dark/navy) */
+  --color-brand-light: #1a1f2e;  /* brand tint bg — charcoal+blue, not dark navy (was #0d2035) */
+  --color-brand-dark:  #2563eb;  /* pressed state — blue-600 */
 
   /* ── SEMANTIC TOKENS — clinical meaning only ────────────── */
-  /* Foreground: readable on near-black surfaces */
-  --color-danger:        #fb923c;  /* amber-red — warm, brand-coherent danger */
-  --color-caution:       #FBBF24;  /* amber-400 — unchanged */
-  --color-safe:          #4ADE80;  /* green-400 */
-  --color-info:          #38BDF8;  /* sky-400   */
-  /* Backgrounds: dark tints sitting on --color-surface (#161c24) */
-  --color-danger-light:  #1e1208;  /* near-black + amber-red tint */
-  --color-caution-light: #1a160a;  /* near-black + amber tint     */
-  --color-safe-light:    #0a1610;  /* near-black + green tint     */
-  --color-info-light:    #0d1520;  /* near-black + sky tint       */
+  /* Foreground: desaturated enough to not bleed on charcoal bg  */
+  /* Reference point: GitHub dark uses ~60-70% saturation semantics */
+  --color-danger:        #f87171;  /* red-400 — softer than orange-red (was #fb923c amber) */
+  --color-caution:       #fbbf24;  /* amber-400 — kept, it works well */
+  --color-safe:          #4ade80;  /* green-400 — kept, clinical green must be clear */
+  --color-info:          #60a5fa;  /* blue-400 — muted vs sky-400's harsh cyan (was #38BDF8) */
+  /* Backgrounds: dark tints — slightly warmer/more neutral than before */
+  --color-danger-light:  #1c1214;  /* charcoal + red tint (was #1e1208 amber-biased) */
+  --color-caution-light: #1c1a10;  /* charcoal + amber tint */
+  --color-safe-light:    #0f1a12;  /* charcoal + green tint */
+  --color-info-light:    #111826;  /* charcoal + blue tint (was #0d1520) */
 
-  /* ── SHADOW TOKENS — neutral dark, no blue cast on near-black bg ── */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,.40), 0 1px 4px rgba(0,0,0,.24);
-  --shadow-md: 0 3px 10px rgba(0,0,0,.50), 0 1px 3px rgba(0,0,0,.30);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,.60), 0 3px 6px rgba(0,0,0,.36);
+  /* ── SHADOW TOKENS — neutral dark, no blue cast ── */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.36), 0 1px 4px rgba(0,0,0,.20);
+  --shadow-md: 0 3px 10px rgba(0,0,0,.44), 0 1px 3px rgba(0,0,0,.26);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,.54), 0 3px 6px rgba(0,0,0,.32);
   /* Search pill shadow */
-  --shadow-search:       0 6px 24px rgba(0,0,0,.48), 0 2px 6px rgba(0,0,0,.30), 0 1px 2px rgba(0,0,0,.20);
-  --shadow-search-focus: 0 8px 32px rgba(0,0,0,.56), 0 3px 8px rgba(0,0,0,.34), 0 0 0 3px rgba(0,104,204,.28);
+  --shadow-search:       0 6px 24px rgba(0,0,0,.42), 0 2px 6px rgba(0,0,0,.26), 0 1px 2px rgba(0,0,0,.18);
+  --shadow-search-focus: 0 8px 32px rgba(0,0,0,.50), 0 3px 8px rgba(0,0,0,.30), 0 0 0 3px rgba(59,130,246,.22);
 
   /* ── SPACING TOKENS — 4px grid ──────────────────────────── */
   --space-1:   4px;
@@ -159,14 +163,16 @@
      Dark mode: brand-tinted background + glowing border.
      Light mode: overridden in [data-theme="light"] block.
      ──────────────────────────────────────────────────────── */
-  --color-chip-active-bg:     rgba(0,104,204,.18);  /* brand tint — not solid fill */
-  --color-chip-active-border: rgba(0,104,204,.80);  /* clear brand outline */
-  --color-chip-active-text:   #5ab0f0;              /* bright readable on dark bg */
+  /* Muted accent — industry standard: subtle tint + quiet border, no electric glow */
+  /* Reference: Linear active chip, GitHub's selected state — tone it down          */
+  --color-chip-active-bg:     rgba(59,130,246,.10);  /* steel-blue tint — very subtle (was .18 too vivid) */
+  --color-chip-active-border: rgba(59,130,246,.38);  /* muted brand outline (was .80 — way too bright) */
+  --color-chip-active-text:   #7fa8d4;               /* muted steel — not electric (was #5ab0f0 saturated) */
 
   /* ── RGB CHANNEL TOKENS — for use in rgba() mask gradients ── */
   /* These expose the raw RGB channels of key surface colors so   */
   /* fade masks can dissolve into the correct background color.   */
-  --color-bg-rgb:      13, 15, 18;    /* #0d0f12 decomposed — dark mode bg */
+  --color-bg-rgb:      17, 18, 20;    /* #111214 decomposed — updated dark mode bg */
 
   /* ── LEGACY ALIASES — keep existing CSS rules working ───── */
   /* Progressively replaced screen-by-screen in Phase 4.      */
@@ -177,7 +183,7 @@
   --navy:             var(--color-bg);      /* alias → --color-bg */
   --navy2:            var(--color-surface-2);
   --teal:             var(--color-brand);
-  --teal2:            #40a8ff;
+  --teal2:            #6ba3d6;  /* muted mid-blue — was #40a8ff too saturated */
   --teal-bg:          var(--color-brand-light);
   --red:              var(--color-danger);
   --red-bg:           var(--color-danger-light);
