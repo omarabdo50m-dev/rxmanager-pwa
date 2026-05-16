@@ -3038,6 +3038,9 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;flex-direction:column;animation:slide-in .28s cubic-bezier(.32,.72,0,1);max-width:480px;margin:0 auto}
 .screen.open{display:flex}
 @keyframes slide-in{from{transform:translateX(6%);opacity:.5}to{transform:none;opacity:1}}
+/* Peer nav screens — sit alongside home, no z-index stack, no slide-in */
+#libScr,#favsScr{position:fixed;inset:0;z-index:10;background:var(--color-bg);display:none;flex-direction:column;max-width:480px;margin:0 auto;animation:none}
+#libScr.peer-open,#favsScr.peer-open{display:flex}
 .scr-hdr{background:var(--color-bg);color: var(--color-text-inverse);padding:var(--header-top-pad) 15px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;box-shadow:0 4px 12px rgba(15,23,42,.3);flex-shrink:0}
 .back-btn{background:none;border:none;color:rgba(255,255,255,.8);font-size:22px;cursor:pointer;padding:2px 4px;line-height:1;transition:.15s}
 .back-btn:active{color: var(--color-text-inverse)}
@@ -8365,11 +8368,8 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 </div>
 
 <!-- LIBRARY -->
-<div class="screen" id="libScr">
+<div id="libScr">
   <div class="cc-screen-header">
-    <button class="cc-screen-header__back" onclick="if(_libSelectMode)toggleLibSelectMode();libClearAllFilters();closeScreen('libScr')" aria-label="Back">
-      <i class="ph ph-arrow-left" style="font-size:20px"></i>
-    </button>
     <span class="cc-screen-header__title" id="libScrTitle" style="font-size:var(--text-lg-size);font-weight:800;letter-spacing:-.3px">Drug Library</span>
     <button class="cc-screen-header__back" id="libMenuBtn" onclick="openLibMenu()" title="More options" aria-label="More options">
       <i class="ph ph-dots-three-outline" style="font-size:18px"></i>
@@ -8421,7 +8421,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
     <button id="lrp_Safety"></button>
     <span id="libFilterSummary"><span id="libFilterSummaryText"></span></span>
   </div>
-  <div class="lib-items" id="libItems" style="padding-bottom:0"></div>
+  <div class="lib-items" id="libItems" style="padding-bottom:80px"></div>
   <!-- Selection action bar — slides up from bottom -->
   <div class="lib-select-bar" id="libSelectBar">
     <div class="lib-select-count" id="libSelectCount">0 selected<span>Tap drugs to select</span></div>
@@ -8869,16 +8869,11 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 </div>
 
 <!-- FAVOURITES SCREEN — Phase 4.13 redesign -->
-<div class="screen" id="favsScr">
+<div id="favsScr">
 
   <!-- Header: canonical .cc-screen-header — Phase 4.13 -->
   <div class="cc-screen-header">
-    <button class="cc-screen-header__back" onclick="closeScreen('favsScr')" aria-label="Back">
-      <i class="ph ph-arrow-left"></i>
-    </button>
     <span class="cc-screen-header__title">Favourites</span>
-    <!-- Spacer to balance back button -->
-    <div style="width:36px;flex-shrink:0"></div>
   </div>
 
   <!-- Scrollable body -->
@@ -10068,7 +10063,7 @@ const SB = {
         await reloadLibrary();
         buildSearchIndex().catch(() => {});
         // Re-render the library list if it's visible
-        if (document.getElementById('libScr')?.classList.contains('open')) renderLib();
+        if (document.getElementById('libScr')?.classList.contains('peer-open')) renderLib();
         // Re-render main list in case prescriptions reference library drugs
         renderMain();
       } catch(e) {
@@ -10382,8 +10377,9 @@ window.addEventListener('popstate', () => {
     _closeLightboxSilent();
     return;
   }
+  // Only close true overlay screens — lib/fav are peer nav tabs, not history entries
   const open = document.querySelector('.screen.open');
-  if (open) open.classList.remove('open');
+  if (open && open.id !== 'libScr' && open.id !== 'favsScr') open.classList.remove('open');
 });
 
 // ═══════════════════════════════════════════════════════
@@ -10433,14 +10429,15 @@ function setView(view) {
   document.getElementById('navRx').classList.toggle('active', view==='rx');
   document.getElementById('navLib').classList.toggle('active', view==='lib');
   document.getElementById('navFav').classList.toggle('active', view==='fav');
+  // Peer screens: show/hide via CSS class, no z-index stack, no history push
+  document.getElementById('libScr').classList.toggle('peer-open', view==='lib');
+  document.getElementById('favsScr').classList.toggle('peer-open', view==='fav');
   if (view === 'rx') {
     renderMain();
   } else if (view === 'fav') {
     renderFavourites();
-    openScreen('favsScr');
   } else {
     renderLib();
-    openScreen('libScr');
   }
 }
 
@@ -10498,7 +10495,7 @@ async function renderFavourites() {
       </div>`;
     } else {
       condList.innerHTML = condItems.map(item => `
-        <div class="fav-item" onclick="openConditionViewer('${esc(item.id)}');closeScreen('favsScr')">
+        <div class="fav-item" onclick="openConditionViewer('${esc(item.id)}');document.getElementById('favsScr').classList.remove('peer-open')">
           <div class="fav-item-ico brand">
             <i class="ph ph-prescription"></i>
           </div>
@@ -10536,7 +10533,7 @@ async function renderFavourites() {
         const subLabel = item.subgroup
           ? `${esc(item.group)} · ${esc(item.subgroup)}`
           : esc(item.group);
-        return `<div class="fav-item" onclick="openDrugViewer('${esc(item.id)}');closeScreen('favsScr')">
+        return `<div class="fav-item" onclick="openDrugViewer('${esc(item.id)}');document.getElementById('favsScr').classList.remove('peer-open')">
           <div class="fav-item-ico safe">
             <i class="ph ph-pill"></i>
           </div>
@@ -11345,7 +11342,7 @@ async function checkContentVersion() {
         localStorage.setItem(VERSION_KEY_LIBRARY, remoteLibV);
         buildSearchIndex().catch(() => {});
         // Re-render library screen if open
-        if (document.getElementById('libScr')?.classList.contains('open')) renderLib();
+        if (document.getElementById('libScr')?.classList.contains('peer-open')) renderLib();
         renderMain();
       }
     }
@@ -15982,7 +15979,7 @@ async function confirmClearAll() {
     await reloadLibrary();
     buildSearchIndex().catch(() => {});
     renderMain();
-    if (document.getElementById('libScr')?.classList.contains('open')) renderLib();
+    if (document.getElementById('libScr')?.classList.contains('peer-open')) renderLib();
     updateGhLibStatus();
     toast('Drug library reloaded');
   } catch(e) {
@@ -19643,7 +19640,7 @@ async function _retryNetworkLoad() {
     _setOfflineIndicator(false);
     buildSearchIndex().catch(() => {});
     renderMain();
-    if (document.getElementById('libScr')?.classList.contains('open')) renderLib();
+    if (document.getElementById('libScr')?.classList.contains('peer-open')) renderLib();
   } else {
     if (retryBtn) {
       retryBtn.textContent = 'Retry';
