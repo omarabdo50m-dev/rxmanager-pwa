@@ -6593,7 +6593,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-sm);
-  margin: var(--space-2) var(--space-3) 0;
+  margin: var(--space-2) var(--space-4) 0;  /* was space-3 (12px) — unified to space-4 (16px) to match drug block */
 }
 
 /* Overview */
@@ -6738,7 +6738,9 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   align-items: flex-start;
   gap: 5px;
   margin-top: var(--space-2);
-  padding-left: 26px;   /* aligns with brand name left edge (18px num + 8px gap) */
+  padding-left: 0;
+  padding-right: 0;
+  justify-content: flex-end;   /* push to right edge */
   line-height: 1.6;
   direction: ltr;
 }
@@ -6746,7 +6748,8 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   flex-direction: row-reverse;
   direction: rtl;
   padding-left: 0;
-  padding-right: 26px;  /* mirrors LTR padding-left — aligns with Arabic content right edge */
+  padding-right: 0;
+  justify-content: flex-end;   /* push to right edge */
 }
 .cv-rx-drug-note-ico {
   font-size: 12px;
@@ -6829,6 +6832,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   text-decoration: underline;
   text-decoration-style: dotted;
   text-decoration-color: var(--color-brand);  /* blue dotted underline in both modes */
+  text-decoration-thickness: 1px;
   text-underline-offset: 3px;
 }
 .cv-rx-brand-name.linked::after {
@@ -6878,7 +6882,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   font-weight:600;                  /* was 500 — bumped up, swapped with note weight */
   color:var(--color-text-primary);
   direction:ltr;
-  text-align:left;
+  text-align:right;
   margin-top:var(--space-1);
   line-height:1.7;
   display:none;
@@ -12956,7 +12960,7 @@ function _renderBrandLine({ brand, brandAr, conc, formula, libDrugId, isPrimary,
 
   return `
     <div class="cv-rx-brand-line${isPrimary ? '' : ' cv-rx-brand-line--alt'}"
-         style="display:flex;align-items:center;gap:var(--space-2)">
+         style="display:flex;align-items:flex-start;gap:var(--space-2)">
       ${leftCell}
       <div style="flex:1;min-width:0">
         ${brandSpan}${conc ? ` <span style="font-size:var(--text-base-size);font-weight:500;color:var(--color-text-secondary)">${esc(conc)}</span>` : ''}${formula ? ` <span class="cv-rx-formula-tag">${esc(formula)}</span>` : ''}
@@ -12968,7 +12972,7 @@ function _renderBrandLine({ brand, brandAr, conc, formula, libDrugId, isPrimary,
          ontouchstart="this.style.background='var(--color-brand-light)';this.style.borderColor='var(--color-brand)'"
          ontouchend="this.style.background='var(--color-surface-2)';this.style.borderColor='var(--color-border)'"
          title="Search images"
-         style="flex-shrink:0;align-self:center">
+         style="flex-shrink:0;align-self:flex-start;margin-top:2px">
         <i class="ph ph-magnifying-glass" style="font-size:15px;color:var(--color-text-secondary)"></i>
       </a>
     </div>`;
@@ -13046,10 +13050,10 @@ function _cvRenderPrescription(rx, agePrefix) {
               }).join('')
             : '')}
         </div>
-        <!-- Line 2: Arabic dose — indented to align with brand name -->
-        ${d.dose_ar ? `<div class="cv-dose-ar" dir="rtl" style="padding-left:26px;text-align:right">${esc(d.dose_ar)}</div>` : ''}
-        ${d.dose    ? `<div class="cv-dose-en" style="padding-left:26px">${esc(d.dose)}</div>` : ''}
-        <!-- Line 2b: Drug note — inside the row, no bg/border, auto bidi -->
+        <!-- Line 2: Arabic dose — right-aligned -->
+        ${d.dose_ar ? `<div class="cv-dose-ar" dir="rtl" style="padding-left:0;text-align:right">${esc(d.dose_ar)}</div>` : ''}
+        ${d.dose    ? `<div class="cv-dose-en" style="padding-left:0;text-align:right">${esc(d.dose)}</div>` : ''}
+        <!-- Line 2b: Drug note — right-aligned, rtl/ltr follows text language -->
         ${d.drug_note ? (() => {
           const isAr = isArabicQuery(d.drug_note);
           const ico = `<i class="ph ph-note-pencil cv-rx-drug-note-ico"></i>`;
