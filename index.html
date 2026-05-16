@@ -93,14 +93,16 @@
   --color-brand-dark:  #006fd4;  /* pressed / darker brand states */
 
   /* ── SEMANTIC TOKENS — clinical meaning only ────────────── */
-  --color-danger:        #EF4444;
-  --color-danger-light:  #1F0A0A;
-  --color-caution:       #F59E0B;
-  --color-caution-light: #1F1200;
-  --color-safe:          #22C55E;  /* also replaces old #0d9488 teal */
-  --color-safe-light:    #052010;
-  --color-info:          #38BDF8;
-  --color-info-light:    #082033;
+  /* Foreground: lifted to -400 scale so they read on dark navy surfaces */
+  --color-danger:        #F87171;  /* red-400   */
+  --color-caution:       #FBBF24;  /* amber-400 */
+  --color-safe:          #4ADE80;  /* green-400 */
+  --color-info:          #38BDF8;  /* sky-400   */
+  /* Backgrounds: navy-tinted, not near-black — sit on --color-surface comfortably */
+  --color-danger-light:  #221218;  /* navy + red tint   */
+  --color-caution-light: #1e1a0e;  /* navy + amber tint */
+  --color-safe-light:    #0e1f18;  /* navy + green tint */
+  --color-info-light:    #0d1e2e;  /* navy + sky tint   */
 
   /* ── SHADOW TOKENS — v75.1: blue-tinted, tighter spread ────
      Pure-black shadows read as muddy on the navy surface palette.
@@ -592,17 +594,9 @@ html:not([data-theme="dark"]):not([data-theme="light"]) body {
   color: var(--color-text-secondary);
 }
 
-/* ── 13. CV PATIENT PRESENTATION — solid brand-blue card ── */
-/* Card is always --color-brand (#0085fe) in both themes.
-   Light-mode adjustments are minimal — icon/label already use black. */
-[data-theme="light"] .cv-pp-header-icon {
-  background: rgba(0,0,0,.10);
-  border-color: rgba(0,0,0,.08);
-  color: #000;
-}
-[data-theme="light"] .cv-pp-header-label {
-  color: rgba(0,0,0,.55);
-}
+/* ── 13. CV PATIENT PRESENTATION — surface card, brand accent ── */
+/* Card uses --color-surface + --color-brand tokens that adapt
+   automatically to both themes. No overrides needed. */
 
 /* ── 14. TOAST — was dark --color-header-bg ── */
 /* Toast bg uses --color-header-bg (alias of --color-bg).
@@ -745,8 +739,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .cv-hdr-specialty-tag {
   html:not([data-theme="dark"]) .dv-hero-p12-source-lbl { color: var(--color-text-tertiary); }
   html:not([data-theme="dark"]) .dv-hero-p12-source-val { color: var(--color-text-tertiary); }
   html:not([data-theme="dark"]) .dv-hero-p12-combo-tag { background: rgba(0,0,0,.07); border-color: rgba(0,0,0,.10); color: var(--color-text-secondary); }
-  html:not([data-theme="dark"]) .cv-pp-card-p11 { box-shadow: var(--shadow-sm); }
-  html:not([data-theme="dark"]) .toast { background: #1a2e42; color: #E8EFF8; }
+  /* cv-pp-card-p11 uses surface tokens — no light-mode override needed */  html:not([data-theme="dark"]) .toast { background: #1a2e42; color: #E8EFF8; }
   html:not([data-theme="dark"]) .fab { background: var(--color-brand); color: #ffffff; }
   html:not([data-theme="dark"]) .cv-rx-num { background: none; color: var(--color-text-tertiary); }
   html:not([data-theme="dark"]) .save-btn { color: #ffffff; }
@@ -7322,9 +7315,9 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 /* Replaces .cv-rf-card teal/amber mix with pure danger tokens */
 .cv-rf-card-p11 {
   background: var(--color-danger-light);
-  border: 1.5px solid rgba(220,38,38,.22);
+  border: 1.5px solid rgba(239,68,68,.22);
   border-radius: var(--radius-md);
-  margin: var(--space-3) var(--space-4) 0;
+  margin: var(--space-3) var(--space-3) 0;
   overflow: hidden;
   box-shadow: var(--shadow-sm);
 }
@@ -7333,15 +7326,15 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  background: rgba(220,38,38,.06);
-  border-bottom: 1px solid rgba(220,38,38,.14);
+  background: rgba(239,68,68,.07);
+  border-bottom: 1px solid rgba(239,68,68,.14);
 }
 .cv-rf-card-icon {
   width: 30px;
   height: 30px;
   border-radius: 8px;
-  background: rgba(220,38,38,.12);
-  border: 1px solid rgba(220,38,38,.2);
+  background: rgba(239,68,68,.12);
+  border: 1px solid rgba(239,68,68,.22);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -7360,7 +7353,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 /* Sub-sections inside red flags (Red Flags / Refer) */
 .cv-rf-sub {
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid rgba(220,38,38,.1);
+  border-bottom: 1px solid rgba(239,68,68,.10);
 }
 .cv-rf-sub:last-child { border-bottom: none; }
 .cv-rf-sub-label {
@@ -7378,24 +7371,26 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 .cv-rf-sub-text {
   font-size: var(--text-sm-size);
   line-height: 1.75;
-  color: #7f1d1d;
+  color: var(--color-text-secondary);
   white-space: pre-wrap;
   word-break: break-word;
   font-weight: 500;
 }
 .cv-rf-divider-p11 {
   border: none;
-  border-top: 1px dashed rgba(220,38,38,.2);
+  border-top: 1px dashed rgba(239,68,68,.20);
   margin: 0;
 }
 
-/* ── Phase 11: Patient Presentation — deep navy callout ── */
+/* ── Phase 11: Patient Presentation — surface card with brand accent ── */
 .cv-pp-card-p11 {
-  background: var(--color-brand);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-brand);
   border-radius: var(--radius-md);
   margin: var(--space-3) var(--space-3) 0;
   padding: var(--space-4);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
 }
 .cv-pp-header-row {
   display: flex;
@@ -7407,28 +7402,29 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   width: 26px;
   height: 26px;
   border-radius: 6px;
-  background: rgba(0,0,0,.12);
-  border: 1px solid rgba(0,0,0,.10);
+  background: var(--color-brand-light);
+  border: 1px solid rgba(0,133,254,.20);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: var(--text-sm-size);
-  color: #000;
+  color: var(--color-brand);
   flex-shrink: 0;
 }
 .cv-pp-header-label {
   font-size: var(--text-xs-size);
   font-weight: 800;
-  color: rgba(0,0,0,.55);
+  color: var(--color-brand);
   text-transform: uppercase;
   letter-spacing: .1em;
+  opacity: .85;
 }
 /* Arabic text in patient presentation */
 .cv-pp-card-p11 .cv-pp-ar {
   font-family: 'IBM Plex Sans Arabic', 'IBM Plex Sans', system-ui, sans-serif;
   font-size: var(--text-base-size);
   font-weight: 600;
-  color: #000;
+  color: var(--color-text-primary);
   direction: rtl;
   text-align: right;
   line-height: 1.9;
@@ -7437,8 +7433,8 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 /* English text */
 .cv-pp-card-p11 .cv-pp-en {
   font-size: var(--text-sm-size);
-  font-weight: 500;
-  color: #000;
+  font-weight: 400;
+  color: var(--color-text-secondary);
   line-height: 1.75;
   display: none;
 }
@@ -7446,12 +7442,12 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 #condViewerScr.lang-ar .cv-pp-ar { display: block; }
 #condViewerScr.lang-en .cv-pp-en { display: block; }
 
-/* ── Phase 11: Overview card — clean white surface ── */
+/* ── Phase 11: Overview card — clean surface card ── */
 .cv-overview-card-p11 {
   background: var(--color-surface);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
-  margin: var(--space-3) var(--space-4) 0;
+  margin: var(--space-3) var(--space-3) 0;
   padding: var(--space-4);
   box-shadow: var(--shadow-sm);
 }
