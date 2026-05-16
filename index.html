@@ -2396,14 +2396,19 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   transform: scale(.90);
 }
 /* Light mode overrides for theme button */
+/* Dark mode: brand blue so sun icon pops */
+[data-theme="dark"] .hdr-theme-btn {
+  color: var(--color-brand);
+}
+/* Light mode: amber so moon icon reads well on light bg */
 [data-theme="light"] .hdr-theme-btn {
-  color: var(--color-text-secondary);
+  color: #CA8A04;
 }
 [data-theme="light"] .hdr-theme-btn:active {
   background: rgba(0,0,0,.08);
 }
 @media (prefers-color-scheme: light) {
-  html:not([data-theme="dark"]) .hdr-theme-btn { color: var(--color-text-secondary); }
+  html:not([data-theme="dark"]) .hdr-theme-btn { color: #CA8A04; }
   html:not([data-theme="dark"]) .hdr-theme-btn:active { background: rgba(0,0,0,.08); }
 }
 /* Legacy alias */
@@ -14848,15 +14853,12 @@ async function renderLib() {
           ${!_libSelectMode ? `<div class="lib-drug-arr"><i class="ph ph-caret-right" style="font-size:14px"></i></div>` : ''}
         </div>
         ${_libSelectMode ? '' : matchingProds.map(function(p){
-          var arLine = p.brandAr ? '<div style="font-size:11px;color:var(--color-text-tertiary);font-family:var(--font-ar);direction:rtl;text-align:right;margin-top:1px">' + esc(p.brandAr) + '</div>' : '';
-          var fTag = p.formula ? '<span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:4px;background:var(--color-brand-light);color:var(--color-brand)">' + esc(p.formula) + '</span>' : '';
-          var cTag = p.conc ? '<span style="font-size:11px;font-weight:700;color:var(--color-text-secondary)">' + esc(p.conc) + '</span>' : '';
-          var dTag = p.dose ? '<span style="font-size:10.5px;color:var(--color-text-tertiary)"><i class="ph ph-prescription" style="font-size:10px;vertical-align:-1px"></i> ' + esc(p.dose) + '</span>' : '';
-          return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px 10px 17px;cursor:pointer;border-bottom:1px solid var(--color-border);background:var(--color-surface)" onclick="openDrugViewer(\'' + d.id + '\')">'
+          var fTag = p.formula ? '<span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;background:var(--color-brand-light);color:var(--color-brand);margin-left:6px">' + esc(p.formula) + '</span>' : '';
+          var arLine = p.brandAr ? '<div style="font-size:11px;color:var(--color-text-tertiary);font-family:var(--font-ar);direction:rtl;text-align:right;margin-top:2px">' + esc(p.brandAr) + '</div>' : '';
+          return '<div style="display:flex;align-items:center;gap:10px;padding:8px 14px 8px 17px;cursor:pointer;border-bottom:1px solid var(--color-border);background:var(--color-surface)" onclick="openDrugViewer(\'' + d.id + '\')">' 
             + '<div style="flex:1;min-width:0">'
-            + '<div style="font-size:14px;font-weight:600;color:var(--color-text-primary)">' + libHighlight(p.brand, q) + '</div>'
+            + '<div style="display:flex;align-items:center">' + '<span style="font-size:14px;font-weight:600;color:var(--color-text-primary)">' + libHighlight(p.brand, q) + '</span>' + fTag + '</div>'
             + arLine
-            + '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:3px;align-items:center">' + fTag + cTag + dTag + '</div>'
             + '</div></div>';
         }).join('')}
         ${(!_libSelectMode && otherBrands.length) ? `
@@ -19652,16 +19654,13 @@ function _syncThemeToggleUI(theme) {
   if (hdrIcon) {
     hdrIcon.className = theme === 'light' ? 'ph ph-moon' : 'ph ph-sun';
   }
-  if (hdrBtn) {
-    // Brand blue in dark mode (sun pops against navy), amber in light mode (moon on white)
-    hdrBtn.style.color = theme === 'light' ? '#CA8A04' : 'var(--color-brand)';
-  }
-  // Sync theme icons and colors on ALL screens (home, lib, fav)
+  // hdrBtn color now handled by CSS [data-theme] rules — no inline override needed
+  // Sync theme icons on ALL screens (home, lib, fav) — color handled by CSS [data-theme]
   document.querySelectorAll('.hdr-theme-btn').forEach(btn => {
     const ico = btn.querySelector('i');
     if (ico) ico.className = theme === 'light' ? 'ph ph-moon' : 'ph ph-sun';
-    // Apply same color as home screen button so all screens match
-    btn.style.color = theme === 'light' ? '#CA8A04' : 'var(--color-brand)';
+    // Remove any previously set inline color so CSS transition takes over
+    btn.style.color = '';
   });
 }
 
