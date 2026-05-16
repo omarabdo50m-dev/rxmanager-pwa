@@ -368,6 +368,81 @@ html:not([data-theme="dark"]):not([data-theme="light"]) body {
 
 /* search-hero-label light mode override removed — element no longer rendered */
 
+/* ── DARK MODE — search box & bottom nav surface overrides ──────
+   The base .search-inp rules use hardcoded #ffffff (light-mode
+   correct). In dark mode we override to a warm lifted surface so
+   the pill doesn't flash white against the charcoal background.
+   --color-surface-elevated also controls .bnav / .cc-bottom-nav.
+   Light mode keeps #fefffe / #ffffff — no changes there.        */
+
+/* Override the hardcoded #ffffff on all search input variants */
+:root .search-inp,
+:root .search-inp:focus {
+  background: var(--color-surface);     /* #202124 — matches card surface */
+  color: var(--color-text-primary);
+  border-color: var(--color-border-strong);
+}
+:root .search-inp:focus {
+  border-color: var(--color-brand);
+  box-shadow: var(--shadow-search-focus);
+}
+:root .search-inp::placeholder {
+  color: var(--color-text-tertiary);
+}
+:root .search-ico {
+  color: var(--color-text-tertiary);
+}
+:root .search-wrap:focus-within .search-ico {
+  color: var(--color-brand);
+}
+
+/* cc-search-bar (canonical component variant) */
+:root .cc-search-bar__wrap {
+  background: var(--color-surface);
+  border-color: var(--color-border-strong);
+}
+:root .cc-search-bar__input {
+  color: var(--color-text-primary);
+}
+:root .cc-search-bar__input::placeholder {
+  color: var(--color-text-tertiary);
+}
+:root .cc-search-bar__icon {
+  color: var(--color-text-tertiary);
+}
+
+/* Bottom nav — lifted charcoal, not white */
+:root {
+  --color-surface-elevated: #252628;   /* dark mode: warm charcoal lift (was #fefffe) */
+}
+
+/* Light mode — restore white for both search and bottom nav */
+[data-theme="light"] .search-inp,
+[data-theme="light"] .search-inp:focus {
+  background: #ffffff;
+  color: #0F1C2E;
+  border-color: var(--color-brand);
+}
+[data-theme="light"] .search-inp::placeholder {
+  color: rgba(15,43,74,.62);
+}
+[data-theme="light"] .search-ico {
+  color: rgba(15,43,74,.62);
+}
+[data-theme="light"] .cc-search-bar__wrap {
+  background: #ffffff;
+}
+[data-theme="light"] .cc-search-bar__input {
+  color: #0F1C2E;
+}
+[data-theme="light"] .cc-search-bar__input::placeholder {
+  color: rgba(15,43,74,.62);
+}
+[data-theme="light"] {
+  --color-surface-elevated: #ffffff;   /* light mode: pure white bottom nav — correct */
+}
+/* ────────────────────────────────────────────────────────────── */
+
 /* Search bar in light mode:
    - Brand border retained (already set on base .search-inp)
    - Shadow uses lighter light-mode token
