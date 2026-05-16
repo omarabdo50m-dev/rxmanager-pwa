@@ -2914,7 +2914,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   font-size:var(--text-sm-size);    /* 13px — uses scale token, was 11px */
   line-height:var(--text-sm-height);/* 1.5 */
   font-weight:400;
-  color:var(--color-text-tertiary);
+  color:var(--color-text-secondary);  /* was tertiary — bumped up for dark mode daylight readability */
   font-family:var(--font);
   border-radius:0;
   background:none !important;
@@ -6746,7 +6746,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   flex-direction: row-reverse;
   direction: rtl;
   padding-left: 0;
-  padding-right: 0;     /* aligns with Arabic dose text at right edge of content div */
+  padding-right: 26px;  /* mirrors LTR padding-left — aligns with Arabic content right edge */
 }
 .cv-rx-drug-note-ico {
   font-size: 12px;
@@ -6757,8 +6757,8 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 }
 .cv-rx-drug-note-text {
   font-size: var(--text-sm-size);   /* 13px — sits between dose and class tag */
-  font-weight: 600;
-  font-style: italic;
+  font-weight: 400;                 /* lighter than dose (was 600) — hierarchy corrected */
+  font-style: normal;               /* was italic — removed */
   color: var(--color-text-primary);
   line-height: 1.6;
   word-break: break-word;
@@ -6824,11 +6824,15 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   word-break:break-word;
 }
 .cv-rx-brand-name.linked {
-  color:var(--color-text-primary);
+  color:var(--color-brand);
   cursor:pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: rgba(59,130,246,.5);
+  text-underline-offset: 3px;
 }
 .cv-rx-brand-name.linked::after {
-  display:none;
+  content: none;
 }
 
 /* Formula tag inline */
@@ -6871,7 +6875,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 /* Dose display — language-aware, Phase 10 */
 .cv-dose-en {
   font-size:var(--text-base-size);  /* 15px — correct */
-  font-weight:500;                  /* was 600 — too close to brand name weight */
+  font-weight:600;                  /* was 500 — bumped up, swapped with note weight */
   color:var(--color-text-primary);
   direction:ltr;
   text-align:left;
@@ -6883,7 +6887,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 .cv-dose-ar {
   font-family:'IBM Plex Sans Arabic','IBM Plex Sans',system-ui,sans-serif;
   font-size:var(--text-base-size);
-  font-weight:500;                  /* was 600 */
+  font-weight:600;                  /* was 500 — bumped up, swapped with note weight */
   color:var(--color-text-primary);
   direction:rtl;
   text-align:right;
