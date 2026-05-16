@@ -5816,111 +5816,143 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   color: var(--color-danger);
   margin-top: var(--space-2);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 5px;
 }
-
-/* ── Phase 12: Pregnancy grid — uses color tokens ────── */
-.dv-preg-grid-p12 {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-2);
-  margin-bottom: var(--space-3);
+.dv-max-dose-p12 i {
+  flex-shrink: 0;
+  margin-top: 1px;
+  line-height: 1;
 }
-.dv-preg-cell-p12 {
+
+/* ── Phase 12: Pregnancy — single category row ──────── */
+/* Row layout: label left, value right */
+.dv-preg-row-p12 {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: var(--space-2) var(--space-1);
-  border-radius: var(--radius-sm);
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.dv-preg-row-p12:last-of-type { border-bottom: none; }
+.dv-preg-row-lbl-p12 {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--color-text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+/* Single FDA category horizontal pill */
+.dv-preg-cat-single-p12 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  padding: 4px 14px;
+  border-radius: var(--radius-full);
   border: 1.5px solid var(--color-border);
   background: var(--color-surface-2);
-  text-align: center;
 }
-.dv-preg-cell-lbl-p12 {
-  font-size: 9px;
-  font-weight: 800;
-  color: var(--color-text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: .05em;
-  line-height: 1.2;
-  white-space: nowrap;
-}
-.dv-preg-cell-val-p12 {
-  font-size: 22px;
+.dv-preg-cat-letter-p12 {
+  font-size: 20px;
   font-weight: 900;
   line-height: 1;
 }
-/* Category color classes using tokens */
-.dv-preg-cell-p12.cat-A  { background: var(--color-safe-light);    border-color: rgba(22,163,74,.35); }
-.dv-preg-cell-p12.cat-A .dv-preg-cell-val-p12  { color: var(--color-safe); }
-.dv-preg-cell-p12.cat-B  { background: var(--color-brand-light);   border-color: rgba(0,133,254,.3); }
-.dv-preg-cell-p12.cat-B .dv-preg-cell-val-p12  { color: var(--color-brand); }
-.dv-preg-cell-p12.cat-C  { background: var(--color-caution-light); border-color: rgba(217,119,6,.3); }
-.dv-preg-cell-p12.cat-C .dv-preg-cell-val-p12  { color: var(--color-caution); }
-.dv-preg-cell-p12.cat-D  { background: #fff7ed;                    border-color: rgba(194,65,12,.3); }
-.dv-preg-cell-p12.cat-D .dv-preg-cell-val-p12  { color: #c2410c; }
-.dv-preg-cell-p12.cat-X  { background: var(--color-danger-light);  border-color: rgba(220,38,38,.3); }
-.dv-preg-cell-p12.cat-X .dv-preg-cell-val-p12  { color: var(--color-danger); }
-.dv-preg-cell-p12.cat-N  { background: var(--color-surface-2);     border-color: var(--color-border); }
-.dv-preg-cell-p12.cat-N .dv-preg-cell-val-p12  { color: var(--color-text-tertiary); font-size: 14px; }
+/* Category color overrides */
+.dv-preg-cat-single-p12.cat-A { background: var(--color-safe-light);    border-color: rgba(22,163,74,.35); }
+.dv-preg-cat-single-p12.cat-A .dv-preg-cat-letter-p12 { color: var(--color-safe); }
+.dv-preg-cat-single-p12.cat-B { background: var(--color-brand-light);   border-color: rgba(59,130,246,.3); }
+.dv-preg-cat-single-p12.cat-B .dv-preg-cat-letter-p12 { color: var(--color-brand); }
+.dv-preg-cat-single-p12.cat-C { background: var(--color-caution-light); border-color: rgba(217,119,6,.3); }
+.dv-preg-cat-single-p12.cat-C .dv-preg-cat-letter-p12 { color: var(--color-caution); }
+.dv-preg-cat-single-p12.cat-D { background: rgba(194,65,12,.08);        border-color: rgba(194,65,12,.3); }
+.dv-preg-cat-single-p12.cat-D .dv-preg-cat-letter-p12 { color: #c2410c; }
+.dv-preg-cat-single-p12.cat-X { background: var(--color-danger-light);  border-color: rgba(220,38,38,.3); }
+.dv-preg-cat-single-p12.cat-X .dv-preg-cat-letter-p12 { color: var(--color-danger); }
+.dv-preg-cat-single-p12.cat-N .dv-preg-cat-letter-p12 { color: var(--color-text-tertiary); font-size: 14px; }
 
-/* Preg legend strip */
-.dv-preg-legend-p12 {
+/* Legend — 2-column grid */
+.dv-preg-legend-grid-p12 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px var(--space-3);
   font-size: 10px;
   color: var(--color-text-tertiary);
-  line-height: var(--text-base-height);
   background: var(--color-surface-2);
   border-radius: var(--radius-sm);
   padding: var(--space-2) var(--space-3);
-  margin-bottom: var(--space-3);
+  margin: var(--space-2) 0 var(--space-3);
 }
-.dv-preg-legend-p12 strong { color: var(--color-text-secondary); }
+.dv-preg-legend-grid-p12 strong { color: var(--color-text-secondary); }
 
-/* Safety cells — Phase 12 token variant */
-.dv-safety-row-p12 {
+/* Breastfeeding row value */
+.dv-preg-row-val-p12 {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+}
+.dv-preg-row-val-p12.safe    { background: var(--color-safe-light);    border-color: rgba(22,163,74,.3);   color: var(--color-safe); }
+.dv-preg-row-val-p12.caution { background: var(--color-caution-light); border-color: rgba(217,119,6,.3);   color: var(--color-caution); }
+.dv-preg-row-val-p12.unsafe  { background: var(--color-danger-light);  border-color: rgba(220,38,38,.3);   color: var(--color-danger); }
+.dv-preg-row-note-p12 {
+  font-size: 10px;
+  font-weight: 400;
+  opacity: .8;
+}
+
+/* BBB + Placenta 2-column toggle row */
+.dv-barrier-row-p12 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-2);
-  margin-top: var(--space-2);
+  margin-top: var(--space-3);
 }
-.dv-safety-row-p12.trio { grid-template-columns: 1fr 1fr 1fr; }
-.dv-safety-cell-p12 {
+.dv-barrier-cell-p12 {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  align-items: center;
+  gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
   background: var(--color-surface-2);
 }
-.dv-safety-cell-p12.safe    { background: var(--color-safe-light);    border-color: rgba(22,163,74,.3); }
-.dv-safety-cell-p12.caution { background: var(--color-caution-light); border-color: rgba(217,119,6,.3); }
-.dv-safety-cell-p12.unsafe  { background: var(--color-danger-light);  border-color: rgba(220,38,38,.3); }
-.dv-safety-cell-p12.yes     { background: var(--color-brand-light);   border-color: rgba(0,133,254,.3); }
-.dv-safety-cell-lbl-p12 {
-  font-size: 8.5px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  color: var(--color-text-tertiary);
-}
-.dv-safety-cell-val-p12 {
-  font-size: 12px;
+.dv-barrier-cell-p12.on  { background: var(--color-caution-light); border-color: rgba(217,119,6,.3); }
+.dv-barrier-cell-p12.off { background: var(--color-safe-light);    border-color: rgba(22,163,74,.3); }
+.dv-barrier-icon-p12 {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 11px;
   font-weight: 700;
+}
+.dv-barrier-cell-p12.on  .dv-barrier-icon-p12 { background: rgba(217,119,6,.2); color: var(--color-caution); }
+.dv-barrier-cell-p12.off .dv-barrier-icon-p12 { background: rgba(22,163,74,.2); color: var(--color-safe); }
+.dv-barrier-label-p12 {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   line-height: 1.3;
 }
-.dv-safety-cell-p12.safe    .dv-safety-cell-val-p12 { color: var(--color-safe); }
-.dv-safety-cell-p12.caution .dv-safety-cell-val-p12 { color: var(--color-caution); }
-.dv-safety-cell-p12.unsafe  .dv-safety-cell-val-p12 { color: var(--color-danger); }
-.dv-safety-cell-p12.yes     .dv-safety-cell-val-p12 { color: var(--color-brand); }
-.dv-safety-cell-note-p12 {
-  font-size: 10px;
-  color: var(--color-text-tertiary);
-  line-height: var(--text-xs-height);
-  margin-top: 2px;
-}
+.dv-barrier-cell-p12.on  .dv-barrier-label-p12 { color: var(--color-caution); }
+.dv-barrier-cell-p12.off .dv-barrier-label-p12 { color: var(--color-safe); }
 
 /* ── Phase 12: Paediatric section ───────────────────── */
 .dv-ped-age-pill-p12 {
@@ -11168,18 +11200,18 @@ function renderNumberedList(text, itemStyle='') {
       .map(s => s.replace(/^\s*\d+[\.\)]\s*/, '').trim())
       .filter(Boolean);
     return '<ol style="margin:0;padding-left:18px;list-style:decimal">' +
-      items.map(i => `<li style="font-size:var(--text-base-size);line-height:1.75;color:var(--color-text-secondary);margin-bottom:4px;padding-left:2px${itemStyle?';'+itemStyle:''}" dir="auto">${esc(i)}</li>`).join('') +
+      items.map(i => `<li style="font-size:var(--text-base-size);line-height:1.5;color:var(--color-text-secondary);margin-bottom:4px;padding-left:2px${itemStyle?';'+itemStyle:''}" dir="auto">${esc(i)}</li>`).join('') +
       '</ol>';
   }
   // Detect semicolon-separated items (at least 2 semicolons)
   const parts = text.split(/;\s*/).map(s => s.trim()).filter(Boolean);
   if (parts.length >= 3) {
     return '<ol style="margin:0;padding-left:18px;list-style:decimal">' +
-      parts.map(i => `<li style="font-size:var(--text-base-size);line-height:1.75;color:var(--color-text-secondary);margin-bottom:4px;padding-left:2px" dir="auto">${esc(i)}</li>`).join('') +
+      parts.map(i => `<li style="font-size:var(--text-base-size);line-height:1.5;color:var(--color-text-secondary);margin-bottom:4px;padding-left:2px" dir="auto">${esc(i)}</li>`).join('') +
       '</ol>';
   }
   // Fallback: plain pre-wrap
-  return `<div style="font-size:var(--text-base-size);line-height:1.75;color:var(--color-text-secondary);white-space:pre-wrap;word-break:break-word" dir="auto">${esc(text)}</div>`;
+  return `<div style="font-size:var(--text-base-size);line-height:1.5;color:var(--color-text-secondary);white-space:pre-wrap;word-break:break-word" dir="auto">${esc(text)}</div>`;
 }
 
 
@@ -16214,7 +16246,7 @@ function _dvFlatCard({iconBg, iconColor, iconName, title, content}) {
       <div class="cv-depth-card-icon-p11" style="background:${iconBg}">
         <i class="ph ${iconName}" style="font-size:15px;color:${iconColor}"></i>
       </div>
-      <span class="cv-depth-card-title-p11">${esc(title)}</span>
+      <span class="cv-depth-card-title-p11">${title}</span>
     </div>
     <div class="cv-depth-card-body-p11">
       ${content}
@@ -16414,8 +16446,8 @@ async function openDrugViewer(id) {
     const hasCalc   = !!pedParsed;
     const pedContent = `
       ${drug.pedAgeLimit ? `<div class="dv-moa-class-strip" style="margin-bottom:var(--space-2);padding-bottom:var(--space-2)">
-        <div class="dv-moa-class-cell-val" style="display:flex;align-items:center;gap:6px">
-          <i class="ph ph-shield-check" style="font-size:13px;color:var(--color-brand);flex-shrink:0"></i>${esc(drug.pedAgeLimit)}
+        <div class="dv-moa-class-cell-val" style="display:flex;align-items:flex-start;gap:6px">
+          <i class="ph ph-shield-check" style="font-size:13px;color:var(--color-brand);flex-shrink:0;margin-top:2px;line-height:1"></i>${esc(drug.pedAgeLimit)}
         </div>
       </div>` : ''}
       ${drug.pedDose ? `<div class="dv-ped-en cv-depth-body-p11" dir="ltr" style="text-align:left;margin-bottom:${hasCalc ? 'var(--space-3)' : '0'}">${esc(drug.pedDose)}</div>` : ''}
@@ -16437,51 +16469,67 @@ async function openDrugViewer(id) {
     html += _dvFlatCard({iconBg:'rgba(99,102,241,.10)', iconColor:'#6366F1', iconName:'ph-baby', title:'Paediatric Dosing', content:pedContent});
   }
 
-  // ══ PREGNANCY & LACTATION — Phase 12 ════════════════════════
+  // ══ PREGNANCY & LACTATION — Phase 12 (redesigned) ══════════
   const hasPregData = (drug.pregnancyT1 && drug.pregnancyT1 !== 'N') ||
                       (drug.pregnancyT2 && drug.pregnancyT2 !== 'N') ||
                       (drug.pregnancyT3 && drug.pregnancyT3 !== 'N') ||
                       drug.lactation || drug.crossesBBB != null || drug.crossesPlacenta != null;
   if (hasPregData || drug.pregnancyT1) {
-    // Safety cells
-    const safetyItems = [];
+    // ── Single pregnancy category (combined from T1/T2/T3 — pick most relevant) ──
+    const pregCat = drug.pregnancyT1 && drug.pregnancyT1 !== 'N' ? drug.pregnancyT1
+                  : drug.pregnancyT2 && drug.pregnancyT2 !== 'N' ? drug.pregnancyT2
+                  : drug.pregnancyT3 && drug.pregnancyT3 !== 'N' ? drug.pregnancyT3
+                  : 'N';
+    const pregCatDisplay = pregCat !== 'N' ? pregCat : '—';
+    const pregCatCls = pregCat !== 'N' ? `cat-${pregCat}` : 'cat-N';
+
+    // ── Breastfeeding row ──
+    let bfRow = '';
     if (drug.lactation) {
-      const lacClass = drug.lactation === 'Safe' ? 'safe' : drug.lactation === 'Unsafe' ? 'unsafe' : drug.lactation === 'Caution' ? 'caution' : '';
-      const lacIcon  = drug.lactation === 'Safe' ? '✓' : drug.lactation === 'Unsafe' ? '✕' : '⚠';
-      safetyItems.push(`<div class="dv-safety-cell-p12 ${lacClass}">
-        <div class="dv-safety-cell-lbl-p12"><i class="ph ph-baby" style="font-size:9px;vertical-align:0"></i> Breastfeeding</div>
-        <div class="dv-safety-cell-val-p12">${lacIcon} ${esc(drug.lactation)}</div>
-        ${drug.lactationNote ? `<div class="dv-safety-cell-note-p12">${esc(drug.lactationNote)}</div>` : ''}
-      </div>`);
+      const lacClass = drug.lactation === 'Safe' ? 'safe' : drug.lactation === 'Unsafe' ? 'unsafe' : 'caution';
+      const lacIcon  = drug.lactation === 'Safe' ? '<i class="ph ph-check-circle" style="font-size:13px"></i>' : drug.lactation === 'Unsafe' ? '<i class="ph ph-x-circle" style="font-size:13px"></i>' : '<i class="ph ph-warning-circle" style="font-size:13px"></i>';
+      bfRow = `<div class="dv-preg-row-p12">
+        <div class="dv-preg-row-lbl-p12"><i class="ph ph-baby" style="font-size:10px"></i> Breastfeeding</div>
+        <div class="dv-preg-row-val-p12 ${lacClass}">${lacIcon} ${esc(drug.lactation)}${drug.lactationNote ? `<span class="dv-preg-row-note-p12"> — ${esc(drug.lactationNote)}</span>` : ''}</div>
+      </div>`;
     }
-    if (drug.crossesBBB != null) {
-      const bbbClass = drug.crossesBBB ? 'yes' : 'safe';
-      safetyItems.push(`<div class="dv-safety-cell-p12 ${bbbClass}">
-        <div class="dv-safety-cell-lbl-p12"><i class="ph ph-brain" style="font-size:9px"></i> Blood-Brain Barrier</div>
-        <div class="dv-safety-cell-val-p12">${drug.crossesBBB ? '✓ Crosses BBB' : '✕ Does not cross'}</div>
-      </div>`);
-    }
-    if (drug.crossesPlacenta != null) {
-      const placClass = drug.crossesPlacenta ? 'caution' : 'safe';
-      safetyItems.push(`<div class="dv-safety-cell-p12 ${placClass}">
-        <div class="dv-safety-cell-lbl-p12"><i class="ph ph-gender-female" style="font-size:9px"></i> Placenta</div>
-        <div class="dv-safety-cell-val-p12">${drug.crossesPlacenta ? '⚠ Crosses placenta' : '✓ Does not cross'}</div>
-      </div>`);
+
+    // ── BBB & Placenta toggle row (2-col) ──
+    let barrierRow = '';
+    const hasBBB  = drug.crossesBBB != null;
+    const hasPlac = drug.crossesPlacenta != null;
+    if (hasBBB || hasPlac) {
+      const bbbOn  = !!drug.crossesBBB;
+      const placOn = !!drug.crossesPlacenta;
+      barrierRow = `<div class="dv-barrier-row-p12">
+        ${hasBBB ? `<div class="dv-barrier-cell-p12 ${bbbOn ? 'on' : 'off'}">
+          <span class="dv-barrier-icon-p12">${bbbOn ? '<i class="ph ph-check" style="font-size:11px"></i>' : '<i class="ph ph-x" style="font-size:11px"></i>'}</span>
+          <span class="dv-barrier-label-p12"><i class="ph ph-brain" style="font-size:10px;opacity:.7"></i> Blood-Brain Barrier</span>
+        </div>` : ''}
+        ${hasPlac ? `<div class="dv-barrier-cell-p12 ${placOn ? 'on' : 'off'}">
+          <span class="dv-barrier-icon-p12">${placOn ? '<i class="ph ph-check" style="font-size:11px"></i>' : '<i class="ph ph-x" style="font-size:11px"></i>'}</span>
+          <span class="dv-barrier-label-p12"><i class="ph ph-gender-female" style="font-size:10px;opacity:.7"></i> Placenta</span>
+        </div>` : ''}
+      </div>`;
     }
 
     const pregContent = `
-      <div style="font-size:9px;font-weight:800;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.07em;margin-bottom:var(--space-2)">FDA Pregnancy Categories</div>
-      <div class="dv-preg-grid-p12">
-        ${_dvPregCellP12('1st Trimester', drug.pregnancyT1||'N')}
-        ${_dvPregCellP12('2nd Trimester', drug.pregnancyT2||'N')}
-        ${_dvPregCellP12('3rd Trimester', drug.pregnancyT3||'N')}
+      <div class="dv-preg-row-p12" style="margin-bottom:var(--space-2)">
+        <div class="dv-preg-row-lbl-p12"><i class="ph ph-shield-check" style="font-size:10px"></i> FDA Pregnancy Category</div>
+        <div class="dv-preg-cat-single-p12 ${pregCatCls}">
+          <span class="dv-preg-cat-letter-p12">${pregCatDisplay}</span>
+        </div>
       </div>
-      <div class="dv-preg-legend-p12">
-        <strong>A</strong> Safe &nbsp;·&nbsp; <strong>B</strong> Likely safe &nbsp;·&nbsp;
-        <strong>C</strong> Caution &nbsp;·&nbsp; <strong>D</strong> Risk evidence &nbsp;·&nbsp;
-        <strong>X</strong> Contraindicated &nbsp;·&nbsp; <strong>—</strong> Not rated
+      <div class="dv-preg-legend-grid-p12">
+        <span><strong>A</strong> Safe</span>
+        <span><strong>B</strong> Likely safe</span>
+        <span><strong>C</strong> Caution</span>
+        <span><strong>D</strong> Risk evidence</span>
+        <span><strong>X</strong> Contraindicated</span>
+        <span><strong>—</strong> Not rated</span>
       </div>
-      ${safetyItems.length ? `<div class="dv-safety-row-p12${safetyItems.length === 3 ? ' trio' : ''}">${safetyItems.join('')}</div>` : ''}`;
+      ${bfRow}
+      ${barrierRow}`;
     html += _dvFlatCard({iconBg:'rgba(236,72,153,.10)', iconColor:'#EC4899', iconName:'ph-heartbeat', title:'Pregnancy &amp; Lactation', content:pregContent});
   }
 
