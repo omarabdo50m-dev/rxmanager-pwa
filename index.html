@@ -7605,6 +7605,14 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 /* Default state (no class set) = AR */
 #drugViewerScr:not(.dv-lang-en) .dv-brand-ar-row-p12 { display: block; }
 
+/* Ped dose — lang toggle: same pattern as brand dose */
+.dv-ped-en { display: none; }
+.dv-ped-ar { display: none; }
+#drugViewerScr.dv-lang-en .dv-ped-en { display: block; }
+#drugViewerScr.dv-lang-ar .dv-ped-ar { display: block; }
+/* Default (no class) = AR */
+#drugViewerScr:not(.dv-lang-en) .dv-ped-ar { display: block; }
+
 /* Arabic brand name — hidden by default, shown in Arabic mode */
 .cv-rx-brand-ar { display:none; }
 #condViewerScr.lang-ar .cv-rx-brand-ar { display:block; }
@@ -16410,10 +16418,8 @@ async function openDrugViewer(id) {
           <i class="ph ph-shield-check" style="font-size:13px;color:var(--color-brand);flex-shrink:0"></i>${esc(drug.pedAgeLimit)}
         </div>
       </div>` : ''}
-      ${drug.pedDose ? `<div style="margin-bottom:${hasCalc ? 'var(--space-3)' : '0'}">
-        <div class="dv-moa-class-cell-val" dir="ltr" style="text-align:left">${esc(drug.pedDose)}</div>
-        ${drug.pedDoseAr ? `<div class="dv-moa-class-cell-val secondary" dir="rtl" style="text-align:right;font-family:var(--font-ar);margin-top:2px">${esc(drug.pedDoseAr)}</div>` : ''}
-      </div>` : ''}
+      ${drug.pedDose ? `<div class="dv-ped-en cv-depth-body-p11" dir="ltr" style="text-align:left;margin-bottom:${hasCalc ? 'var(--space-3)' : '0'}">${esc(drug.pedDose)}</div>` : ''}
+      ${drug.pedDoseAr ? `<div class="dv-ped-ar cv-depth-body-p11" dir="rtl" style="text-align:right;font-family:var(--font-ar);margin-bottom:${hasCalc ? 'var(--space-3)' : '0'}">${esc(drug.pedDoseAr)}</div>` : ''}
       ${hasCalc ? `<div class="dv-calc-box-p12">
         <div class="dv-calc-title-p12">
           <i class="ph ph-calculator" style="font-size:13px"></i>
