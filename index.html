@@ -3068,9 +3068,11 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 @keyframes fab-pop-in{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
 
 /* ── SCREENS ────────────────────────── */
-.screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;flex-direction:column;animation:slide-in .28s cubic-bezier(.32,.72,0,1);max-width:480px;margin:0 auto}
+.screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;flex-direction:column;animation:slide-in .2s cubic-bezier(.22,.68,0,1);max-width:480px;margin:0 auto}
 .screen.open{display:flex}
-@keyframes slide-in{from{transform:translateX(6%);opacity:.5}to{transform:none;opacity:1}}
+.screen.slide-out{animation:slide-out .16s cubic-bezier(.22,.68,0,1) forwards}
+@keyframes slide-in{from{transform:translateX(14px);opacity:0}to{transform:none;opacity:1}}
+@keyframes slide-out{from{transform:none;opacity:1}to{transform:translateX(-14px);opacity:0}}
 /* Peer nav screens — sit alongside home, no z-index stack, no slide-in */
 #libScr,#favsScr{position:fixed;inset:0;z-index:10;background:var(--color-bg);display:none;flex-direction:column;max-width:480px;margin:0 auto;animation:none;overflow:hidden}
 #libScr.peer-open,#favsScr.peer-open{display:flex}
@@ -9601,7 +9603,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 <!-- DRUG VIEWER (read-only) -->
 <div class="screen" id="drugViewerScr">
   <div class="cc-screen-header">
-    <button class="cc-screen-header__back" onclick="_dvFormulaFilter.clear();_dvFormulaPanelOpen=false;closeScreen('drugViewerScr')" aria-label="Back">
+    <button class="cc-screen-header__back" onclick="_dvFormulaFilter.clear();_dvFormulaPanelOpen=false;_closeDrugViewer()" aria-label="Back">
       <i class="ph ph-arrow-left"></i>
     </button>
     <span class="cc-screen-header__title" id="dvScrTitle">Drug Info</span>
@@ -12755,7 +12757,9 @@ function _cvSpinner() {
 
 function closeConditionViewer() {
   cvCloseLangDropdown();
-  closeScreen('condViewerScr');
+  const _scr = document.getElementById('condViewerScr');
+  _scr.classList.add('slide-out');
+  setTimeout(() => { _scr.classList.remove('slide-out'); closeScreen('condViewerScr'); }, 155);
 }
 
 // ── CV-2: fetchConditionData — fetch prescriptions + drugs in background ───────
@@ -16373,11 +16377,15 @@ function _dvPregCellP12(label, cat) {
   </div>`;
 }
 
+function _closeDrugViewer(cb) {
+  const _scr = document.getElementById('drugViewerScr');
+  _scr.classList.add('slide-out');
+  setTimeout(() => { _scr.classList.remove('slide-out'); closeScreen('drugViewerScr'); if (cb) cb(); }, 155);
+}
 function drugViewerOpenEditor() {
   _dvFormulaFilter.clear();
   _dvFormulaPanelOpen = false;
-  closeScreen('drugViewerScr');
-  setTimeout(() => openDrugEditor(_dvCurrentId), 80);
+  _closeDrugViewer(() => setTimeout(() => openDrugEditor(_dvCurrentId), 0));
 }
 
 function toggleFavDrugViewer() {
