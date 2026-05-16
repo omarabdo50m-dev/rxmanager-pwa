@@ -11064,7 +11064,7 @@ async function renderFavourites() {
             ${item.spec ? `<div class="fav-item-sub">${esc(item.spec)}</div>` : ''}
           </div>
           <button class="fav-item-del" onclick="event.stopPropagation();removeFavCondition('${esc(item.id)}')" aria-label="Remove from favourites" title="Remove from favourites">
-            <i class="ph ph-star-fill"></i>
+            <i class="ph-fill ph-star"></i>
           </button>
         </div>`).join('');
     }
@@ -11102,7 +11102,7 @@ async function renderFavourites() {
             ${item.group ? `<div class="fav-item-sub">${subLabel}</div>` : ''}
           </div>
           <button class="fav-item-del" onclick="event.stopPropagation();removeFavDrug('${esc(item.id)}')" aria-label="Remove from favourites" title="Remove from favourites">
-            <i class="ph ph-star-fill"></i>
+            <i class="ph-fill ph-star"></i>
           </button>
         </div>`;
       }).join('');
