@@ -3038,7 +3038,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   letter-spacing:-.5px;
   color:var(--color-text-primary);
   line-height:1.1;
-  padding:2px var(--space-5) 10px;
+  padding:2px 0 10px;
   text-align:left;
 }
 /* lib fixed header needs no extra padding-bottom since title provides it */
@@ -19619,11 +19619,11 @@ function _syncThemeToggleUI(theme) {
     // Brand blue in dark mode (sun pops against navy), amber in light mode (moon on white)
     hdrBtn.style.color = theme === 'light' ? '#CA8A04' : 'var(--color-brand)';
   }
-  // Sync theme icons on peer nav screens (lib, fav) which share the same button class
+  // Sync theme icons on peer nav screens (lib, fav) — only swap the icon class,
+  // let CSS [data-theme] rules handle colors so transitions stay smooth
   document.querySelectorAll('.hdr-theme-btn').forEach(btn => {
     const ico = btn.querySelector('i');
     if (ico) ico.className = theme === 'light' ? 'ph ph-moon' : 'ph ph-sun';
-    btn.style.color = theme === 'light' ? '#CA8A04' : 'var(--color-brand)';
   });
 }
 
