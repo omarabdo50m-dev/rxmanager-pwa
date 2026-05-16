@@ -3396,21 +3396,24 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .fav-item-del {
   background: none;
   border: none;
-  font-size: 16px;
+  font-size: 18px;
   cursor: pointer;
-  color: var(--color-text-tertiary);
+  color: var(--color-caution);
   padding: var(--space-1);
   flex-shrink: 0;
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color .12s, background .12s;
+  transition: color .15s, background .15s, transform .12s;
   -webkit-tap-highlight-color: transparent;
+  opacity: 0.75;
 }
 .fav-item-del:active {
   color: var(--color-danger);
   background: var(--color-danger-light);
+  transform: scale(.85);
+  opacity: 1;
 }
 
 /* Empty state inside section body */
@@ -11060,8 +11063,8 @@ async function renderFavourites() {
             <div class="fav-item-name" dir="auto">${esc(item.name)}</div>
             ${item.spec ? `<div class="fav-item-sub">${esc(item.spec)}</div>` : ''}
           </div>
-          <button class="fav-item-del" onclick="event.stopPropagation();removeFavCondition('${esc(item.id)}')" aria-label="Remove from favourites">
-            <i class="ph ph-trash"></i>
+          <button class="fav-item-del" onclick="event.stopPropagation();removeFavCondition('${esc(item.id)}')" aria-label="Remove from favourites" title="Remove from favourites">
+            <i class="ph ph-star-fill"></i>
           </button>
         </div>`).join('');
     }
@@ -11098,8 +11101,8 @@ async function renderFavourites() {
             <div class="fav-item-name">${esc(item.name)}</div>
             ${item.group ? `<div class="fav-item-sub">${subLabel}</div>` : ''}
           </div>
-          <button class="fav-item-del" onclick="event.stopPropagation();removeFavDrug('${esc(item.id)}')" aria-label="Remove from favourites">
-            <i class="ph ph-trash"></i>
+          <button class="fav-item-del" onclick="event.stopPropagation();removeFavDrug('${esc(item.id)}')" aria-label="Remove from favourites" title="Remove from favourites">
+            <i class="ph ph-star-fill"></i>
           </button>
         </div>`;
       }).join('');
@@ -11107,8 +11110,10 @@ async function renderFavourites() {
   }
 }
 
-// Remove a condition from favourites and re-render
-function removeFavCondition(id) {
+// Remove a condition from favourites — with confirmation
+async function removeFavCondition(id) {
+  const ok = await openConfirm('Remove from Favourites?', 'This condition will be removed from your favourites list.', 'Remove', 'var(--color-danger)');
+  if (!ok) return;
   let favs = JSON.parse(localStorage.getItem('rxmgr_fav_conditions') || '[]');
   favs = favs.filter(x => x !== id);
   localStorage.setItem('rxmgr_fav_conditions', JSON.stringify(favs));
@@ -11116,8 +11121,10 @@ function removeFavCondition(id) {
   toast('Removed from favourites');
 }
 
-// Remove a drug from favourites and re-render
-function removeFavDrug(id) {
+// Remove a drug from favourites — with confirmation
+async function removeFavDrug(id) {
+  const ok = await openConfirm('Remove from Favourites?', 'This drug will be removed from your favourites list.', 'Remove', 'var(--color-danger)');
+  if (!ok) return;
   let favs = JSON.parse(localStorage.getItem('rxmgr_fav_drugs') || '[]');
   favs = favs.filter(x => x !== id);
   localStorage.setItem('rxmgr_fav_drugs', JSON.stringify(favs));
