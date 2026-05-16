@@ -3848,20 +3848,19 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   gap: 0;
 }
 
-/* "All Drugs" row — visually separated at top */
+/* "All Drugs" row — no special treatment needed, same card style */
 .lib-cat-tile--all {
   margin-bottom: var(--space-2);
-  border-bottom: 1.5px solid var(--color-border);
 }
 
-/* Base tile — compact horizontal row */
+/* Base tile — matches .lib-drug-card exactly */
 .lib-cat-tile {
-  background: transparent;
-  border-radius: 0;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
   border: none;
-  border-bottom: 1px solid var(--color-border-subtle, var(--color-border));
-  box-shadow: none;
-  padding: 13px 0 13px 10px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-2);
+  padding: 13px var(--space-4) 13px var(--space-4);
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -3869,7 +3868,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   gap: var(--space-3);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background .12s;
+  transition: transform .12s ease, box-shadow .12s ease;
   min-height: 0;
   position: relative;
   overflow: hidden;
@@ -3877,22 +3876,16 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   -webkit-user-select: none;
 }
 .lib-cat-tile:active {
-  background: var(--color-border);
+  transform: scale(.985);
+  box-shadow: none;
 }
 .lib-cat-tile:last-child {
-  border-bottom: none;
+  margin-bottom: 0;
 }
 
-/* Left accent bar */
+/* No left stripe — matches .lib-drug-stripe display:none decision */
 .lib-cat-tile::before {
-  content: '';
-  position: absolute;
-  top: 8px;
-  left: 0;
-  bottom: 8px;
-  width: 3px;
-  background: var(--tile-accent);
-  border-radius: 2px;
+  display: none;
 }
 
 /* No icon bubble */
@@ -3900,7 +3893,17 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   display: none;
 }
 
-/* Category name — takes all remaining space, never wraps */
+/* Colored dot — replaces stripe, subtle category identifier */
+.lib-cat-tile__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--tile-accent);
+  flex-shrink: 0;
+  opacity: .85;
+}
+
+/* Category name */
 .lib-cat-tile__name {
   font-size: 15px;
   font-weight: 600;
@@ -3914,11 +3917,10 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   text-overflow: ellipsis;
 }
 .lib-cat-tile--all .lib-cat-tile__name {
-  font-size: 15px;
   font-weight: 700;
 }
 
-/* Drug count badge — right-aligned pill */
+/* Drug count badge */
 .lib-cat-tile__count {
   font-size: 12px;
   font-weight: 600;
@@ -3927,7 +3929,6 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   border-radius: 20px;
   padding: 2px 9px;
   flex-shrink: 0;
-  letter-spacing: .01em;
 }
 
 /* Chevron caret */
@@ -3939,25 +3940,25 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   border-top: 1.5px solid var(--color-text-tertiary);
   transform: rotate(45deg);
   flex-shrink: 0;
-  opacity: .5;
+  opacity: .4;
 }
 
 /* Staggered entrance animation */
 @keyframes lib-tile-in {
-  from { opacity: 0; transform: translateX(-6px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 .lib-cat-tile {
   animation: lib-tile-in .18s ease both;
 }
 
-/* Light mode — transparent bg so no override needed */
+/* Light mode */
 [data-theme="light"] .lib-cat-tile {
-  background: transparent;
+  background: #ffffff;
 }
 @media (prefers-color-scheme: light) {
   html:not([data-theme="dark"]) .lib-cat-tile {
-    background: transparent;
+    background: #ffffff;
   }
 }
 
@@ -15184,7 +15185,7 @@ async function renderCategoryGrid() {
         role="button"
         tabindex="0"
         aria-label="${esc(cat.name)}, ${cat.count} drug${cat.count !== 1 ? 's' : ''}"
-      ><div class="lib-cat-tile__name">${esc(cat.name)}</div><div class="lib-cat-tile__count">${cat.count}</div></div>`;
+      ><div class="lib-cat-tile__dot"></div><div class="lib-cat-tile__name">${esc(cat.name)}</div><div class="lib-cat-tile__count">${cat.count}</div></div>`;
     }).join('')
   }</div>`;
 }
