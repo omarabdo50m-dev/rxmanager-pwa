@@ -2979,22 +2979,10 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 }
 /* Active dot indicator — 3px pill above the label */
 .bnav-btn::after {
-  content:'';
-  display:block;
-  position:absolute;
-  bottom:4px;
-  left:50%;
-  transform:translateX(-50%) scaleX(0);
-  width:18px;
-  height:3px;
-  border-radius:var(--radius-full);
-  background:var(--color-brand);
-  transition:transform .2s cubic-bezier(.32,.72,0,1), opacity .2s ease;
-  opacity:0;
+  display:none;
 }
 .bnav-btn.active::after {
-  transform:translateX(-50%) scaleX(1);
-  opacity:1;
+  display:none;
 }
 /* Icon slot — holds the Phosphor <i> element */
 .bnav-ico{
@@ -3045,12 +3033,13 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 #favsScr .favs-scroll-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 /* Peer nav screen title — sits below hdr-top row, adapts to theme */
 .peer-scr-title{
-  font-size:var(--text-lg-size);
+  font-size:var(--text-xl-size, 24px);
   font-weight:800;
-  letter-spacing:-.3px;
+  letter-spacing:-.5px;
   color:var(--color-text-primary);
   line-height:1.1;
-  padding:6px var(--space-5) 10px;
+  padding:2px var(--space-5) 10px;
+  text-align:left;
 }
 /* lib fixed header needs no extra padding-bottom since title provides it */
 .lib-fixed-header .search-bar-wrap{padding:6px 20px 12px}
@@ -8422,6 +8411,13 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
       <button class="lib-filter-active-clear" onclick="libClearAllFilters()">
         <i class="ph ph-x" style="font-size:10px;vertical-align:-1px;margin-right:2px"></i>Clear all
       </button>
+    </div>
+    <!-- Recently viewed drugs strip — same pattern as home screen rv-wrap -->
+    <div class="rv-wrap" id="libRvWrap" style="padding-bottom:6px">
+      <div class="rv-inner">
+        <span class="rv-label"><i class="ph ph-clock-counter-clockwise" style="font-size:10px;vertical-align:-1px;margin-right:3px"></i>Recent</span>
+        <div class="rv-chips" id="libRvChips"></div>
+      </div>
     </div>
   </div><!-- /.lib-fixed-header -->
 
@@ -15216,6 +15212,8 @@ async function openDrugViewer(id) {
       entity_name: _trackDrug.name || id,
       specialty:   _trackDrug.group || _trackDrug.type || null,
     });
+    // ── Lib recently-viewed ───────────────────────────────────────────
+    addToLibRecentlyViewed(id, _trackDrug.name || id);
   }
   const [drug, allProds, allLib] = await Promise.all([
     DB.get('library', id),
@@ -16996,6 +16994,7 @@ async function init() {
 
   // Pre-render into the DOM while the loader is still covering the screen.
   renderRecentlyViewed(); // Phase 8 — restore persisted recent items
+  renderLibRecentlyViewed(); // lib recently-viewed drugs
   await renderSpecStrip();
   renderMain();
 
@@ -19375,6 +19374,40 @@ function updateStickyTop() { /* no-op in v62 */ }
 // ===================================================
 const RV_KEY = 'rxmgr_recently_viewed';
 const RV_MAX = 5;
+
+// ── Library recently-viewed drugs — same pattern ──────────────
+const LIB_RV_KEY = 'rxmgr_lib_recently_viewed';
+const LIB_RV_MAX = 5;
+
+function addToLibRecentlyViewed(id, name) {
+  if (!id || !name) return;
+  try {
+    let items = JSON.parse(localStorage.getItem(LIB_RV_KEY) || '[]');
+    items = items.filter(x => x.id !== id);
+    items.unshift({ id, name });
+    items = items.slice(0, LIB_RV_MAX);
+    localStorage.setItem(LIB_RV_KEY, JSON.stringify(items));
+  } catch(e) {}
+  renderLibRecentlyViewed();
+}
+
+function renderLibRecentlyViewed() {
+  const wrap  = document.getElementById('libRvWrap');
+  const chips = document.getElementById('libRvChips');
+  if (!wrap || !chips) return;
+  let items = [];
+  try { items = JSON.parse(localStorage.getItem(LIB_RV_KEY) || '[]'); } catch(e) {}
+  if (!items.length) { wrap.classList.remove('has-items'); chips.innerHTML = ''; return; }
+  wrap.classList.add('has-items');
+  chips.innerHTML = items.map(function(item) {
+    const safeName = String(item.name || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const safeId   = String(item.id || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return '<div class="rv-chip" onclick="openDrugViewer(\'' + safeId + '\')" title="' + safeName + '">'
+      + '<span class="rv-dot"><i class="ph ph-arrow-bend-up-right"></i></span>'
+      + '<span class="rv-chip-name">' + safeName + '</span>'
+      + '</div>';
+  }).join('');
+}
 
 const _RV_SPEC_COLORS = {
   'General Practice':   '#006fd4', 'General':            '#006fd4',
