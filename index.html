@@ -5721,21 +5721,27 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 /* Brand row restructured layout */
 .dv-brand-main-p12 { width: 100%; }
 .dv-brand-top-p12 { display: flex; align-items: flex-start; gap: var(--space-3); }
-/* AR row — full width, right-aligned content */
+/* AR row — mirrors top row: [AR content flex:1] [spacer = icon width] */
 .dv-brand-ar-row-p12 {
   display: flex;
-  justify-content: flex-end;
-  margin-top: 3px;
-  padding-top: 3px;
-  border-top: 1px solid var(--color-border);
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-top: 2px;
 }
 .dv-brand-ar-content-p12 {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 2px;
+  gap: 1px;
   direction: rtl;
   text-align: right;
+  min-width: 0;
+}
+/* Spacer that matches the search icon column width exactly */
+.dv-brand-ar-icon-spacer-p12 {
+  width: 15px;
+  flex-shrink: 0;
 }
 /* Image search button — Phase 12 — matches prescription row icon style */
 .dv-img-btn-p12 {
@@ -5762,7 +5768,6 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .dv-generic-dose-p12 {
   background: var(--color-brand-light);
   border: none;
-  border-top: 1px solid rgba(0,133,254,.18);
   border-bottom: 1px solid rgba(0,133,254,.18);
   border-radius: 0;
   padding: var(--space-3) var(--space-4);
@@ -6533,7 +6538,12 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .formula-filter-btn:active{background:var(--color-surface-2)}
 .formula-filter-btn.active{border-color:var(--color-brand);color:var(--color-brand);background:var(--color-brand-light)}
 /* Drug viewer formula filter btn — active state (uses search-filter-btn base) */
-.dv-formula-filter-btn { color: var(--color-text-secondary); }
+.dv-formula-filter-btn {
+  color: var(--color-text-secondary);
+  width: 24px;
+  height: 24px;
+  padding: 0;
+}
 .dv-formula-filter-active { color: var(--color-brand) !important; }
 .formula-filter-badge{background:var(--color-brand);color:var(--color-text-inverse);border-radius:10px;padding:1px 7px;font-size:10px;font-weight:800;min-width:18px;text-align:center}
 .formula-filter-panel{overflow:hidden;max-height:0;opacity:0;transition:max-height .2s ease,opacity .15s ease;background:var(--color-surface);border-bottom:1px solid var(--color-border)}
@@ -17585,13 +17595,16 @@ function _singleBrandRow(p, drug, dimmed) {
   const searchParts = [brandName, p.conc, p.formula].filter(Boolean);
   const googleImgUrl = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(searchParts.join(' '))}`;
 
-  // AR row: brand-ar + dose-ar right-aligned, search icon at far right
+  // AR row mirrors the top row layout:
+  // [flex:1 right-aligned AR content] [15px spacer matching icon width]
+  // This ensures AR text right-edge aligns with the search icon right-edge
   const arRow = (brandAr || hasAr) ? `
     <div class="dv-brand-ar-row-p12">
       <div class="dv-brand-ar-content-p12">
         ${brandAr ? `<span class="dv-brand-name-ar-p12" dir="rtl">${esc(brandAr)}</span>` : ''}
         ${hasAr ? `<span class="dv-brand-dose-ar-p12" dir="rtl">${esc(p.doseAr)}</span>` : ''}
       </div>
+      <div class="dv-brand-ar-icon-spacer-p12"></div>
     </div>` : '';
 
   return `<div class="dv-brand-row-p12${dimmed ? ' dimmed' : ''}" onclick="void(0)">
