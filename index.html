@@ -2469,18 +2469,19 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   display:flex;
   align-items:center;
   justify-content:center;
-  background: rgba(15,43,74,.08);
-  border: 1px solid rgba(15,43,74,.12);
-  color: rgba(15,43,74,.55);
+  background: rgba(var(--color-bg-rgb), .0);
+  border: 1px solid transparent;
+  color: var(--color-search-placeholder);
   font-size:18px;
   cursor:pointer;
   border-radius:var(--radius-full);
   transition:background .15s, color .15s;
   -webkit-tap-highlight-color:transparent;
+  position: relative;
 }
 .search-filter-btn:active{
-  background: rgba(15,43,74,.15);
-  color: var(--color-header-bg);
+  background: rgba(var(--color-bg-rgb), .12);
+  color: var(--color-brand);
 }
 .search-clear{
   width:28px;
@@ -2488,10 +2489,10 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   display:none;
   align-items:center;
   justify-content:center;
-  background: rgba(15,43,74,.10);
+  background: rgba(var(--color-bg-rgb), .10);
   border:none;
   border-radius:var(--radius-full);
-  color: rgba(15,43,74,.60);
+  color: var(--color-search-placeholder);
   font-size:var(--text-sm-size);
   font-weight:700;
   cursor:pointer;
@@ -2500,8 +2501,8 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   -webkit-tap-highlight-color:transparent;
 }
 .search-clear:active{
-  background: rgba(15,43,74,.18);
-  color: var(--color-header-bg);
+  background: rgba(var(--color-bg-rgb), .20);
+  color: var(--color-text-primary);
 }
 
 /* ── RECENTLY VIEWED — inside hero-zone, dark surface ── */
@@ -3433,7 +3434,6 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .lib-search-row {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
   padding: var(--space-2) var(--space-3) var(--space-2);
   background: var(--color-bg);
   flex-shrink: 0;
@@ -3540,20 +3540,18 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 }
 .lib-filter-badge {
   display: none;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
   background: var(--color-brand);
-  color: var(--color-text-inverse);
   border-radius: var(--radius-full);
-  font-size: 10px;
-  font-weight: 800;
-  line-height: 1;
+  border: 2px solid var(--color-surface-search);
 }
-.lib-filter-btn.has-filters .lib-filter-badge {
-  display: inline-flex;
+.lib-filter-btn.has-filters .lib-filter-badge,
+#libFilterBtn.has-filters .lib-filter-badge {
+  display: block;
 }
 
 /* ── LIB FILTER ACTIVE STRIP ───────────────
@@ -8377,17 +8375,19 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
       <i class="ph ph-dots-three-outline" style="font-size:18px"></i>
     </button>
   </div>
-  <!-- ── Search + Filter bar — Hero styling matches home screen search ── -->
+  <!-- ── Search + Filter bar — same structure as home screen search ── -->
   <div class="lib-search-row" style="padding:var(--space-2) var(--space-4) var(--space-3)">
-    <div class="lib-search-inp-wrap" style="flex:1;position:relative;display:flex;align-items:center">
-      <span class="lib-search-ico" style="position:absolute;left:16px;font-size:18px;color:rgba(15,43,74,.55);pointer-events:none;z-index:2;display:flex;align-items:center"><i class="ph ph-magnifying-glass"></i></span>
-      <input class="lib-hero-search" type="text" id="libSearch" placeholder="Search drugs, class, use…" oninput="debouncedRenderLib()" dir="auto" autocomplete="off"/>
+    <div class="search-wrap" style="flex:1">
+      <span class="search-ico"><i class="ph ph-magnifying-glass"></i></span>
+      <input class="search-inp" type="text" id="libSearch" placeholder="Search drugs, class, use…" oninput="debouncedRenderLib()" dir="auto" autocomplete="off"/>
+      <div class="search-right">
+        <button class="search-clear" id="libSearchClearBtn" onclick="document.getElementById('libSearch').value='';debouncedRenderLib()" aria-label="Clear search" style="display:none"><i class="ph ph-x" style="font-size:13px;font-weight:700"></i></button>
+        <button class="search-filter-btn" id="libFilterBtn" onclick="openLibFilterSheet()" aria-label="Filter drugs" title="Filter">
+          <i class="ph ph-faders"></i>
+          <span class="lib-filter-badge" id="libFilterBadge"></span>
+        </button>
+      </div>
     </div>
-    <button class="lib-filter-btn hero-height" id="libFilterBtn" onclick="openLibFilterSheet()" aria-label="Filter drugs">
-      <i class="ph ph-faders" style="font-size:15px"></i>
-      Filter
-      <span class="lib-filter-badge" id="libFilterBadge">0</span>
-    </button>
   </div>
 
   <!-- Active filter summary strip (shown when any filter is active) -->
