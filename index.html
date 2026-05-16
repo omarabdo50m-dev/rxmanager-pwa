@@ -7601,23 +7601,109 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   color: var(--color-text-primary);
 }
 
-/* ── Phase 11: Clinical depth block inside collapsible ── */
+/* ── Phase 11: Clinical depth — flat non-collapsible card ── */
+.cv-depth-card-p11 {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  margin: var(--space-3) var(--space-3) 0;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.cv-depth-card-hdr-p11 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+.cv-depth-card-icon-p11 {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(99,102,241,.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.cv-depth-card-title-p11 {
+  font-size: var(--text-sm-size);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--color-text-primary);
+}
+.cv-depth-card-body-p11 {
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+/* Each heading+paragraph pair — no inner box, no border, no bg */
 .cv-depth-block-p11 {
   margin-bottom: var(--space-4);
-  padding: var(--space-3);
-  background: var(--color-surface-2);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border);
 }
 .cv-depth-block-p11:last-child { margin-bottom: 0; }
 .cv-depth-heading-p11 {
   font-size: var(--text-sm-size);
   font-weight: 700;
-  color: var(--color-text-primary);  /* was --color-brand — headings should be white, not blue */
+  color: var(--color-text-primary);
   margin-bottom: var(--space-2);
 }
 .cv-depth-body-p11 {
-  font-size: var(--text-base-size);  /* was text-sm-size — body reading blocks need 15px */
+  font-size: var(--text-base-size);
+  line-height: 1.75;
+  color: var(--color-text-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Phase 11: Key Investigations card — same flat card style ── */
+.cv-key-inv-card-p11 {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  margin: var(--space-3) var(--space-3) 0;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.cv-key-inv-hdr-p11 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+.cv-key-inv-icon-p11 {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(2,132,199,.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.cv-key-inv-title-p11 {
+  font-size: var(--text-sm-size);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--color-text-primary);
+}
+.cv-key-inv-body-p11 {
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+.cv-key-inv-block-p11 {
+  margin-bottom: var(--space-4);
+}
+.cv-key-inv-block-p11:last-child { margin-bottom: 0; }
+.cv-key-inv-heading-p11 {
+  font-size: var(--text-sm-size);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-2);
+}
+.cv-key-inv-text-p11 {
+  font-size: var(--text-base-size);
   line-height: 1.75;
   color: var(--color-text-secondary);
   white-space: pre-wrap;
@@ -12729,33 +12815,50 @@ function renderConditionViewer(data) {
     </div>`;
   }
 
-  // ── Clinical Depth — collapsible, block-parsed ─────────────────────────
+  // ── Key Investigations — flat non-collapsible card ─────────────────────
+  if (condition.key_investigations) {
+    const invBlocks = condition.key_investigations.split(/\n\n+/).map(b => b.trim()).filter(Boolean);
+    clinHtml += `<div class="cv-key-inv-card-p11">
+      <div class="cv-key-inv-hdr-p11">
+        <div class="cv-key-inv-icon-p11">
+          <i class="ph ph-test-tube" style="font-size:15px;color:var(--color-info)"></i>
+        </div>
+        <span class="cv-key-inv-title-p11">Key Investigations</span>
+      </div>
+      <div class="cv-key-inv-body-p11">
+        ${invBlocks.map(block => {
+          const lines = block.split('\n');
+          const heading = lines[0].replace(/^#+\s*/, '').trim();
+          const body = lines.slice(1).join('\n').trim();
+          return `<div class="cv-key-inv-block-p11">
+            <div class="cv-key-inv-heading-p11">${esc(heading)}</div>
+            ${body ? `<div class="cv-key-inv-text-p11" dir="auto">${esc(body)}</div>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+
+  // ── Clinical Depth — flat non-collapsible card ─────────────────────────
   if (condition.clinical_depth) {
-    const depthId    = 'cvp11_depth_body';
-    const depthArrow = 'cvp11_depth_arrow';
     const depthBlocks = condition.clinical_depth.split(/\n\n+/).map(b => b.trim()).filter(Boolean);
-    clinHtml += `<div class="cv-collapsible" style="margin:var(--space-3) var(--space-4) 0">
-      <div class="cv-coll-hdr" onclick="cvToggleCollP11('${depthId}','${depthArrow}')">
-        <div class="cv-coll-hdr-icon-wrap" style="background:rgba(99,102,241,.1)">
+    clinHtml += `<div class="cv-depth-card-p11">
+      <div class="cv-depth-card-hdr-p11">
+        <div class="cv-depth-card-icon-p11">
           <i class="ph ph-dna" style="font-size:15px;color:#6366F1"></i>
         </div>
-        <span class="cv-coll-hdr-title">Clinical Depth</span>
-        <div class="cv-coll-hdr-arrow" id="${depthArrow}">
-          <i class="ph ph-caret-right"></i>
-        </div>
+        <span class="cv-depth-card-title-p11">Clinical Depth</span>
       </div>
-      <div class="cv-coll-body" id="${depthId}">
-        <div class="cv-coll-inner-p11">
-          ${depthBlocks.map(block => {
-            const lines = block.split('\n');
-            const heading = lines[0].replace(/^#+\s*/, '').trim();
-            const body = lines.slice(1).join('\n').trim();
-            return `<div class="cv-depth-block-p11">
-              <div class="cv-depth-heading-p11">${esc(heading)}</div>
-              ${body ? `<div class="cv-depth-body-p11" dir="auto">${esc(body)}</div>` : ''}
-            </div>`;
-          }).join('')}
-        </div>
+      <div class="cv-depth-card-body-p11">
+        ${depthBlocks.map(block => {
+          const lines = block.split('\n');
+          const heading = lines[0].replace(/^#+\s*/, '').trim();
+          const body = lines.slice(1).join('\n').trim();
+          return `<div class="cv-depth-block-p11">
+            <div class="cv-depth-heading-p11">${esc(heading)}</div>
+            ${body ? `<div class="cv-depth-body-p11" dir="auto">${esc(body)}</div>` : ''}
+          </div>`;
+        }).join('')}
       </div>
     </div>`;
   }

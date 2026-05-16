@@ -455,6 +455,13 @@ input[dir=rtl], textarea[dir=rtl] {
   text-transform: uppercase;
   letter-spacing: .07em;
 }
+.form-hint {
+  font-size: var(--text-xs-size);
+  color: var(--color-text-tertiary);
+  line-height: 1.6;
+  margin-top: 2px;
+  white-space: pre-wrap;
+}
 .form-row-inline {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1888,19 +1895,13 @@ function _checkGatePassword() {
             </div>
           </div>
 
-          <!-- Row 2: specialty / clinical_depth -->
-          <div class="form-row-inline">
-            <div class="form-row">
-              <label class="form-label">Specialty</label>
-              <select id="cf-specialty" onchange="condSave('specialty',this.value);condBuildSpecialtySelect(this.value)">
-                <option value="">— None —</option>
-                <!-- populated dynamically by condBuildSpecialtySelect() from _SPECIALTIES -->
-              </select>
-            </div>
-            <div class="form-row">
-              <label class="form-label">Clinical Depth</label>
-              <input type="text" id="cf-clinical_depth" onblur="condSave('clinical_depth',this.value)"/>
-            </div>
+          <!-- Row 2: specialty only -->
+          <div class="form-row">
+            <label class="form-label">Specialty</label>
+            <select id="cf-specialty" onchange="condSave('specialty',this.value);condBuildSpecialtySelect(this.value)">
+              <option value="">— None —</option>
+              <!-- populated dynamically by condBuildSpecialtySelect() from _SPECIALTIES -->
+            </select>
           </div>
 
           <!-- Row 3: age_group / urgency_level / sibling -->
@@ -1955,6 +1956,32 @@ function _checkGatePassword() {
           <div class="form-row">
             <label class="form-label">Referral</label>
             <textarea id="cf-referral" rows="2" onblur="condSave('referral',this.value)"></textarea>
+          </div>
+
+          <!-- Key Investigations -->
+          <div class="form-row">
+            <label class="form-label">Key Investigations</label>
+            <p class="form-hint">One block per blank line. First line = heading, following lines = body text.
+Example:
+FBC
+Look for neutrophilia in bacterial infection; lymphocytosis in viral.
+
+CRP / ESR
+Elevated in bacterial causes; may be normal in early viral infection.</p>
+            <textarea id="cf-key_investigations" rows="8" onblur="condSave('key_investigations',this.value)" placeholder="FBC&#10;Look for neutrophilia in bacterial, lymphocytosis in viral.&#10;&#10;CRP / ESR&#10;Elevated in bacterial causes; normal in early viral."></textarea>
+          </div>
+
+          <!-- Clinical Depth -->
+          <div class="form-row">
+            <label class="form-label">Clinical Depth</label>
+            <p class="form-hint">One block per blank line. First line = heading, following lines = body text.
+Example:
+Pathophysiology
+Acute cough is triggered by inflammatory mediators acting on airway receptors...
+
+Diagnostic Approach
+Start with duration and character of cough to distinguish infectious from non-infectious causes...</p>
+            <textarea id="cf-clinical_depth" rows="10" onblur="condSave('clinical_depth',this.value)" placeholder="Pathophysiology&#10;Enter body text here...&#10;&#10;Diagnostic Approach&#10;Enter body text here..."></textarea>
           </div>
 
           <!-- patient instructions en/ar -->
@@ -4400,6 +4427,7 @@ async function condEdit(id) {
   document.getElementById('cf-name').value            = c.name ?? '';
   document.getElementById('cf-name_ar').value         = c.name_ar ?? '';
   document.getElementById('cf-clinical_depth').value  = c.clinical_depth ?? '';
+  document.getElementById('cf-key_investigations').value = c.key_investigations ?? '';
   document.getElementById('cf-overview').value        = c.overview ?? '';
   document.getElementById('cf-how_to_diagnose').value = c.how_to_diagnose ?? '';
   document.getElementById('cf-exam_pearls').value     = c.exam_pearls ?? '';
