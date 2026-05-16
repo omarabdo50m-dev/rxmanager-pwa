@@ -5288,23 +5288,22 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 /* ── Phase 12: Hero section ──────────────────────────── */
 .dv-hero-p12 {
   background: var(--color-bg);
-  padding: var(--space-4) var(--space-4) var(--space-4);
+  padding: var(--space-2) var(--space-4) var(--space-4);
 }
 /* Group › subgroup breadcrumb — sits above the drug name */
 .dv-hero-p12-breadcrumb-line {
-  font-size: 11px;
-  font-weight: 700;
-  color: rgba(255,255,255,.38);
-  text-transform: uppercase;
-  letter-spacing: .07em;
-  margin-bottom: var(--space-2);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-1);
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .dv-hero-p12-breadcrumb-sep {
-  color: rgba(255,255,255,.22);
+  color: var(--color-text-tertiary);
+  margin: 0 3px;
 }
 /* App name in drug viewer header — matches other screens' hdr-app-name */
 .dv-hdr-app-name {
@@ -5314,6 +5313,49 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   text-transform: uppercase !important;
   color: var(--color-text-secondary) !important;
   white-space: nowrap;
+}
+
+/* ── Drug viewer: extended sticky header with breadcrumb + drug name ── */
+.dv-screen-header {
+  background: var(--color-bg);
+  padding: var(--header-top-pad) var(--space-4) var(--space-3);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  flex-shrink: 0;
+  /* No box-shadow — header merges with page background */
+}
+.dv-screen-header__top-row {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  gap: var(--space-3);
+  margin-bottom: 2px;
+}
+.dv-screen-header__breadcrumb {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+  padding-left: 2px;
+}
+.dv-screen-header__breadcrumb-sep {
+  color: var(--color-text-tertiary);
+  margin: 0 3px;
+}
+.dv-screen-header__drug-name {
+  font-size: var(--text-xl-size);
+  font-weight: 900;
+  color: var(--color-text-primary);
+  line-height: 1.1;
+  letter-spacing: -.3px;
+  word-break: break-word;
+  padding-left: 2px;
+  font-family: var(--font);
 }
 .dv-hero-p12-breadcrumb {
   display: flex;
@@ -5353,7 +5395,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   line-height: 1.1;
   letter-spacing: -.3px;
   word-break: break-word;
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-2);
   font-family: var(--font);
 }
 /* Two-badge class strip */
@@ -9636,14 +9678,18 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 
 <!-- DRUG VIEWER (read-only) -->
 <div class="screen" id="drugViewerScr">
-  <div class="cc-screen-header">
-    <button class="cc-screen-header__back" onclick="_dvFormulaFilter.clear();_dvFormulaPanelOpen=false;_closeDrugViewer()" aria-label="Back">
-      <i class="ph ph-arrow-left"></i>
-    </button>
-    <span class="cc-screen-header__title dv-hdr-app-name">RxManager Pro</span>
-    <button class="cc-screen-header__action" id="dvFavBtn" onclick="toggleFavDrugViewer()" title="Favourite" style="background:none;border:none;padding:3px;font-size:20px;">
-      <i class="ph ph-star" style="font-size:20px"></i>
-    </button>
+  <div class="dv-screen-header" id="dvStickyHeader">
+    <div class="dv-screen-header__top-row">
+      <button class="cc-screen-header__back" onclick="_dvFormulaFilter.clear();_dvFormulaPanelOpen=false;_closeDrugViewer()" aria-label="Back">
+        <i class="ph ph-arrow-left"></i>
+      </button>
+      <span class="cc-screen-header__title dv-hdr-app-name">RxManager Pro</span>
+      <button class="cc-screen-header__action" id="dvFavBtn" onclick="toggleFavDrugViewer()" title="Favourite" style="background:none;border:none;padding:3px;font-size:20px;">
+        <i class="ph ph-star" style="font-size:20px"></i>
+      </button>
+    </div>
+    <div class="dv-screen-header__breadcrumb" id="dvHeaderBreadcrumb" style="display:none"></div>
+    <div class="dv-screen-header__drug-name" id="dvHeaderDrugName" style="display:none"></div>
   </div>
   <div style="overflow-y:auto;flex:1;padding-bottom:100px" id="dvBody"></div>
 </div>
@@ -15997,17 +16043,25 @@ async function openDrugViewer(id) {
 
   let html = '';
 
-  // ══ HERO — Phase 12 — Option C: name + two class badges always visible ══════
-  // Breadcrumb (group › subgroup), combo tags, and source citation collapse into
-  // the first "Drug Details" collapsible section immediately below the hero.
-  html += `<div class="dv-hero-p12">
-    <!-- Group › subgroup breadcrumb — muted, above drug name -->
-    ${(gs.group || gs.subgroup) ? `<div class="dv-hero-p12-breadcrumb-line">
-      ${esc(gs.group||'')}${gs.subgroup ? `<span class="dv-hero-p12-breadcrumb-sep"> › </span>${esc(gs.subgroup)}` : ''}
-    </div>` : ''}
-    <!-- Drug name — always visible -->
-    <div class="dv-hero-p12-name">${esc(drug.name)}</div>
+  // ── Populate sticky header breadcrumb + drug name ──────────────
+  const breadcrumbEl = document.getElementById('dvHeaderBreadcrumb');
+  const drugNameEl   = document.getElementById('dvHeaderDrugName');
+  if (breadcrumbEl) {
+    if (gs.group || gs.subgroup) {
+      breadcrumbEl.innerHTML = esc(gs.group||'') +
+        (gs.subgroup ? `<span class="dv-screen-header__breadcrumb-sep">›</span>${esc(gs.subgroup)}` : '');
+      breadcrumbEl.style.display = '';
+    } else {
+      breadcrumbEl.style.display = 'none';
+    }
+  }
+  if (drugNameEl) {
+    drugNameEl.textContent = drug.name;
+    drugNameEl.style.display = '';
+  }
 
+  // ══ HERO — Phase 12 — Option C: two class badges always visible ══════
+  html += `<div class="dv-hero-p12">
     <!-- Two-badge class strip — always visible -->
     ${hasClass ? `<div class="dv-hero-p12-badges">
       ${cls.therapeutic ? `<div class="dv-hero-p12-badge">
@@ -16365,6 +16419,11 @@ function _dvPregCellP12(label, cat) {
 
 function _closeDrugViewer(cb) {
   closeScreen('drugViewerScr');
+  // Clear sticky header content so it doesn't flash stale data on next open
+  const b = document.getElementById('dvHeaderBreadcrumb');
+  const n = document.getElementById('dvHeaderDrugName');
+  if (b) { b.innerHTML=''; b.style.display='none'; }
+  if (n) { n.textContent=''; n.style.display='none'; }
   if (cb) setTimeout(cb, 160);
 }
 function drugViewerOpenEditor() {
