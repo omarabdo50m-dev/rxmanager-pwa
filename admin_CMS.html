@@ -715,7 +715,9 @@ input[dir=rtl], textarea[dir=rtl] {
   width: 90%;
   max-width: 480px;
   max-height: 85vh;
-  overflow-y: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   animation: modalIn .18s ease;
 }
 @keyframes modalIn {
@@ -729,6 +731,7 @@ input[dir=rtl], textarea[dir=rtl] {
   justify-content: space-between;
   padding: var(--space-5) var(--space-5) var(--space-4);
   border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
 }
 .modal-title {
   font-size: var(--text-md-size);
@@ -737,6 +740,9 @@ input[dir=rtl], textarea[dir=rtl] {
 }
 .modal-body {
   padding: var(--space-5);
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 .modal-footer {
   display: flex;
@@ -744,6 +750,7 @@ input[dir=rtl], textarea[dir=rtl] {
   gap: var(--space-2);
   padding: var(--space-4) var(--space-5);
   border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
 }
 
 /* ─── COLLAPSIBLE ────────────────────────────────────────── */
@@ -6945,6 +6952,8 @@ async function nbCreateNewGeneric() {
 
   } catch(e) {
     toast('Failed to create generic: ' + e.message, 'error');
+  } finally {
+    // Always reset the button whether success or failure
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ph ph-check"></i> Create generic &amp; link'; }
   }
 }
@@ -7066,26 +7075,27 @@ function nbRenderRows() {
         style="border:1px solid var(--color-border);border-radius:var(--radius-md);
           padding:var(--space-3);margin-bottom:var(--space-2)">
 
-        <div style="display:grid;grid-template-columns:1fr 1fr 90px 90px auto;
-          gap:var(--space-2);align-items:center;margin-bottom:var(--space-2)">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);margin-bottom:var(--space-2)">
           <input type="text" class="nb-brand-input"
-            placeholder="Brand (EN) *"
+            placeholder="Brand name (EN) *"
             value="${esc(row.brand)}"
             autocomplete="off"
             oninput="nbSyncRow(${rid},'brand',this.value)"/>
           <input type="text"
-            placeholder="Brand (AR)"
+            placeholder="Brand name (AR)"
             value="${esc(row.brand_ar)}"
             dir="rtl"
             autocomplete="off"
             oninput="nbSyncRow(${rid},'brand_ar',this.value)"/>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:var(--space-2);align-items:center;margin-bottom:var(--space-2)">
           <input type="text"
-            placeholder="Conc."
+            placeholder="Concentration (e.g. 500mg)"
             value="${esc(row.conc)}"
             autocomplete="off"
             oninput="nbSyncRow(${rid},'conc',this.value)"/>
           <input type="text"
-            placeholder="Formula"
+            placeholder="Formula (e.g. tablet, syrup)"
             value="${esc(row.formula)}"
             autocomplete="off"
             oninput="nbSyncRow(${rid},'formula',this.value)"/>
@@ -7096,30 +7106,37 @@ function nbRenderRows() {
           </button>
         </div>
 
-        <div style="display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap">
-          <label style="display:flex;align-items:center;gap:var(--space-1);
+        <div>
+          <label style="display:flex;align-items:center;gap:var(--space-2);
             font-size:var(--text-xs-size);color:var(--color-text-secondary);
-            cursor:pointer;user-select:none">
+            cursor:pointer;user-select:none;padding:var(--space-1) 0">
             <input type="checkbox"
               ${row.overrideDose ? 'checked' : ''}
-              onchange="nbToggleOverride(${rid},this.checked)"/>
-            Give this brand its own dose (overrides the shared dose above)
+              onchange="nbToggleOverride(${rid},this.checked)"
+              style="width:14px;height:14px;flex-shrink:0;cursor:pointer"/>
+            <span>Give this brand its own dose <span style="color:var(--color-text-tertiary)">(overrides the shared dose above)</span></span>
           </label>
           ${row.overrideDose ? `
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);flex:1">
-              <input type="text"
-                placeholder="Brand-specific dose (EN)"
-                value="${esc(row.dose)}"
-                autocomplete="off"
-                style="font-size:var(--text-xs-size)"
-                oninput="nbSyncRow(${rid},'dose',this.value)"/>
-              <input type="text"
-                placeholder="Brand-specific dose (AR)"
-                value="${esc(row.dose_ar)}"
-                dir="rtl"
-                autocomplete="off"
-                style="font-size:var(--text-xs-size)"
-                oninput="nbSyncRow(${rid},'dose_ar',this.value)"/>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);margin-top:var(--space-2)">
+              <div>
+                <div style="font-size:10px;color:var(--color-text-tertiary);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.04em">Brand dose (EN)</div>
+                <textarea
+                  placeholder="Brand-specific dose (EN)"
+                  autocomplete="off"
+                  rows="2"
+                  style="width:100%;resize:vertical;font-size:var(--text-xs-size)"
+                  oninput="nbSyncRow(${rid},'dose',this.value)">${esc(row.dose)}</textarea>
+              </div>
+              <div>
+                <div style="font-size:10px;color:var(--color-text-tertiary);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.04em">Brand dose (AR)</div>
+                <textarea
+                  placeholder="الجرعة"
+                  dir="rtl"
+                  autocomplete="off"
+                  rows="2"
+                  style="width:100%;resize:vertical;font-size:var(--text-xs-size)"
+                  oninput="nbSyncRow(${rid},'dose_ar',this.value)">${esc(row.dose_ar)}</textarea>
+              </div>
             </div>` : ''}
         </div>
 
