@@ -13991,12 +13991,17 @@ function _cvRenderPrescription(rx, agePrefix) {
         ...(item.alternatives || []).map(alt => {
           const altLibDrug = _LIB.find(lib => lib.name && alt.resolvedGeneric &&
             lib.name.toLowerCase() === alt.resolvedGeneric.toLowerCase()) || null;
-          // ── Phase 1: use alt's own three-tier cascade if resolved, else
-          // fall back to raw alt.dose, then inherit from primary's effective dose
+          // ── Phase 1 (fixed): use alt's own three-tier cascade (pd → product → generic).
+          // The cascade is already resolved by _resolveRpcItem() into effectiveDoseEn/Ar.
+          // Only inherit the primary's dose when dose_source_pd_id is explicitly set —
+          // that field is the CMS signal that this alt intentionally shares the primary's
+          // dose block. Without it, an alt with no dose of its own gets an empty dose
+          // and sameGroup() will correctly keep it in its own group (or ungrouped).
           const altDoseEn = (alt.effectiveDoseEn ?? (alt.dose    || '')).trim();
           const altDoseAr = (alt.effectiveDoseAr ?? (alt.dose_ar || '')).trim();
-          const effectiveDoseEn = altDoseEn || primaryDoseEn;
-          const effectiveDoseAr = altDoseAr || primaryDoseAr;
+          const inheritFromPrimary = !!alt.dose_source_pd_id;
+          const effectiveDoseEn = altDoseEn || (inheritFromPrimary ? primaryDoseEn : '');
+          const effectiveDoseAr = altDoseAr || (inheritFromPrimary ? primaryDoseAr : '');
           return {
             brand:     alt.resolvedBrand || alt.resolvedGeneric || 'Drug',
             brandAr:   alt.resolvedBrandAr || '',
@@ -14007,7 +14012,7 @@ function _cvRenderPrescription(rx, agePrefix) {
             drugNum:   null,
             effectiveDoseEn,
             effectiveDoseAr,
-            doseTier:  alt.doseTier || (altDoseEn || altDoseAr ? 'rx' : 'inherited'),
+            doseTier:  alt.doseTier || (altDoseEn || altDoseAr ? 'rx' : (inheritFromPrimary ? 'inherited' : 'none')),
             // Phase 7: explicit grouping pointer
             dose_source_pd_id: alt.dose_source_pd_id || null,
             _pdId: alt.id,
