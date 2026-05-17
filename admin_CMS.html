@@ -2852,15 +2852,6 @@ function _checkGatePassword() {
               </span>
             </div>
 
-            <!-- Name AR -->
-            <div style="margin-bottom:var(--space-2)">
-              <input type="text" id="nb-ng-name-ar"
-                placeholder="الاسم بالعربي (اختياري)"
-                dir="rtl"
-                autocomplete="off"
-                style="width:100%"/>
-            </div>
-
             <!-- Group -->
             <div style="margin-bottom:var(--space-2)">
               <select id="nb-ng-group" style="width:100%"
@@ -6205,7 +6196,6 @@ async function nbCreateNewGeneric() {
   }
   if (errEl) errEl.style.display = 'none';
 
-  const nameAr   = document.getElementById('nb-ng-name-ar')?.value.trim()  || null;
   const group    = document.getElementById('nb-ng-group')?.value            || null;
   const subgroup = document.getElementById('nb-ng-subgroup')?.value         || null;
 
@@ -6214,20 +6204,28 @@ async function nbCreateNewGeneric() {
 
   try {
     const id = genId();
+    // Only insert the minimal fields the DB accepts (mirrors drugNew())
     const stub = {
       id,
       name:         nameVal,
-      name_ar:      nameAr,
-      group_name:   group    || null,
-      subgroup:     subgroup || null,
       is_published: false,
     };
 
     await SB.insert('drugs', stub);
 
+    // Patch optional fields separately (same pattern as drugSave())
+    const patches = {};
+    if (group)    patches.group_name = group;
+    if (subgroup) patches.subgroup   = subgroup;
+    if (Object.keys(patches).length) {
+      await SB.patch('drugs', id, patches);
+    }
+
     // Build full local entry (mirrors drugNew() pattern)
     const entry = {
       ...stub,
+      group_name:   group    || null,
+      subgroup:     subgroup || null,
       therapeutic_class: null, pharmacological_class: null,
       moa: null, common_uses: null,
       dose: null, dose_ar: null, max_dose: null,
@@ -6253,9 +6251,8 @@ async function nbCreateNewGeneric() {
     if (toggleBtn) toggleBtn.style.display = 'none'; // hide — generic is now linked
 
     // Reset panel fields for next time
-    ['nb-ng-name','nb-ng-name-ar'].forEach(elId => {
-      const el = document.getElementById(elId); if (el) el.value = '';
-    });
+    const nameEl = document.getElementById('nb-ng-name');
+    if (nameEl) nameEl.value = '';
     const grpSel = document.getElementById('nb-ng-group');
     const subSel = document.getElementById('nb-ng-subgroup');
     if (grpSel) grpSel.value = '';
