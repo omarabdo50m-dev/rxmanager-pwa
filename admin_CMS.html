@@ -409,6 +409,13 @@ html, body {
 }
 .btn-danger:hover { background: var(--color-danger); color: #fff; }
 
+.btn-caution {
+  background: var(--color-caution-light);
+  color: var(--color-caution);
+  border-color: rgba(245,158,11,.30);
+}
+.btn-caution:hover { background: var(--color-caution); color: #fff; }
+
 .btn-sm {
   padding: 4px 10px;
   font-size: var(--text-xs-size);
@@ -2491,6 +2498,9 @@ function _checkGatePassword() {
               <i class="ph ph-magnifying-glass"></i>
               <input type="search" id="prod-search" placeholder="Search brand…" oninput="prodFilterList()"/>
             </div>
+            <button class="btn btn-ghost btn-sm" id="filter-needs-review" onclick="productsToggleNeedsReview()" title="Show only products flagged for review">
+              <i class="ph ph-flag"></i> <span id="needs-review-label">Needs review</span>
+            </button>
             <button class="btn btn-primary" onclick="prodNew()">
               <i class="ph ph-plus"></i> New Product
             </button>
@@ -2509,6 +2519,7 @@ function _checkGatePassword() {
                 <th>Formula</th>
                 <th>Concentration</th>
                 <th>Published</th>
+                <th>Review</th>
                 <th style="width:60px"></th>
               </tr>
             </thead>
@@ -2779,8 +2790,87 @@ function _checkGatePassword() {
         <div class="picker-empty">Start typing to search…</div>
       </div>
       <div id="picker-selection"></div>
+
+      <!-- ── NEW BRAND INLINE FORM (hidden until + Add new brand is clicked) ── -->
+      <div id="picker-new-brand-form" style="display:none">
+        <!-- Form header -->
+        <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-4);padding-bottom:var(--space-3);border-bottom:1px solid var(--color-border)">
+          <button class="btn-icon" onclick="pickerHideNewBrandForm()" title="Back to search">
+            <i class="ph ph-arrow-left"></i>
+          </button>
+          <span style="font-size:var(--text-sm-size);font-weight:700;color:var(--color-text-primary)">
+            <i class="ph ph-plus-circle" style="color:var(--color-brand);margin-right:4px"></i>New brand
+          </span>
+          <span style="margin-left:auto;font-size:var(--text-xs-size);color:var(--color-caution);font-weight:600">
+            <i class="ph ph-warning"></i> Will be flagged for review
+          </span>
+        </div>
+
+        <!-- Row 1: Brand EN + Brand AR -->
+        <div class="form-row-inline">
+          <div class="form-row" style="margin-bottom:0">
+            <label class="form-label">Brand (EN) <span style="color:var(--color-danger)">*</span></label>
+            <input type="text" id="nb-brand" placeholder="e.g. Augmentin" autocomplete="off"/>
+            <span id="nb-brand-err" style="display:none;font-size:var(--text-xs-size);color:var(--color-danger);margin-top:2px">Required</span>
+          </div>
+          <div class="form-row" style="margin-bottom:0">
+            <label class="form-label">Brand (AR)</label>
+            <input type="text" id="nb-brand-ar" placeholder="الاسم بالعربي" dir="rtl" autocomplete="off"/>
+          </div>
+        </div>
+
+        <!-- Row 2: Formula + Concentration -->
+        <div class="form-row-inline" style="margin-top:var(--space-3)">
+          <div class="form-row" style="margin-bottom:0">
+            <label class="form-label">Formula</label>
+            <input type="text" id="nb-formula" placeholder="e.g. Amoxicillin/Clavulanate" autocomplete="off"/>
+          </div>
+          <div class="form-row" style="margin-bottom:0">
+            <label class="form-label">Concentration</label>
+            <input type="text" id="nb-conc" placeholder="e.g. 625mg" autocomplete="off"/>
+          </div>
+        </div>
+
+        <!-- Row 3: Dose EN + Dose AR -->
+        <div class="form-row-inline" style="margin-top:var(--space-3)">
+          <div class="form-row" style="margin-bottom:0">
+            <label class="form-label">Dose (EN)</label>
+            <input type="text" id="nb-dose" placeholder="e.g. 1 tab twice daily" autocomplete="off"/>
+          </div>
+          <div class="form-row" style="margin-bottom:0">
+            <label class="form-label">Dose (AR)</label>
+            <input type="text" id="nb-dose-ar" placeholder="الجرعة بالعربي" dir="rtl" autocomplete="off"/>
+          </div>
+        </div>
+
+        <!-- Row 4: Generic (optional) -->
+        <div class="form-row" style="margin-top:var(--space-3);margin-bottom:0">
+          <label class="form-label">Generic / drug <span style="color:var(--color-text-tertiary);font-weight:400;text-transform:none;letter-spacing:0"> — optional, can link later</span></label>
+          <div style="position:relative">
+            <input type="text" id="nb-generic-search" placeholder="Search generic name…" autocomplete="off"
+              oninput="nbGenericFilter(this.value)"/>
+            <div id="nb-generic-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-sm);z-index:10;max-height:140px;overflow-y:auto;margin-top:2px;box-shadow:var(--shadow-md)"></div>
+          </div>
+          <div id="nb-generic-selected" style="display:none;margin-top:var(--space-2);align-items:center;gap:var(--space-2)">
+            <span style="font-size:var(--text-xs-size);background:var(--color-brand-light);color:var(--color-brand);border:1px solid var(--color-brand);border-radius:var(--radius-full);padding:2px 10px;font-weight:700" id="nb-generic-pill"></span>
+            <button class="btn-icon" style="width:18px;height:18px;font-size:11px" onclick="nbGenericClear()" title="Clear generic"><i class="ph ph-x"></i></button>
+          </div>
+        </div>
+
+        <!-- Create button -->
+        <div style="margin-top:var(--space-4);padding-top:var(--space-3);border-top:1px solid var(--color-border)">
+          <button class="btn btn-primary" style="width:100%" onclick="pickerCreateAndSelectBrand()">
+            <i class="ph ph-plus-circle"></i> Create &amp; select
+          </button>
+        </div>
+      </div>
+      <!-- ── /NEW BRAND INLINE FORM ── -->
+
     </div>
     <div class="modal-footer">
+      <button class="btn btn-ghost" id="picker-new-brand-btn" onclick="pickerShowNewBrandForm()" style="margin-right:auto">
+        <i class="ph ph-plus-circle"></i> Add new brand
+      </button>
       <button class="btn btn-ghost" onclick="closeDrugPicker()">Cancel</button>
       <button class="btn btn-primary" id="picker-confirm-btn" onclick="pickerConfirm()" disabled>
         <i class="ph ph-check"></i> Select
@@ -4071,6 +4161,18 @@ function navTo(section) {
   if (section === 'prescriptions' && typeof rxBuildCondFilter === 'function') { rxBuildCondFilter(); rxRefreshAndRender(); }
 }
 
+// Step 7 helper — navigate to Products panel with needs-review filter active.
+// Called from the "link one in Products" link on unlinked brand rows.
+// productsToggleNeedsReview() is defined in Step 8; this stub navigates now,
+// filter activation happens once Step 8 is in place.
+function productsOpenNeedsReview() {
+  navTo('products');
+  // Activate the needs-review filter if the function exists (added in Step 8)
+  if (typeof productsToggleNeedsReview === 'function') {
+    productsToggleNeedsReview(true);
+  }
+}
+
 /* ── THEME TOGGLE ────────────────────────────────────────────── */
 function toggleTheme() {
   const html = document.documentElement;
@@ -4185,6 +4287,7 @@ function updateStats() {
   document.getElementById('stat-products').textContent      = _PRODUCTS.length;
   document.getElementById('stat-prescriptions').textContent = _PRESCRIPTIONS.length;
   document.getElementById('stat-flags').textContent         = _FLAGS.filter(f => f.status === 'new').length;
+  updateNeedsReviewBadge();
 }
 
 /* ── SERVICE KEY MODAL FUNCTIONS ─────────────────────────────── */
@@ -5045,7 +5148,11 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
   const brandLabel = product
     ? `${esc(product.brand || '')}${product.conc ? ' ' + esc(product.conc) : ''}${product.formula ? ' ' + esc(product.formula) : ''}`
     : '<span style="color:var(--color-caution)">⚠ No product selected</span>';
-  const genericLabel = drug ? esc(drug.name) : (row.drug_id ? '<em>Unknown drug</em>' : '');
+  const genericLabel = drug
+    ? esc(drug.name)
+    : row.drug_id
+      ? '<em>Unknown drug</em>'
+      : '<span style="color:var(--color-caution);font-size:var(--text-xs-size)"><i class="ph ph-warning"></i> No generic linked — <a onclick="productsOpenNeedsReview()" style="cursor:pointer;text-decoration:underline">link one in Products</a></span>';
 
   // Orphaned alternative warning badge
   const orphanedBadge = row._orphaned
@@ -5071,7 +5178,7 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
           <span>${apLabel}</span>
         </div>
         <div style="display:flex;align-items:center;gap:var(--space-2);flex-shrink:0">
-          <button class="btn btn-ghost btn-sm" onclick="rxPickAltProduct('${alt.id}','${row.drug_id}')">
+          <button class="btn btn-ghost btn-sm" onclick="rxPickAltProduct('${alt.id}',${row.drug_id ? "'" + row.drug_id + "'" : 'null'})">
             <i class="ph ph-pencil"></i>
           </button>
           <button class="btn btn-danger btn-sm" onclick="rxDeleteDrugRow('${alt.id}')">
@@ -5124,9 +5231,14 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
       <div class="drug-row-alt-zone">
         ${altHtml}
         <div class="drug-alt-add">
-          <button class="btn btn-ghost btn-sm" onclick="rxAddAltProduct('${row.id}','${row.drug_id}')">
-            <i class="ph ph-plus"></i> Add alternative brand
-          </button>
+          ${row.drug_id
+            ? `<button class="btn btn-ghost btn-sm" onclick="rxAddAltProduct('${row.id}','${row.drug_id}')">
+                 <i class="ph ph-plus"></i> Add alternative brand
+               </button>`
+            : `<span style="font-size:var(--text-xs-size);color:var(--color-text-tertiary)">
+                 <i class="ph ph-info"></i> Link a generic first to add alternatives
+               </span>`
+          }
         </div>
       </div>
     </div>`;
@@ -5852,6 +5964,91 @@ function pickerClear() {
   document.querySelectorAll('.picker-result-item').forEach(el => el.classList.remove('selected'));
 }
 
+// ── Step 5: Show / hide the new-brand inline form ──────────────────────────
+
+let _newBrandDrugId   = null;  // drug_id chosen in the generic search field
+let _newBrandDrugName = null;  // display name for the pill
+
+function pickerShowNewBrandForm() {
+  // Hide the normal search UI
+  document.getElementById('picker-search-wrap') && null; // search-wrap stays (used for layout)
+  document.querySelector('.picker-search-wrap').style.display = 'none';
+  document.getElementById('picker-results').style.display     = 'none';
+  document.getElementById('picker-selection').style.display   = 'none';
+  document.getElementById('picker-new-brand-btn').style.display = 'none';
+
+  // Clear all form fields
+  ['nb-brand','nb-brand-ar','nb-formula','nb-conc','nb-dose','nb-dose-ar','nb-generic-search']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('nb-brand-err').style.display       = 'none';
+  document.getElementById('nb-generic-results').style.display = 'none';
+  document.getElementById('nb-generic-selected').style.display = 'none';
+  _newBrandDrugId   = null;
+  _newBrandDrugName = null;
+
+  // Show the form
+  document.getElementById('picker-new-brand-form').style.display = 'block';
+  setTimeout(() => document.getElementById('nb-brand').focus(), 80);
+}
+
+function pickerHideNewBrandForm() {
+  // Hide the form
+  document.getElementById('picker-new-brand-form').style.display = 'none';
+
+  // Restore normal search UI
+  document.querySelector('.picker-search-wrap').style.display = '';
+  document.getElementById('picker-results').style.display     = '';
+  document.getElementById('picker-selection').style.display   = '';
+  document.getElementById('picker-new-brand-btn').style.display = '';
+
+  // Re-run filter so results reappear as they were
+  pickerFilter();
+  setTimeout(() => document.getElementById('picker-search').focus(), 80);
+}
+
+// Generic search inside the new-brand form
+function nbGenericFilter(q) {
+  const box = document.getElementById('nb-generic-results');
+  q = q.trim().toLowerCase();
+  if (!q) { box.style.display = 'none'; return; }
+
+  const hits = _DRUGS
+    .filter(d => d.name.toLowerCase().includes(q))
+    .slice(0, 8);
+
+  if (!hits.length) {
+    box.innerHTML = '<div style="padding:10px 12px;font-size:var(--text-xs-size);color:var(--color-text-tertiary)">No generics found</div>';
+    box.style.display = 'block';
+    return;
+  }
+
+  box.innerHTML = hits.map(d => `
+    <div onclick="nbGenericSelect('${d.id}', ${JSON.stringify(d.name)})"
+      style="padding:8px 12px;cursor:pointer;font-size:var(--text-sm-size);border-bottom:1px solid var(--color-border)"
+      onmouseover="this.style.background='var(--color-brand-light)'"
+      onmouseout="this.style.background=''">
+      <span style="font-weight:600;color:var(--color-text-primary)">${esc(d.name)}</span>
+      ${d.group_name ? `<span style="color:var(--color-text-tertiary);font-size:var(--text-xs-size);margin-left:6px">${esc(d.group_name)}</span>` : ''}
+    </div>`).join('');
+  box.style.display = 'block';
+}
+
+function nbGenericSelect(drugId, drugName) {
+  _newBrandDrugId   = drugId;
+  _newBrandDrugName = drugName;
+  document.getElementById('nb-generic-search').value   = '';
+  document.getElementById('nb-generic-results').style.display  = 'none';
+  document.getElementById('nb-generic-pill').textContent        = drugName;
+  document.getElementById('nb-generic-selected').style.display = 'flex';
+}
+
+function nbGenericClear() {
+  _newBrandDrugId   = null;
+  _newBrandDrugName = null;
+  document.getElementById('nb-generic-search').value            = '';
+  document.getElementById('nb-generic-selected').style.display  = 'none';
+}
+
 async function pickerConfirm() {
   if (!_pickerSelected) return;
   const { drug_id, product_id } = _pickerSelected;
@@ -5936,6 +6133,73 @@ async function pickerConfirm() {
     }
   } catch(e) {
     toast('Failed: ' + e.message, 'error');
+  }
+}
+
+// ── Step 6: Create brand inline and auto-select it ────────────────────────
+
+async function pickerCreateAndSelectBrand() {
+  // 1. Validate — Brand EN is required
+  const brandVal = document.getElementById('nb-brand').value.trim();
+  const errEl    = document.getElementById('nb-brand-err');
+  if (!brandVal) {
+    errEl.style.display = 'block';
+    document.getElementById('nb-brand').focus();
+    return;
+  }
+  errEl.style.display = 'none';
+
+  // 2. Build the new product stub
+  const id = genId();
+  const stub = {
+    id,
+    drug_id:      _newBrandDrugId || null,
+    brand:        brandVal,
+    brand_ar:     document.getElementById('nb-brand-ar').value.trim()  || null,
+    formula:      document.getElementById('nb-formula').value.trim()   || null,
+    conc:         document.getElementById('nb-conc').value.trim()      || null,
+    dose:         document.getElementById('nb-dose').value.trim()      || null,
+    dose_ar:      document.getElementById('nb-dose-ar').value.trim()   || null,
+    is_published: false,
+    needs_review: true,
+    last_updated: null,
+  };
+
+  // 3. Disable button to prevent double-submit
+  const createBtn = document.querySelector('#picker-new-brand-form .btn-primary');
+  if (createBtn) { createBtn.disabled = true; createBtn.textContent = 'Creating…'; }
+
+  try {
+    // 4. Insert into products table
+    await SB.insert('products', stub);
+
+    // 5. Update in-memory caches
+    _PRODUCTS.push(stub);
+    _PRODUCT_MAP[id] = stub;
+    updateStats();
+
+    // 6. Auto-select the new product (drug_id may be null — that's fine)
+    _pickerSelected = { drug_id: _newBrandDrugId || null, product_id: id };
+    document.getElementById('picker-confirm-btn').disabled = false;
+
+    // 7. Return to picker view and show the selection chip
+    pickerHideNewBrandForm();
+    // Render selection chip — reuse existing pickerSelect display logic
+    const label   = stub.brand;
+    const generic = _newBrandDrugName || null;
+    document.getElementById('picker-selection').innerHTML =
+      `<div class="picker-chip">
+         <i class="ph ph-check-circle"></i>
+         <span>${esc(label)}${generic ? ' — ' + esc(generic) : ''}</span>
+         <button onclick="pickerClear()"><i class="ph ph-x"></i></button>
+       </div>`;
+
+    // 8. Toast — amber to signal it needs review
+    toast(`"${brandVal}" created — tap Select to add · flagged for review`, 'info', 5000);
+
+  } catch(e) {
+    toast('Failed to create brand: ' + e.message, 'error');
+    if (createBtn) { createBtn.disabled = false; createBtn.innerHTML = '<i class="ph ph-plus-circle"></i> Create &amp; select'; }
   }
 }
 
@@ -6903,6 +7167,10 @@ function prodFilterList() {
 
   _prodFiltered = [..._PRODUCTS];
 
+  if (_prodNeedsReviewActive) {
+    _prodFiltered = _prodFiltered.filter(p => p.needs_review === true);
+  }
+
   if (drugId) {
     _prodFiltered = _prodFiltered.filter(p => p.drug_id === drugId);
   }
@@ -6925,7 +7193,8 @@ function prodFilterList() {
   // Summary strip
   const summary = document.getElementById('prod-list-summary');
   if (summary) {
-    summary.style.display = (q || drugId) ? 'block' : 'none';
+    const isFiltered = q || drugId || _prodNeedsReviewActive;
+    summary.style.display = isFiltered ? 'block' : 'none';
     summary.textContent = `${_prodFiltered.length} of ${_PRODUCTS.length} product${_PRODUCTS.length !== 1 ? 's' : ''} shown`;
   }
 
@@ -6938,7 +7207,7 @@ function prodRenderList(list) {
   if (!tbody) return;
 
   if (!list || !list.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state" style="padding:var(--space-8)">
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state" style="padding:var(--space-8)">
       <i class="ph ph-package"></i><p>No products found.</p>
     </div></td></tr>`;
     return;
@@ -6948,6 +7217,9 @@ function prodRenderList(list) {
     const pub = p.is_published === true || p.is_published === 'true';
     const drug = _DRUG_MAP[p.drug_id];
     const genericName = drug ? esc(drug.name) : `<span style="color:var(--color-text-tertiary);font-size:11px">Unknown</span>`;
+    const reviewBadge = p.needs_review
+      ? `<span class="badge badge-amber" title="Flagged for review — link a generic drug to clear this"><i class="ph ph-flag"></i> Review</span>`
+      : `<span style="color:var(--color-text-tertiary);font-size:var(--text-xs-size)">—</span>`;
 
     return `<tr>
       <td>
@@ -6961,6 +7233,7 @@ function prodRenderList(list) {
         <button class="toggle ${pub ? 'on' : ''}" title="${pub ? 'Published' : 'Draft'}"
           onclick="prodTogglePublish('${p.id}',this)"></button>
       </td>
+      <td>${reviewBadge}</td>
       <td>
         <button class="btn btn-ghost btn-sm" onclick="prodEdit('${p.id}')">
           <i class="ph ph-pencil"></i> Edit
@@ -7082,7 +7355,79 @@ async function prodEdit(id) {
   document.getElementById('app-main').scrollTop = 0;
 }
 
-/* ── Build the drug select inside the edit form ─────────────── */
+/* ══════════════════════════════════════════════════════════════
+   STEP 8 — Needs Review filter in Products panel
+   ══════════════════════════════════════════════════════════════ */
+
+let _prodNeedsReviewActive = false;
+
+/**
+ * Toggle the "Needs review" filter on/off.
+ * Pass `force = true` to activate without toggling (used by productsOpenNeedsReview).
+ */
+function productsToggleNeedsReview(force) {
+  _prodNeedsReviewActive = (force === true) ? true : !_prodNeedsReviewActive;
+  const btn = document.getElementById('filter-needs-review');
+  if (btn) {
+    btn.classList.toggle('btn-caution', _prodNeedsReviewActive);
+    btn.classList.toggle('btn-ghost',   !_prodNeedsReviewActive);
+  }
+  updateNeedsReviewBadge();
+  prodFilterList();
+}
+
+/** Refresh the needs-review count badge on the filter button. */
+function updateNeedsReviewBadge() {
+  const count = _PRODUCTS.filter(p => p.needs_review === true).length;
+  const label = document.getElementById('needs-review-label');
+  if (label) {
+    label.textContent = count > 0 ? `Needs review (${count})` : 'Needs review';
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   STEP 9 — Backfill prescription_drugs.drug_id when generic is linked
+   ══════════════════════════════════════════════════════════════ */
+
+/**
+ * After a drug_id is saved on a product that was needs_review,
+ * back-fill all prescription_drugs rows that reference this product
+ * and currently have drug_id = null, then clear needs_review on the product.
+ */
+async function _backfillDrugId(productId, newDrugId) {
+  if (!newDrugId) return;  // nothing to back-fill if no drug selected
+
+  // Find all prescription_drugs rows for this product with no drug_id
+  const rowsToFix = _rxDrugRows.filter(r =>
+    r.product_id === productId && (r.drug_id === null || r.drug_id === undefined || r.drug_id === '')
+  );
+
+  for (const row of rowsToFix) {
+    try {
+      await SB.patch('prescription_drugs', row.id, { drug_id: newDrugId });
+      row.drug_id = newDrugId;  // update in memory
+    } catch(e) {
+      console.warn('Backfill failed for row', row.id, e.message);
+    }
+  }
+
+  // Clear needs_review on the product
+  try {
+    await autoSave('products', productId, 'needs_review', false);
+    if (_PRODUCT_MAP[productId]) _PRODUCT_MAP[productId].needs_review = false;
+    const pidx = _PRODUCTS.findIndex(x => x.id === productId);
+    if (pidx >= 0) _PRODUCTS[pidx].needs_review = false;
+  } catch(e) {
+    console.warn('Failed to clear needs_review:', e.message);
+  }
+
+  updateNeedsReviewBadge();
+
+  if (rowsToFix.length > 0) {
+    toast(`Generic linked — ${rowsToFix.length} prescription row${rowsToFix.length !== 1 ? 's' : ''} updated`, 'success', 4000);
+  }
+}
+
 function prodBuildDrugSelect(currentDrugId) {
   const sel = document.getElementById('pf-drug_id');
   const drugs = [..._DRUGS].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
@@ -7114,6 +7459,11 @@ async function prodSave(field, value) {
   }
 
   await autoSave('products', _prodEditId, field, v);
+
+  // Step 9 — if drug_id was just linked on a needs_review product, back-fill prescription rows
+  if (field === 'drug_id' && v && _PRODUCT_MAP[_prodEditId]?.needs_review) {
+    await _backfillDrugId(_prodEditId, v);
+  }
 }
 
 /* ── Publish toggle in edit header ──────────────────────────── */
