@@ -5415,6 +5415,44 @@ function rxRenderUnified() {
   container.innerHTML = html;
 }
 
+/* ── Alt dose preview helper — avoids nested escaped backticks ── */
+function _renderAltDosePreview(alt) {
+  const altProd     = _PRODUCT_MAP[alt.product_id];
+  const altDrug     = _DRUG_MAP[alt.drug_id];
+  const brandDoseEn = altProd?.dose    || '';
+  const brandDoseAr = altProd?.dose_ar || '';
+  const genDoseEn   = altDrug?.dose    || '';
+  const genDoseAr   = altDrug?.dose_ar || '';
+  const inheritedEn = brandDoseEn || genDoseEn;
+  const inheritedAr = brandDoseAr || genDoseAr;
+  const source      = (brandDoseEn || brandDoseAr) ? 'brand' : (genDoseEn || genDoseAr) ? 'generic' : null;
+
+  if (!inheritedEn && !inheritedAr) {
+    return `<div style="margin-bottom:var(--space-2);padding:var(--space-2) var(--space-3);
+              border-radius:var(--radius-sm);background:rgba(239,68,68,.08);
+              border:1px solid rgba(239,68,68,.2);font-size:var(--text-xs-size);color:var(--color-danger)">
+              <i class="ph ph-warning"></i> No dose stored on this brand or generic — add one in the Products or Drugs editor.
+            </div>`;
+  }
+
+  const arHtml = inheritedAr
+    ? `<span dir="rtl" style="font-family:var(--font-ar);display:block;margin-top:2px">${esc(inheritedAr)}</span>`
+    : '';
+  const enSnippet = inheritedEn.length > 120 ? inheritedEn.substring(0, 120) + '…' : inheritedEn;
+  const enHtml = inheritedEn
+    ? `<span style="display:block;margin-top:2px">${esc(enSnippet)}</span>`
+    : '';
+
+  return `<div style="margin-bottom:var(--space-2);padding:var(--space-2) var(--space-3);
+            border-radius:var(--radius-sm);background:var(--color-surface-2);
+            border:1px solid var(--color-border);font-size:var(--text-xs-size);color:var(--color-text-secondary)">
+            <span style="font-weight:700;color:var(--color-text-primary)"><i class="ph ph-arrow-bend-down-right"></i> Default dose from ${esc(source)}:</span>
+            ${arHtml}
+            ${enHtml}
+            <span style="color:var(--color-text-tertiary);margin-top:4px;display:block">This is shown automatically when unchecked below and no override is set.</span>
+          </div>`;
+}
+
 /* ── DRUG ROW CARD RENDERER ──────────────────────────────────── */
 function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
   const drug    = _DRUG_MAP[row.drug_id];
@@ -5500,32 +5538,7 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
           <!-- Phase 7.6: "Group with primary dose" toggle — sets dose_source_pd_id -->
 
           <!-- Resolved brand/generic dose for this alt — shown as info -->
-          ${(() => {
-            const altProd = _PRODUCT_MAP[alt.product_id];
-            const altDrug = _DRUG_MAP[alt.drug_id];
-            const brandDoseEn = altProd?.dose || '';
-            const brandDoseAr = altProd?.dose_ar || '';
-            const genDoseEn   = altDrug?.dose || '';
-            const genDoseAr   = altDrug?.dose_ar || '';
-            const inheritedEn = brandDoseEn || genDoseEn;
-            const inheritedAr = brandDoseAr || genDoseAr;
-            const source      = (brandDoseEn || brandDoseAr) ? 'brand' : (genDoseEn || genDoseAr) ? 'generic' : null;
-            if (!inheritedEn && !inheritedAr) return \`
-              <div style="margin-bottom:var(--space-2);padding:var(--space-2) var(--space-3);
-                border-radius:var(--radius-sm);background:rgba(239,68,68,.08);
-                border:1px solid rgba(239,68,68,.2);font-size:var(--text-xs-size);color:var(--color-danger)">
-                <i class="ph ph-warning"></i> No dose stored on this brand or generic — add one in the Products or Drugs editor.
-              </div>\`;
-            return \`
-              <div style="margin-bottom:var(--space-2);padding:var(--space-2) var(--space-3);
-                border-radius:var(--radius-sm);background:var(--color-surface-2);
-                border:1px solid var(--color-border);font-size:var(--text-xs-size);color:var(--color-text-secondary)">
-                <span style="font-weight:700;color:var(--color-text-primary)"><i class="ph ph-arrow-bend-down-right"></i> Default dose from \${source}:</span>
-                \${inheritedAr ? \`<span dir="rtl" style="font-family:var(--font-ar);display:block;margin-top:2px">\${esc(inheritedAr)}</span>\` : ''}
-                \${inheritedEn ? \`<span style="display:block;margin-top:2px">\${esc(inheritedEn.substring(0,120))}\${inheritedEn.length > 120 ? '…' : ''}</span>\` : ''}
-                <span style="color:var(--color-text-tertiary);margin-top:4px;display:block">This is shown automatically when unchecked below and no override is set.</span>
-              </div>\`;
-          })()}
+          ${_renderAltDosePreview(alt)}
 
           <label style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-2);
                         font-size:var(--text-xs-size);color:var(--color-text-secondary);cursor:pointer;
