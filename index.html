@@ -14024,11 +14024,16 @@ function _cvRenderPrescription(rx, agePrefix) {
       // fall back to normDose string comparison (Phase 4.1) when neither has it.
       function sameGroup(a, b) {
         if (a.dose_source_pd_id && b.dose_source_pd_id) {
+          // Both alts explicitly grouped — same group if they point to the same primary
           return a.dose_source_pd_id === b.dose_source_pd_id;
         }
-        if (a.dose_source_pd_id || b.dose_source_pd_id) {
-          // One has an explicit source, the other doesn't — different groups
-          return false;
+        if (b.dose_source_pd_id) {
+          // b is a grouped alt — same group only if it explicitly points at a (the primary)
+          return b.dose_source_pd_id === a._pdId;
+        }
+        if (a.dose_source_pd_id) {
+          // a is a grouped alt — same group only if it explicitly points at b (the primary)
+          return a.dose_source_pd_id === b._pdId;
         }
         // Neither has an explicit source — fall back to normalised string comparison
         return normDose(a.effectiveDoseEn) === normDose(b.effectiveDoseEn) &&
