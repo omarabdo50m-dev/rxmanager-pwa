@@ -2793,58 +2793,22 @@ function _checkGatePassword() {
 
       <!-- ── NEW BRAND INLINE FORM (hidden until + Add new brand is clicked) ── -->
       <div id="picker-new-brand-form" style="display:none">
+
         <!-- Form header -->
         <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-4);padding-bottom:var(--space-3);border-bottom:1px solid var(--color-border)">
           <button class="btn-icon" onclick="pickerHideNewBrandForm()" title="Back to search">
             <i class="ph ph-arrow-left"></i>
           </button>
           <span style="font-size:var(--text-sm-size);font-weight:700;color:var(--color-text-primary)">
-            <i class="ph ph-plus-circle" style="color:var(--color-brand);margin-right:4px"></i>New brand
+            <i class="ph ph-plus-circle" style="color:var(--color-brand);margin-right:4px"></i>New brands
           </span>
           <span style="margin-left:auto;font-size:var(--text-xs-size);color:var(--color-caution);font-weight:600">
-            <i class="ph ph-warning"></i> Will be flagged for review
+            <i class="ph ph-warning"></i> flagged for review
           </span>
         </div>
 
-        <!-- Row 1: Brand EN + Brand AR -->
-        <div class="form-row-inline">
-          <div class="form-row" style="margin-bottom:0">
-            <label class="form-label">Brand (EN) <span style="color:var(--color-danger)">*</span></label>
-            <input type="text" id="nb-brand" placeholder="e.g. Augmentin" autocomplete="off"/>
-            <span id="nb-brand-err" style="display:none;font-size:var(--text-xs-size);color:var(--color-danger);margin-top:2px">Required</span>
-          </div>
-          <div class="form-row" style="margin-bottom:0">
-            <label class="form-label">Brand (AR)</label>
-            <input type="text" id="nb-brand-ar" placeholder="الاسم بالعربي" dir="rtl" autocomplete="off"/>
-          </div>
-        </div>
-
-        <!-- Row 2: Formula + Concentration -->
-        <div class="form-row-inline" style="margin-top:var(--space-3)">
-          <div class="form-row" style="margin-bottom:0">
-            <label class="form-label">Formula</label>
-            <input type="text" id="nb-formula" placeholder="e.g. Amoxicillin/Clavulanate" autocomplete="off"/>
-          </div>
-          <div class="form-row" style="margin-bottom:0">
-            <label class="form-label">Concentration</label>
-            <input type="text" id="nb-conc" placeholder="e.g. 625mg" autocomplete="off"/>
-          </div>
-        </div>
-
-        <!-- Row 3: Dose EN + Dose AR -->
-        <div class="form-row-inline" style="margin-top:var(--space-3)">
-          <div class="form-row" style="margin-bottom:0">
-            <label class="form-label">Dose (EN)</label>
-            <input type="text" id="nb-dose" placeholder="e.g. 1 tab twice daily" autocomplete="off"/>
-          </div>
-          <div class="form-row" style="margin-bottom:0">
-            <label class="form-label">Dose (AR)</label>
-            <input type="text" id="nb-dose-ar" placeholder="الجرعة بالعربي" dir="rtl" autocomplete="off"/>
-          </div>
-        </div>
-
-        <!-- Row 4: Generic (optional) -->
-        <div class="form-row" style="margin-top:var(--space-3);margin-bottom:0">
+        <!-- Generic (shared, optional) — unchanged JS hooks -->
+        <div class="form-row" style="margin-bottom:0">
           <label class="form-label">Generic / drug <span style="color:var(--color-text-tertiary);font-weight:400;text-transform:none;letter-spacing:0"> — optional, can link later</span></label>
           <div style="position:relative">
             <input type="text" id="nb-generic-search" placeholder="Search generic name…" autocomplete="off"
@@ -2857,12 +2821,41 @@ function _checkGatePassword() {
           </div>
         </div>
 
-        <!-- Create button -->
-        <div style="margin-top:var(--space-4);padding-top:var(--space-3);border-top:1px solid var(--color-border)">
-          <button class="btn btn-primary" style="width:100%" onclick="pickerCreateAndSelectBrand()">
-            <i class="ph ph-plus-circle"></i> Create &amp; select
+        <!-- Shared dose -->
+        <div class="form-row" style="margin-top:var(--space-3);margin-bottom:0">
+          <label class="form-label">Shared dose <span style="color:var(--color-text-tertiary);font-weight:400;text-transform:none;letter-spacing:0"> — applies to all brands unless overridden</span></label>
+          <div class="form-row-inline" style="margin-bottom:0">
+            <input type="text" id="nb-dose-shared" placeholder="e.g. 15ml twice daily" autocomplete="off" oninput="nbSyncSharedDose()"/>
+            <input type="text" id="nb-dose-ar-shared" placeholder="الجرعة بالعربي" dir="rtl" autocomplete="off" oninput="nbSyncSharedDose()"/>
+          </div>
+        </div>
+
+        <!-- Brand rows -->
+        <div class="form-row" style="margin-top:var(--space-4);margin-bottom:0">
+          <label class="form-label">
+            Brands
+            <span style="color:var(--color-text-tertiary);font-weight:400;text-transform:none;letter-spacing:0" id="nb-row-count-label"></span>
+          </label>
+          <div id="nb-brand-rows"></div>
+          <button class="btn btn-ghost btn-sm" id="nb-add-row-btn" onclick="nbAddBrandRow()"
+            style="width:100%;margin-top:var(--space-2);border-style:dashed">
+            <i class="ph ph-plus"></i> Add another brand
           </button>
         </div>
+
+        <!-- Selection footer -->
+        <div id="nb-selection-section" style="display:none;margin-top:var(--space-4);padding-top:var(--space-3);border-top:1px solid var(--color-border)">
+          <label class="form-label" style="margin-bottom:var(--space-2)">Add to prescription</label>
+          <div id="nb-selection-list"></div>
+        </div>
+
+        <!-- Save button -->
+        <div style="margin-top:var(--space-4);padding-top:var(--space-3);border-top:1px solid var(--color-border)">
+          <button class="btn btn-primary" style="width:100%" onclick="pickerCreateAndSelectBatch()">
+            <i class="ph ph-check-circle"></i> Save brands &amp; add selected
+          </button>
+        </div>
+
       </div>
       <!-- ── /NEW BRAND INLINE FORM ── -->
 
@@ -5969,6 +5962,11 @@ function pickerClear() {
 let _newBrandDrugId   = null;  // drug_id chosen in the generic search field
 let _newBrandDrugName = null;  // display name for the pill
 
+// ── Step 2: Batch brand data model ───────────────────────────────────────────
+let _nbRows      = [];   // [{ _id, brand, brand_ar, conc, formula, dose, dose_ar, overrideDose }]
+let _nbSelection = {};   // { [_id]: { checked: bool, role: 'primary'|'alternative'|'none' } }
+let _nbRowCounter = 0;   // local integer id for DOM keying — not a DB id
+
 function pickerShowNewBrandForm() {
   // Hide the normal search UI
   document.getElementById('picker-search-wrap') && null; // search-wrap stays (used for layout)
@@ -5977,18 +5975,26 @@ function pickerShowNewBrandForm() {
   document.getElementById('picker-selection').style.display   = 'none';
   document.getElementById('picker-new-brand-btn').style.display = 'none';
 
-  // Clear all form fields
-  ['nb-brand','nb-brand-ar','nb-formula','nb-conc','nb-dose','nb-dose-ar','nb-generic-search']
-    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-  document.getElementById('nb-brand-err').style.display       = 'none';
-  document.getElementById('nb-generic-results').style.display = 'none';
+  // Clear generic field
+  document.getElementById('nb-generic-search').value           = '';
+  document.getElementById('nb-generic-results').style.display  = 'none';
   document.getElementById('nb-generic-selected').style.display = 'none';
   _newBrandDrugId   = null;
   _newBrandDrugName = null;
 
+  // Clear shared dose fields
+  ['nb-dose-shared','nb-dose-ar-shared'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+
+  // Reset batch state and start with one empty row
+  _nbRows       = [];
+  _nbSelection  = {};
+  _nbRowCounter = 0;
+  nbAddBrandRow();
+
   // Show the form
   document.getElementById('picker-new-brand-form').style.display = 'block';
-  setTimeout(() => document.getElementById('nb-brand').focus(), 80);
 }
 
 function pickerHideNewBrandForm() {
@@ -6047,6 +6053,29 @@ function nbGenericClear() {
   _newBrandDrugName = null;
   document.getElementById('nb-generic-search').value            = '';
   document.getElementById('nb-generic-selected').style.display  = 'none';
+}
+
+// ── Step 3: nbAddBrandRow() ───────────────────────────────────────────────────
+function nbAddBrandRow() {
+  if (_nbRows.length >= 6) return;
+
+  const id = _nbRowCounter++;
+  _nbRows.push({ _id: id, brand: '', brand_ar: '', conc: '', formula: '',
+                 dose: '', dose_ar: '', overrideDose: false });
+
+  // Default role: first row = primary, all subsequent = alternative
+  _nbSelection[id] = {
+    checked: true,
+    role: _nbRows.length === 1 ? 'primary' : 'alternative',
+  };
+
+  nbRenderRows();
+
+  // Focus the brand-EN input of the newly added row
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('.nb-brand-input');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  }, 40);
 }
 
 async function pickerConfirm() {
@@ -6136,70 +6165,325 @@ async function pickerConfirm() {
   }
 }
 
-// ── Step 6: Create brand inline and auto-select it ────────────────────────
+// ── Step 4: nbRenderRows() ───────────────────────────────────────────────────
+function nbRenderRows() {
+  const container = document.getElementById('nb-brand-rows');
+  if (!container) return;
 
-async function pickerCreateAndSelectBrand() {
-  // 1. Validate — Brand EN is required
-  const brandVal = document.getElementById('nb-brand').value.trim();
-  const errEl    = document.getElementById('nb-brand-err');
-  if (!brandVal) {
-    errEl.style.display = 'block';
-    document.getElementById('nb-brand').focus();
-    return;
+  const canDelete = _nbRows.length > 1;
+
+  container.innerHTML = _nbRows.map((row) => {
+    const rid = row._id;
+    return `
+      <div class="nb-row" id="nb-row-${rid}"
+        style="border:1px solid var(--color-border);border-radius:var(--radius-md);
+          padding:var(--space-3);margin-bottom:var(--space-2)">
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 90px 90px auto;
+          gap:var(--space-2);align-items:center;margin-bottom:var(--space-2)">
+          <input type="text" class="nb-brand-input"
+            placeholder="Brand (EN) *"
+            value="${esc(row.brand)}"
+            autocomplete="off"
+            oninput="nbSyncRow(${rid},'brand',this.value)"/>
+          <input type="text"
+            placeholder="Brand (AR)"
+            value="${esc(row.brand_ar)}"
+            dir="rtl"
+            autocomplete="off"
+            oninput="nbSyncRow(${rid},'brand_ar',this.value)"/>
+          <input type="text"
+            placeholder="Conc."
+            value="${esc(row.conc)}"
+            autocomplete="off"
+            oninput="nbSyncRow(${rid},'conc',this.value)"/>
+          <input type="text"
+            placeholder="Formula"
+            value="${esc(row.formula)}"
+            autocomplete="off"
+            oninput="nbSyncRow(${rid},'formula',this.value)"/>
+          <button class="btn-icon" title="Remove row"
+            style="${canDelete ? '' : 'visibility:hidden'}"
+            onclick="nbRemoveRow(${rid})">
+            <i class="ph ph-trash" style="font-size:15px;color:var(--color-danger)"></i>
+          </button>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:var(--space-1);
+            font-size:var(--text-xs-size);color:var(--color-text-secondary);
+            cursor:pointer;user-select:none">
+            <input type="checkbox"
+              ${row.overrideDose ? 'checked' : ''}
+              onchange="nbToggleOverride(${rid},this.checked)"/>
+            Override dose
+          </label>
+          ${row.overrideDose ? `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);flex:1">
+              <input type="text"
+                placeholder="Dose (EN)"
+                value="${esc(row.dose)}"
+                autocomplete="off"
+                style="font-size:var(--text-xs-size)"
+                oninput="nbSyncRow(${rid},'dose',this.value)"/>
+              <input type="text"
+                placeholder="Dose (AR)"
+                value="${esc(row.dose_ar)}"
+                dir="rtl"
+                autocomplete="off"
+                style="font-size:var(--text-xs-size)"
+                oninput="nbSyncRow(${rid},'dose_ar',this.value)"/>
+            </div>` : ''}
+        </div>
+
+        <span id="nb-row-err-${rid}"
+          style="display:none;font-size:var(--text-xs-size);color:var(--color-danger)">
+          Brand name required
+        </span>
+      </div>`;
+  }).join('');
+
+  // Update add-button state and count label
+  const addBtn  = document.getElementById('nb-add-row-btn');
+  const countEl = document.getElementById('nb-row-count-label');
+  if (addBtn)  addBtn.disabled = _nbRows.length >= 6;
+  if (countEl) countEl.textContent = `(${_nbRows.length} of 6)`;
+
+  nbRenderSelectionList();
+}
+
+// ── Step 5: nbSyncRow() ───────────────────────────────────────────────────────
+function nbSyncRow(id, field, value) {
+  const row = _nbRows.find(r => r._id === id);
+  if (!row) return;
+  row[field] = value;
+  if (field === 'brand') nbRenderSelectionList();
+}
+
+// ── Step 6: nbToggleOverride() ────────────────────────────────────────────────
+function nbToggleOverride(id, checked) {
+  const row = _nbRows.find(r => r._id === id);
+  if (!row) return;
+  row.overrideDose = checked;
+
+  if (!checked) {
+    const sharedDose   = document.getElementById('nb-dose-shared')?.value.trim()    || '';
+    const sharedDoseAr = document.getElementById('nb-dose-ar-shared')?.value.trim() || '';
+    row.dose    = sharedDose;
+    row.dose_ar = sharedDoseAr;
   }
-  errEl.style.display = 'none';
 
-  // 2. Build the new product stub
-  const id = genId();
-  const stub = {
-    id,
-    drug_id:      _newBrandDrugId || null,
-    brand:        brandVal,
-    brand_ar:     document.getElementById('nb-brand-ar').value.trim()  || null,
-    formula:      document.getElementById('nb-formula').value.trim()   || null,
-    conc:         document.getElementById('nb-conc').value.trim()      || null,
-    dose:         document.getElementById('nb-dose').value.trim()      || null,
-    dose_ar:      document.getElementById('nb-dose-ar').value.trim()   || null,
-    is_published: false,
-    needs_review: true,
-    last_updated: null,
-  };
+  nbRenderRows();
+}
 
-  // 3. Disable button to prevent double-submit
-  const createBtn = document.querySelector('#picker-new-brand-form .btn-primary');
-  if (createBtn) { createBtn.disabled = true; createBtn.textContent = 'Creating…'; }
+// ── Step 7: nbSyncSharedDose() ────────────────────────────────────────────────
+function nbSyncSharedDose() {
+  const dose    = document.getElementById('nb-dose-shared')?.value.trim()    || '';
+  const dose_ar = document.getElementById('nb-dose-ar-shared')?.value.trim() || '';
+
+  _nbRows.forEach(row => {
+    if (!row.overrideDose) {
+      row.dose    = dose;
+      row.dose_ar = dose_ar;
+    }
+  });
+}
+
+// ── Step 8: nbRemoveRow() ─────────────────────────────────────────────────────
+function nbRemoveRow(id) {
+  _nbRows = _nbRows.filter(r => r._id !== id);
+  delete _nbSelection[id];
+
+  // If the removed row was the primary, promote the first remaining row
+  const hasPrimary = Object.values(_nbSelection).some(s => s.role === 'primary');
+  if (!hasPrimary && _nbRows.length > 0) {
+    _nbSelection[_nbRows[0]._id].role = 'primary';
+  }
+
+  nbRenderRows();
+}
+
+// ── Step 9: nbRenderSelectionList() ──────────────────────────────────────────
+function nbRenderSelectionList() {
+  const section = document.getElementById('nb-selection-section');
+  const list    = document.getElementById('nb-selection-list');
+  if (!section || !list) return;
+
+  const filled = _nbRows.filter(r => r.brand.trim());
+  section.style.display = filled.length ? '' : 'none';
+
+  list.innerHTML = filled.map(row => {
+    const sel = _nbSelection[row._id] || { checked: true, role: 'alternative' };
+    return `
+      <div style="display:flex;align-items:center;gap:var(--space-3);
+        padding:6px 0;border-bottom:1px solid var(--color-border)">
+        <input type="checkbox"
+          ${sel.checked ? 'checked' : ''}
+          onchange="nbSetSelection(${row._id},'checked',this.checked)"/>
+        <span style="flex:1;font-size:var(--text-sm-size);font-weight:600">
+          ${esc(row.brand)}
+        </span>
+        <select style="font-size:var(--text-xs-size);padding:3px 6px;width:auto"
+          onchange="nbSetSelection(${row._id},'role',this.value)"
+          ${!sel.checked ? 'disabled' : ''}>
+          <option value="primary"     ${sel.role==='primary'     ? 'selected':''}>Primary drug</option>
+          <option value="alternative" ${sel.role==='alternative' ? 'selected':''}>Alternative</option>
+          <option value="none"        ${sel.role==='none'        ? 'selected':''}>Don't add</option>
+        </select>
+      </div>`;
+  }).join('');
+}
+
+// ── Step 10: nbSetSelection() ─────────────────────────────────────────────────
+function nbSetSelection(id, field, value) {
+  if (!_nbSelection[id]) _nbSelection[id] = { checked: true, role: 'alternative' };
+  _nbSelection[id][field] = value;
+
+  // Only one row can be primary — demote others if this one is set to primary
+  if (field === 'role' && value === 'primary') {
+    Object.entries(_nbSelection).forEach(([k, s]) => {
+      if (Number(k) !== id && s.role === 'primary') s.role = 'alternative';
+    });
+  }
+
+  nbRenderSelectionList();
+}
+
+// ── Step 12: pickerCreateAndSelectBatch() ─────────────────────────────────────
+async function pickerCreateAndSelectBatch() {
+  // 1. Validate — every row must have a brand EN
+  let hasError = false;
+  _nbRows.forEach(row => {
+    const errEl = document.getElementById(`nb-row-err-${row._id}`);
+    if (!row.brand.trim()) {
+      if (errEl) errEl.style.display = 'block';
+      hasError = true;
+    } else {
+      if (errEl) errEl.style.display = 'none';
+    }
+  });
+  if (hasError) return;
+
+  // 2. At least one row must exist
+  if (!_nbRows.length) return;
+
+  const btn = document.querySelector('#picker-new-brand-form .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+
+  const sharedDose   = document.getElementById('nb-dose-shared')?.value.trim()    || null;
+  const sharedDoseAr = document.getElementById('nb-dose-ar-shared')?.value.trim() || null;
+
+  const created = [];   // [{ stub, role }] — only rows selected for the prescription
 
   try {
-    // 4. Insert into products table
-    await SB.insert('products', stub);
+    // 3. Insert all rows into products
+    for (const row of _nbRows) {
+      const id = genId();
+      const stub = {
+        id,
+        drug_id:      _newBrandDrugId || null,
+        brand:        row.brand.trim(),
+        brand_ar:     row.brand_ar.trim()  || null,
+        formula:      row.formula.trim()   || null,
+        conc:         row.conc.trim()      || null,
+        dose:         row.overrideDose ? (row.dose.trim()    || null) : (sharedDose   || null),
+        dose_ar:      row.overrideDose ? (row.dose_ar.trim() || null) : (sharedDoseAr || null),
+        is_published: false,
+        needs_review: true,
+      };
 
-    // 5. Update in-memory caches
-    _PRODUCTS.push(stub);
-    _PRODUCT_MAP[id] = stub;
-    updateStats();
+      await SB.insert('products', stub);
+      _PRODUCTS.push(stub);
+      _PRODUCT_MAP[id] = stub;
 
-    // 6. Auto-select the new product (drug_id may be null — that's fine)
-    _pickerSelected = { drug_id: _newBrandDrugId || null, product_id: id };
-    document.getElementById('picker-confirm-btn').disabled = false;
+      const sel = _nbSelection[row._id];
+      if (sel?.checked && sel.role !== 'none') {
+        created.push({ stub, role: sel.role });
+      }
+    }
 
-    // 7. Return to picker view and show the selection chip
+    updateStats();   // refreshes needs-review badge count
+
+    // 4. Add selected brands to the prescription
+    let primaryRowId = null;   // prescription_drugs row id of the primary
+
+    for (const { stub, role } of created) {
+      const isPrimary = role === 'primary';
+
+      if (isPrimary) {
+        const rxId     = genId();
+        const unified  = rxBuildUnifiedRows();
+        const maxOrder = unified.length
+          ? Math.max(...unified.map(r => r.sort_order ?? 0)) + 1
+          : 0;
+        const rxStub = {
+          id:                rxId,
+          prescription_id:   _rxEditId,
+          drug_id:           stub.drug_id,
+          product_id:        stub.id,
+          dose:              stub.dose    || null,
+          dose_ar:           stub.dose_ar || null,
+          drug_note:         null,
+          sort_order:        maxOrder,
+          is_alternative:    false,
+          alternative_to_id: null,
+        };
+        await SB.insert('prescription_drugs', rxStub);
+        _rxDrugRows.push(rxStub);
+        primaryRowId = rxId;
+
+      } else {
+        // Alternative — attach to the primary created in this batch, or _pickerPrimaryId
+        const attachTo = primaryRowId || _pickerPrimaryId || null;
+        if (!attachTo) continue;
+
+        const altOrder = _rxDrugRows
+          .filter(r => r.is_alternative && r.alternative_to_id === attachTo)
+          .reduce((m, r) => Math.max(m, r.sort_order ?? 0), -1) + 1;
+
+        const rxStub = {
+          id:                genId(),
+          prescription_id:   _rxEditId,
+          drug_id:           stub.drug_id,
+          product_id:        stub.id,
+          dose:              stub.dose    || null,
+          dose_ar:           stub.dose_ar || null,
+          drug_note:         null,
+          sort_order:        altOrder,
+          is_alternative:    true,
+          alternative_to_id: attachTo,
+        };
+        await SB.insert('prescription_drugs', rxStub);
+        _rxDrugRows.push(rxStub);
+      }
+    }
+
+    if (_rxEditId) rxRenderUnified();
+
+    // 5. Close form and toast
     pickerHideNewBrandForm();
-    // Render selection chip — reuse existing pickerSelect display logic
-    const label   = stub.brand;
-    const generic = _newBrandDrugName || null;
-    document.getElementById('picker-selection').innerHTML =
-      `<div class="picker-chip">
-         <i class="ph ph-check-circle"></i>
-         <span>${esc(label)}${generic ? ' — ' + esc(generic) : ''}</span>
-         <button onclick="pickerClear()"><i class="ph ph-x"></i></button>
-       </div>`;
 
-    // 8. Toast — amber to signal it needs review
-    toast(`"${brandVal}" created — tap Select to add · flagged for review`, 'info', 5000);
+    const savedCount = _nbRows.length;
+    const addedCount = created.length;
+    toast(
+      `${savedCount} brand${savedCount !== 1 ? 's' : ''} saved` +
+      (addedCount ? ` · ${addedCount} added to prescription` : ' · none added to prescription') +
+      ' · flagged for review',
+      'info',
+      5000
+    );
+
+    // Close picker if something was added to the prescription
+    if (addedCount) {
+      closeDrugPicker();
+    }
 
   } catch(e) {
-    toast('Failed to create brand: ' + e.message, 'error');
-    if (createBtn) { createBtn.disabled = false; createBtn.innerHTML = '<i class="ph ph-plus-circle"></i> Create &amp; select'; }
+    toast('Failed: ' + e.message, 'error');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ph ph-check-circle"></i> Save brands &amp; add selected';
+    }
   }
 }
 
