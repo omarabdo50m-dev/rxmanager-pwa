@@ -5449,9 +5449,23 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
     const altDoseEn = alt.dose ?? '';
     const altDoseAr = alt.dose_ar ?? '';
     const altHasDose = altDoseEn || altDoseAr;
-    const doseBadge = altHasDose
-      ? `<span class="alt-dose-indicator" title="Has own dose">Rx dose</span>`
-      : `<span class="alt-dose-indicator inherited" title="Inheriting primary dose">inherited</span>`;
+    // Resolve what dose the alt will actually show (pd.dose → product.dose → drug.dose)
+    const altProd = _PRODUCT_MAP[alt.product_id];
+    const altDrug = _DRUG_MAP[alt.drug_id];
+    const altEffectiveDose = altDoseEn || altDoseAr
+      || altProd?.dose || altProd?.dose_ar
+      || altDrug?.dose || altDrug?.dose_ar;
+    const altDoseSource = (altDoseEn || altDoseAr) ? 'rx override'
+      : (altProd?.dose || altProd?.dose_ar) ? 'brand dose'
+      : (altDrug?.dose || altDrug?.dose_ar) ? 'generic dose'
+      : null;
+    const doseBadge = alt.dose_source_pd_id
+      ? `<span class="alt-dose-indicator inherited" title="Forced to show same dose block as primary">grouped</span>`
+      : altDoseSource === 'rx override'
+        ? `<span class="alt-dose-indicator" title="Has its own prescription-level dose override">Rx override</span>`
+        : altDoseSource
+          ? `<span class="alt-dose-indicator" style="background:rgba(16,185,129,.1);color:var(--color-safe);border-color:rgba(16,185,129,.3)" title="Using ${altDoseSource} — no override needed">${altDoseSource}</span>`
+          : `<span class="alt-dose-indicator inherited" style="background:rgba(239,68,68,.1);color:var(--color-danger);border-color:rgba(239,68,68,.3)" title="No dose found anywhere — add one to the brand or generic">⚠ no dose</span>`;
     // Phase 6.3: reorder handles — hide up on first, hide down on last
     const altIdx  = alts.indexOf(alt);
     const isFirst = altIdx === 0;
@@ -5484,6 +5498,35 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
         <div class="drug-alt-dose-panel" id="alt-dose-${alt.id}"
              style="display:none;width:100%;margin-top:var(--space-2);padding-top:var(--space-2);border-top:1px solid var(--color-border)">
           <!-- Phase 7.6: "Group with primary dose" toggle — sets dose_source_pd_id -->
+
+          <!-- Resolved brand/generic dose for this alt — shown as info -->
+          ${(() => {
+            const altProd = _PRODUCT_MAP[alt.product_id];
+            const altDrug = _DRUG_MAP[alt.drug_id];
+            const brandDoseEn = altProd?.dose || '';
+            const brandDoseAr = altProd?.dose_ar || '';
+            const genDoseEn   = altDrug?.dose || '';
+            const genDoseAr   = altDrug?.dose_ar || '';
+            const inheritedEn = brandDoseEn || genDoseEn;
+            const inheritedAr = brandDoseAr || genDoseAr;
+            const source      = (brandDoseEn || brandDoseAr) ? 'brand' : (genDoseEn || genDoseAr) ? 'generic' : null;
+            if (!inheritedEn && !inheritedAr) return \`
+              <div style="margin-bottom:var(--space-2);padding:var(--space-2) var(--space-3);
+                border-radius:var(--radius-sm);background:rgba(239,68,68,.08);
+                border:1px solid rgba(239,68,68,.2);font-size:var(--text-xs-size);color:var(--color-danger)">
+                <i class="ph ph-warning"></i> No dose stored on this brand or generic — add one in the Products or Drugs editor.
+              </div>\`;
+            return \`
+              <div style="margin-bottom:var(--space-2);padding:var(--space-2) var(--space-3);
+                border-radius:var(--radius-sm);background:var(--color-surface-2);
+                border:1px solid var(--color-border);font-size:var(--text-xs-size);color:var(--color-text-secondary)">
+                <span style="font-weight:700;color:var(--color-text-primary)"><i class="ph ph-arrow-bend-down-right"></i> Default dose from \${source}:</span>
+                \${inheritedAr ? \`<span dir="rtl" style="font-family:var(--font-ar);display:block;margin-top:2px">\${esc(inheritedAr)}</span>\` : ''}
+                \${inheritedEn ? \`<span style="display:block;margin-top:2px">\${esc(inheritedEn.substring(0,120))}\${inheritedEn.length > 120 ? '…' : ''}</span>\` : ''}
+                <span style="color:var(--color-text-tertiary);margin-top:4px;display:block">This is shown automatically when unchecked below and no override is set.</span>
+              </div>\`;
+          })()}
+
           <label style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-2);
                         font-size:var(--text-xs-size);color:var(--color-text-secondary);cursor:pointer;
                         padding:var(--space-2);border-radius:var(--radius-sm);
@@ -5492,27 +5535,27 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
               onchange="rxToggleDoseSource('${alt.id}','${row.id}',this.checked)"
               style="width:14px;height:14px;flex-shrink:0;cursor:pointer"/>
             <span>
-              <strong>Group with primary's dose</strong> — clears any own dose and links this
-              alternative to always display the same dose block as the primary drug.
-              Uncheck to give this alternative its own independent dose.
+              <strong>Force same dose as primary</strong> — tick this only when this alternative
+              is the exact same drug and concentration as the primary and should show
+              a single shared dose block. Leave unticked to show this alt's own brand dose.
             </span>
           </label>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);
                       ${alt.dose_source_pd_id ? 'opacity:0.4;pointer-events:none' : ''}">
             <div>
-              <div class="drug-row-field-label">Alt dose (EN) — overrides primary</div>
-              <input type="text" value="${esc(altDoseEn)}" placeholder="Leave blank to inherit primary dose"
+              <div class="drug-row-field-label">Prescription dose override (EN) — optional</div>
+              <input type="text" value="${esc(altDoseEn)}" placeholder="Leave blank — brand dose used automatically"
                 onblur="rxSaveDrugField('${alt.id}','dose',this.value)"/>
             </div>
             <div>
-              <div class="drug-row-field-label">Alt dose (AR)</div>
-              <input type="text" dir="rtl" value="${esc(altDoseAr)}" placeholder="اتركه فارغاً للإرث"
+              <div class="drug-row-field-label">Prescription dose override (AR) — optional</div>
+              <input type="text" dir="rtl" value="${esc(altDoseAr)}" placeholder="اتركه فارغاً"
                 style="font-family:var(--font-ar)"
                 onblur="rxSaveDrugField('${alt.id}','dose_ar',this.value)"/>
             </div>
           </div>
           <div style="margin-top:var(--space-1);font-size:var(--text-xs-size);color:var(--color-text-tertiary)">
-            Blank = inherit from primary drug row. Clear both fields to revert to grouped display.
+            Override fields: only fill when this specific prescription needs a different instruction than the brand default (e.g. half dose for elderly). Leave blank for normal cases.
           </div>
         </div>
       </div>`;
