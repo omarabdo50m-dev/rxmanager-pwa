@@ -7631,6 +7631,31 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 #condViewerScr.lang-ar .cv-dose-ar { display:block; }
 #condViewerScr.lang-en .cv-dose-en { display:block; }
 
+/* ── Phase 4: ?debug=doses tier highlighting (QA only — never shown in production) ──
+   Activate by appending ?debug=doses to any condition URL.
+   data-dose-tier="generic"  → amber outline  (inherited from drug master)
+   data-dose-tier="product"  → blue outline   (inherited from brand product)
+   data-dose-tier="rx"       → no outline     (explicitly set on the prescription row)
+   .cv-dose-missing          → red label      (no dose at any tier — primary drug only)  */
+.debug-doses [data-dose-tier="generic"] {
+  outline: 2px solid var(--color-caution);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+.debug-doses [data-dose-tier="product"] {
+  outline: 2px solid var(--color-info);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+.cv-dose-missing {
+  display: none; /* hidden in production; shown only when .debug-doses is active */
+  font-size: var(--text-xs-size);
+  color: var(--color-danger);
+  font-weight: 700;
+  margin-top: var(--space-1);
+}
+.debug-doses .cv-dose-missing { display: block; }
+
 /* ── Drug viewer language visibility ── */
 /* EN dose: hide by default, show in EN mode */
 .dv-brand-dose-p12 { display: none; }
@@ -12391,6 +12416,25 @@ function _resolveRpcItem(item) {
     };
   }).filter(Boolean);
 
+  // ── Phase 1 (masterplan): Three-tier dose cascade ────────────────────────
+  // pd.dose → product.dose → generic.dose  (first non-empty wins)
+  // The RPC already returns product.dose / generic.dose at every level.
+  const pdDoseEn   = (pd.dose          || '').trim();
+  const pdDoseAr   = (pd.dose_ar       || '').trim();
+  const prodDoseEn = (product.dose     || '').trim();
+  const prodDoseAr = (product.dose_ar  || '').trim();
+  const genDoseEn  = (generic.dose     || '').trim();
+  const genDoseAr  = (generic.dose_ar  || '').trim();
+
+  const effectiveDoseEn = pdDoseEn  || prodDoseEn  || genDoseEn  || '';
+  const effectiveDoseAr = pdDoseAr  || prodDoseAr  || genDoseAr  || '';
+
+  // doseTier records which tier actually provided the dose (used by Phase 4 grouping)
+  const doseTier = (pdDoseEn   || pdDoseAr)   ? 'rx'
+                 : (prodDoseEn || prodDoseAr)  ? 'product'
+                 : (genDoseEn  || genDoseAr)   ? 'generic'
+                 : 'none';
+
   return {
     ...pd,
     _type:            'drug',
@@ -12400,6 +12444,22 @@ function _resolveRpcItem(item) {
     resolvedConc:     conc,
     resolvedGeneric:  generic.name     || '',
     resolvedSubgroup: generic.subgroup || generic.group_name || '',
+    // Dose — raw pd values preserved, plus the resolved cascade result
+    dose:             pd.dose    || null,
+    dose_ar:          pd.dose_ar || null,
+    effectiveDoseEn,
+    effectiveDoseAr,
+    doseTier,
+    // Phase 7 (masterplan): dose_source_pd_id — when present, the grouped-dose render in
+    // _cvRenderPrescription() uses this field as the group key rather than comparing
+    // effectiveDoseEn strings. Flows through via ...pd spread above; listed explicitly
+    // here for documentation. Null = fall back to normDose string comparison (Phase 4).
+    dose_source_pd_id: pd.dose_source_pd_id || null,
+    // Raw product/generic doses kept for CMS hint use (Phases 5, 8) — not rendered in app
+    _productDoseEn:   prodDoseEn,
+    _productDoseAr:   prodDoseAr,
+    _genericDoseEn:   genDoseEn,
+    _genericDoseAr:   genDoseAr,
     alternatives:     resolvedAlts,
   };
 }
@@ -12888,7 +12948,9 @@ async function openConditionViewer(conditionId) {
 
   // Reset screen state
   const scr = document.getElementById('condViewerScr');
-  scr.className = 'screen lang-ar age-adult';
+  // Phase 4: add debug-doses class when ?debug=doses is in the URL — enables tier CSS highlights
+  const _isDebugDoses = new URLSearchParams(window.location.search).get('debug') === 'doses';
+  scr.className = 'screen lang-ar age-adult' + (_isDebugDoses ? ' debug-doses' : '');
   // Reset language toggle to Arabic (default)
   const arBtn = document.getElementById('cvBtnAr');
   const enBtn = document.getElementById('cvBtnEn');
@@ -13894,8 +13956,20 @@ function _cvRenderPrescription(rx, agePrefix) {
       // We render brand lines first, then inject a dose block once per dose-group
       // (at the end of each group of consecutive entries sharing the same dose).
       // ──────────────────────────────────────────────────────────────────
-      const primaryDoseEn = (d.dose    || '').trim();
-      const primaryDoseAr = (d.dose_ar || '').trim();
+      // ── Phase 1 (masterplan): use three-tier cascade from _resolveRpcItem ──
+      // effectiveDoseEn/Ar are already resolved: pd → product → generic.
+      // Fall back to raw d.dose for the legacy waterfall path (non-RPC cache).
+      const primaryDoseEn = (d.effectiveDoseEn ?? (d.dose    || '')).trim();
+      const primaryDoseAr = (d.effectiveDoseAr ?? (d.dose_ar || '')).trim();
+
+      // ── Phase 4 (masterplan): normDose — collapse whitespace + lowercase for grouping keys.
+      // Prevents silent grouping failures from trailing spaces or mixed capitalisation.
+      // Only used for the isLastInGroup comparison — display values are always the originals.
+      function normDose(s) { return (s || '').trim().replace(/\s+/g, ' ').toLowerCase(); }
+
+      // ?debug=doses — activate dose-tier highlighting for content QA (Steps 4.2, 4.3)
+      const _debugDoses = new URLSearchParams(window.location.search).has('debug') &&
+        new URLSearchParams(window.location.search).get('debug') === 'doses';
 
       // Flatten: primary + alts, each annotated with its effective dose
       const allEntries = [
@@ -13909,13 +13983,18 @@ function _cvRenderPrescription(rx, agePrefix) {
           drugNum:   ++drugIdx,
           effectiveDoseEn: primaryDoseEn,
           effectiveDoseAr: primaryDoseAr,
+          doseTier:  d.doseTier || 'none',
+          // Phase 7: explicit grouping pointer (null = fall back to string comparison)
+          dose_source_pd_id: d.dose_source_pd_id || null,
+          _pdId: d.id,
         },
         ...(item.alternatives || []).map(alt => {
           const altLibDrug = _LIB.find(lib => lib.name && alt.resolvedGeneric &&
             lib.name.toLowerCase() === alt.resolvedGeneric.toLowerCase()) || null;
-          const altDoseEn = (alt.dose    || '').trim();
-          const altDoseAr = (alt.dose_ar || '').trim();
-          // Use alt's own dose if it has one, otherwise inherit the primary's dose
+          // ── Phase 1: use alt's own three-tier cascade if resolved, else
+          // fall back to raw alt.dose, then inherit from primary's effective dose
+          const altDoseEn = (alt.effectiveDoseEn ?? (alt.dose    || '')).trim();
+          const altDoseAr = (alt.effectiveDoseAr ?? (alt.dose_ar || '')).trim();
           const effectiveDoseEn = altDoseEn || primaryDoseEn;
           const effectiveDoseAr = altDoseAr || primaryDoseAr;
           return {
@@ -13928,9 +14007,28 @@ function _cvRenderPrescription(rx, agePrefix) {
             drugNum:   null,
             effectiveDoseEn,
             effectiveDoseAr,
+            doseTier:  alt.doseTier || (altDoseEn || altDoseAr ? 'rx' : 'inherited'),
+            // Phase 7: explicit grouping pointer
+            dose_source_pd_id: alt.dose_source_pd_id || null,
+            _pdId: alt.id,
           };
         }),
       ];
+
+      // Phase 7.5: sameGroup() — prefer dose_source_pd_id when set on either entry;
+      // fall back to normDose string comparison (Phase 4.1) when neither has it.
+      function sameGroup(a, b) {
+        if (a.dose_source_pd_id && b.dose_source_pd_id) {
+          return a.dose_source_pd_id === b.dose_source_pd_id;
+        }
+        if (a.dose_source_pd_id || b.dose_source_pd_id) {
+          // One has an explicit source, the other doesn't — different groups
+          return false;
+        }
+        // Neither has an explicit source — fall back to normalised string comparison
+        return normDose(a.effectiveDoseEn) === normDose(b.effectiveDoseEn) &&
+               normDose(a.effectiveDoseAr) === normDose(b.effectiveDoseAr);
+      }
 
       // Build brand-lines HTML + inject dose block at each group boundary
       let brandLinesHtml = '';
@@ -13948,20 +14046,25 @@ function _cvRenderPrescription(rx, agePrefix) {
           altDoseAr: null,
         });
 
-        // Check if this entry is the last in its dose-group
+        // Phase 7.5: use sameGroup() — falls back to normDose comparison (Phase 4.1) when no explicit pointer
         const nextEntry = allEntries[ei + 1];
-        const isLastInGroup = !nextEntry ||
-          nextEntry.effectiveDoseEn !== entry.effectiveDoseEn ||
-          nextEntry.effectiveDoseAr !== entry.effectiveDoseAr;
+        const isLastInGroup = !nextEntry || !sameGroup(entry, nextEntry);
 
         if (isLastInGroup && (entry.effectiveDoseAr || entry.effectiveDoseEn)) {
-          // Inject the shared dose block once for this group
+          // Phase 4.2: data-dose-tier attr for ?debug=doses QA highlighting
+          const tier = entry.doseTier || 'none';
           brandLinesHtml += entry.effectiveDoseAr
-            ? `<div class="cv-dose-ar" dir="rtl">${esc(entry.effectiveDoseAr)}</div>`
+            ? `<div class="cv-dose-ar" dir="rtl" data-dose-tier="${tier}">${esc(entry.effectiveDoseAr)}</div>`
             : '';
           brandLinesHtml += entry.effectiveDoseEn
-            ? `<div class="cv-dose-en">${esc(entry.effectiveDoseEn)}</div>`
+            ? `<div class="cv-dose-en" data-dose-tier="${tier}">${esc(entry.effectiveDoseEn)}</div>`
             : '';
+        }
+
+        // Phase 4.3: debug-only "No dose" marker for primary entries with no dose at any tier
+        if (isLastInGroup && !entry.effectiveDoseEn && !entry.effectiveDoseAr &&
+            entry.isPrimary && _debugDoses) {
+          brandLinesHtml += `<div class="cv-dose-missing">⚠ No dose specified</div>`;
         }
       }
 

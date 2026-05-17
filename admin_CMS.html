@@ -5,10 +5,10 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <script>
-// ── Cache-bust: if no ?v= param (or wrong version), redirect to ?v=2.4
+// ── Cache-bust: if no ?v= param (or wrong version), redirect to ?v=2.6
 // so the browser always fetches the latest file instead of a stale cache.
 (function() {
-  var CURRENT = '2.4';
+  var CURRENT = '2.8';
   var params = new URLSearchParams(window.location.search);
   if (params.get('v') !== CURRENT) {
     params.set('v', CURRENT);
@@ -987,6 +987,72 @@ input[dir=rtl], textarea[dir=rtl] {
 }
 .rx-group-body { margin-bottom: var(--space-3); }
 
+/* ── PHASE 9 — DOSE AUDIT ────────────────────────────────── */
+.dose-audit-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs-size);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 4px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  transition: background .12s, border-color .12s;
+  user-select: none;
+}
+.dose-audit-toggle:hover { background: var(--color-border); border-color: var(--color-brand); }
+.dose-audit-toggle.active { background: rgba(99,102,241,.1); border-color: var(--color-brand); color: var(--color-brand); }
+
+#dose-audit-table-wrap {
+  margin-bottom: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.dose-audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-xs-size);
+}
+.dose-audit-table th {
+  background: var(--color-surface-2);
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+.dose-audit-table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+.dose-audit-table tr:last-child td { border-bottom: none; }
+.dose-audit-table tr:hover td { background: var(--color-surface-2); }
+.dose-audit-table td.audit-ok { color: var(--color-safe); font-weight: 600; }
+.dose-audit-table td.audit-warn { color: var(--color-danger); font-weight: 700; }
+.dose-audit-table td.audit-cross { color: var(--color-brand); font-weight: 600; }
+.audit-rx-link { cursor: pointer; color: var(--color-brand); text-decoration: underline; font-weight: 600; }
+.audit-rx-link:hover { opacity: .8; }
+
+/* Missing-dose badge on rx list rows */
+.rx-dose-missing-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(239,68,68,.12);
+  border: 1px solid rgba(239,68,68,.3);
+  color: var(--color-danger);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+
 /* ── RX LIST ROW ─────────────────────────────────────────── */
 .rx-list-row {
   display: flex;
@@ -1071,6 +1137,7 @@ input[dir=rtl], textarea[dir=rtl] {
 }
 .drug-alt-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   padding: var(--space-2) 0;
@@ -1097,6 +1164,124 @@ input[dir=rtl], textarea[dir=rtl] {
 }
 .drug-alt-add {
   padding: var(--space-2) 0 0;
+}
+/* ── Phase 2/3: Alt dose indicator badge ─────────────────── */
+.alt-dose-indicator {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  background: var(--color-brand-light);
+  color: var(--color-brand);
+  border: 1px solid var(--color-brand);
+  flex-shrink: 0;
+}
+.alt-dose-indicator.inherited {
+  background: var(--color-surface-2);
+  color: var(--color-text-tertiary);
+  border-color: var(--color-border);
+}
+/* ── Phase 5: Dose inherit hint (5.1) ───────────────────────── */
+.dose-inherit-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  font-size: var(--text-xs-size);
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-1);
+  line-height: 1.5;
+  flex-wrap: wrap;
+}
+.dose-inherit-hint i { flex-shrink: 0; margin-top: 1px; }
+.dose-inherit-warn { color: var(--color-caution) !important; }
+.dose-inherit-source-badge {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: 1px 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-2);
+  color: var(--color-text-tertiary);
+  border: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+.dose-inherit-fill-btn {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  font-size: var(--text-xs-size);
+  padding: 1px 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: border-color .15s, color .15s;
+  flex-shrink: 0;
+}
+.dose-inherit-fill-btn:hover {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}
+
+/* ── Phase 5: Picker dose preview (5.2) ─────────────────────── */
+.picker-dose-preview {
+  font-size: var(--text-xs-size);
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+.picker-dose-source {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: 1px 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-brand-light);
+  color: var(--color-brand);
+  border: 1px solid var(--color-brand);
+  flex-shrink: 0;
+}
+.picker-dose-none {
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
+/* ── Phase 6: Alt reorder buttons ───────────────────────── */
+.alt-reorder-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.alt-reorder-btn {
+  padding: 0 4px !important;
+  height: 16px !important;
+  min-width: 20px;
+  font-size: 10px !important;
+  line-height: 1;
+}
+.alt-reorder-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+/* ── Phase 2: Picker context label ───────────────────────── */
+#picker-context-label {
+  font-size: var(--text-xs-size);
+  color: var(--color-text-secondary);
+  background: var(--color-brand-light);
+  border: 1px solid var(--color-brand);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-3);
+  margin-bottom: var(--space-3);
+  display: none;
 }
 
 /* ── NOTE BLOCK ──────────────────────────────────────────── */
@@ -2373,11 +2558,17 @@ function _checkGatePassword() {
             <select id="rx-cond-filter" onchange="rxFilterList()" style="max-width:220px">
               <option value="">All Conditions</option>
             </select>
+            <!-- Phase 9.1: Dose audit toggle -->
+            <button class="dose-audit-toggle" id="dose-audit-btn" onclick="rxToggleDoseAudit()" title="Show dose coverage audit table">
+              <i class="ph ph-stethoscope"></i> Dose Audit
+            </button>
             <button class="btn btn-primary" onclick="rxNew()" title="Select a condition first, then click to create">
               <i class="ph ph-plus"></i> New Prescription
             </button>
           </div>
         </div>
+        <!-- Phase 9.1: Dose audit table (hidden by default) -->
+        <div id="dose-audit-table-wrap" style="display:none"></div>
         <div id="rx-grouped-list"></div>
       </div>
 
@@ -2393,6 +2584,10 @@ function _checkGatePassword() {
             <div class="panel-title" style="font-size:var(--text-md-size)" id="rx-edit-title">Edit Prescription</div>
           </div>
           <div class="panel-actions">
+            <!-- Phase 9.3: Auto-fill empty doses -->
+            <button class="btn btn-ghost btn-sm" onclick="rxAutoFillDoses()" title="Auto-fill empty dose fields from product or generic dose">
+              <i class="ph ph-magic-wand"></i> Auto-fill Doses
+            </button>
             <span id="rx-pub-toggle-wrap"></span>
             <button class="btn btn-danger btn-sm" onclick="rxDelete()">
               <i class="ph ph-trash"></i> Delete
@@ -2782,6 +2977,8 @@ function _checkGatePassword() {
       <button class="btn-icon" onclick="closeDrugPicker()"><i class="ph ph-x"></i></button>
     </div>
     <div class="modal-body">
+      <!-- Phase 2: Context label shown in add-alt / repick-alt modes -->
+      <div id="picker-context-label"></div>
       <div class="picker-search-wrap">
         <i class="ph ph-magnifying-glass"></i>
         <input type="search" id="picker-search" placeholder="Search brand or generic name…" oninput="pickerFilter()" autocomplete="off"/>
@@ -2882,10 +3079,19 @@ function _checkGatePassword() {
 
         <!-- Shared dose -->
         <div class="form-row" style="margin-top:var(--space-3);margin-bottom:0">
-          <label class="form-label">Generic dose <span style="color:var(--color-text-tertiary);font-weight:400;text-transform:none;letter-spacing:0"> — saved to the linked generic · overridable per brand</span></label>
+          <label class="form-label">Shared dose <span style="color:var(--color-text-tertiary);font-weight:400;text-transform:none;letter-spacing:0"> — saved to the linked generic · overridable per brand below</span></label>
           <div class="form-row-inline" style="margin-bottom:0">
             <input type="text" id="nb-dose-shared" placeholder="e.g. 15ml twice daily" autocomplete="off" oninput="nbSyncSharedDose()"/>
             <input type="text" id="nb-dose-ar-shared" placeholder="الجرعة بالعربي" dir="rtl" autocomplete="off" oninput="nbSyncSharedDose()"/>
+          </div>
+          <!-- Phase 8.1: generic dose hint — shown when a generic with an existing dose is selected -->
+          <div id="nb-generic-dose-hint" style="display:none;margin-top:var(--space-1);
+            font-size:var(--text-xs-size);color:var(--color-text-tertiary);
+            display:none;align-items:center;gap:var(--space-1);flex-wrap:wrap">
+            <i class="ph ph-arrow-bend-down-right" style="flex-shrink:0"></i>
+            <span>Generic dose on file:</span>
+            <span id="nb-generic-dose-hint-ar" dir="rtl" style="font-family:var(--font-ar)"></span>
+            <span id="nb-generic-dose-hint-en"></span>
           </div>
         </div>
 
@@ -5232,19 +5438,75 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
     const apLabel = ap
       ? `${esc(ap.brand || '')}${ap.conc ? ' ' + esc(ap.conc) : ''}${ap.formula ? ' ' + esc(ap.formula) : ''}`
       : '<span style="color:var(--color-caution)">⚠ No product</span>';
+    // Phase 3: dose indicator badge
+    const altDoseEn = alt.dose ?? '';
+    const altDoseAr = alt.dose_ar ?? '';
+    const altHasDose = altDoseEn || altDoseAr;
+    const doseBadge = altHasDose
+      ? `<span class="alt-dose-indicator" title="Has own dose">Rx dose</span>`
+      : `<span class="alt-dose-indicator inherited" title="Inheriting primary dose">inherited</span>`;
+    // Phase 6.3: reorder handles — hide up on first, hide down on last
+    const altIdx  = alts.indexOf(alt);
+    const isFirst = altIdx === 0;
+    const isLast  = altIdx === alts.length - 1;
     return `
       <div class="drug-alt-row" id="alt-${alt.id}">
         <div class="drug-alt-label">
           <span class="drug-alt-or">or</span>
           <span>${apLabel}</span>
+          ${doseBadge}
         </div>
         <div style="display:flex;align-items:center;gap:var(--space-2);flex-shrink:0">
-          <button class="btn btn-ghost btn-sm" onclick="rxPickAltProduct('${alt.id}',${row.drug_id ? "'" + row.drug_id + "'" : 'null'})">
-            <i class="ph ph-pencil"></i>
+          <div class="alt-reorder-btns" title="Reorder alternative">
+            <button class="btn btn-ghost btn-xs alt-reorder-btn" onclick="rxMoveAlt('${alt.id}','up')"
+              ${isFirst ? 'disabled' : ''} title="Move up"><i class="ph ph-caret-up"></i></button>
+            <button class="btn btn-ghost btn-xs alt-reorder-btn" onclick="rxMoveAlt('${alt.id}','down')"
+              ${isLast ? 'disabled' : ''} title="Move down"><i class="ph ph-caret-down"></i></button>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="rxToggleAltDose('${alt.id}')" title="Edit dose for this alternative">
+            <i class="ph ph-pencil-line"></i>
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="rxPickAltProduct('${alt.id}')" title="Change product">
+            <i class="ph ph-arrows-clockwise"></i>
           </button>
           <button class="btn btn-danger btn-sm" onclick="rxDeleteDrugRow('${alt.id}')">
             <i class="ph ph-trash"></i>
           </button>
+        </div>
+        <!-- Phase 3: collapsible dose panel for this alternative -->
+        <div class="drug-alt-dose-panel" id="alt-dose-${alt.id}"
+             style="display:none;width:100%;margin-top:var(--space-2);padding-top:var(--space-2);border-top:1px solid var(--color-border)">
+          <!-- Phase 7.6: "Group with primary dose" toggle — sets dose_source_pd_id -->
+          <label style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-2);
+                        font-size:var(--text-xs-size);color:var(--color-text-secondary);cursor:pointer;
+                        padding:var(--space-2);border-radius:var(--radius-sm);
+                        background:var(--color-surface-2);border:1px solid var(--color-border)">
+            <input type="checkbox" ${alt.dose_source_pd_id ? 'checked' : ''}
+              onchange="rxToggleDoseSource('${alt.id}','${row.id}',this.checked)"
+              style="width:14px;height:14px;flex-shrink:0;cursor:pointer"/>
+            <span>
+              <strong>Group with primary's dose</strong> — clears any own dose and links this
+              alternative to always display the same dose block as the primary drug.
+              Uncheck to give this alternative its own independent dose.
+            </span>
+          </label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);
+                      ${alt.dose_source_pd_id ? 'opacity:0.4;pointer-events:none' : ''}">
+            <div>
+              <div class="drug-row-field-label">Alt dose (EN) — overrides primary</div>
+              <input type="text" value="${esc(altDoseEn)}" placeholder="Leave blank to inherit primary dose"
+                onblur="rxSaveDrugField('${alt.id}','dose',this.value)"/>
+            </div>
+            <div>
+              <div class="drug-row-field-label">Alt dose (AR)</div>
+              <input type="text" dir="rtl" value="${esc(altDoseAr)}" placeholder="اتركه فارغاً للإرث"
+                style="font-family:var(--font-ar)"
+                onblur="rxSaveDrugField('${alt.id}','dose_ar',this.value)"/>
+            </div>
+          </div>
+          <div style="margin-top:var(--space-1);font-size:var(--text-xs-size);color:var(--color-text-tertiary)">
+            Blank = inherit from primary drug row. Clear both fields to revert to grouped display.
+          </div>
         </div>
       </div>`;
   }).join('');
@@ -5274,6 +5536,37 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
                 onblur="rxSaveDrugField('${row.id}','dose_ar',this.value)"/>
             </div>
           </div>
+          ${(function(){
+            // Phase 5.1 + 5.3: dose inherit hint & quick-fill button
+            const refProduct = _PRODUCT_MAP[row.product_id];
+            const refDrug    = _DRUG_MAP[row.drug_id];
+            const refDoseEn  = refProduct?.dose || refDrug?.dose || null;
+            const refDoseAr  = refProduct?.dose_ar || refDrug?.dose_ar || null;
+            const refSource  = refProduct?.dose || refProduct?.dose_ar ? 'product' : refDrug?.dose || refDrug?.dose_ar ? 'generic' : null;
+            const hasOwnDose = !!(row.dose || row.dose_ar);
+            if (!hasOwnDose && (refDoseEn || refDoseAr)) {
+              const doseText = [
+                refDoseAr ? `<span dir="rtl" style="font-family:var(--font-ar)">${esc(refDoseAr)}</span>` : '',
+                refDoseEn ? `<span>${esc(refDoseEn)}</span>` : ''
+              ].filter(Boolean).join(' / ');
+              return `<div class="dose-inherit-hint">
+                <i class="ph ph-arrow-bend-down-right"></i>
+                <span class="dose-inherit-source-badge">${esc(refSource)}</span>
+                <span>Inheriting:</span>
+                ${doseText}
+                <button class="dose-inherit-fill-btn" title="Copy into this row so you can edit it"
+                  onclick="rxFillDoseFromRef('${row.id}','${esc(refDoseEn || '')}','${esc(refDoseAr || '')}')">
+                  <i class="ph ph-arrow-down-left"></i> Fill
+                </button>
+              </div>`;
+            } else if (!hasOwnDose && !refDoseEn && !refDoseAr) {
+              return `<div class="dose-inherit-hint dose-inherit-warn">
+                <i class="ph ph-warning"></i>
+                No dose found at any level — add one here, or set it on the product / generic.
+              </div>`;
+            }
+            return '';
+          })()}
           <div>
             <div class="drug-row-field-label">Drug Note</div>
             <input type="text" value="${esc(row.drug_note ?? '')}" placeholder="Optional note"
@@ -5292,14 +5585,14 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
       <div class="drug-row-alt-zone">
         ${altHtml}
         <div class="drug-alt-add">
-          ${row.drug_id
-            ? `<button class="btn btn-ghost btn-sm" onclick="rxAddAltProduct('${row.id}','${row.drug_id}')">
-                 <i class="ph ph-plus"></i> Add alternative brand
+          <button class="btn btn-ghost btn-sm" onclick="rxAddAltProduct('${row.id}')">
+            <i class="ph ph-plus"></i> Add alternative brand
+          </button>
+          ${alts.length > 0
+            ? `<button class="btn btn-danger btn-xs" onclick="rxClearAlts('${row.id}')" title="Delete all alternatives for this drug" style="margin-left:var(--space-2)">
+                 <i class="ph ph-x-circle"></i> Clear all alternatives
                </button>`
-            : `<span style="font-size:var(--text-xs-size);color:var(--color-text-tertiary)">
-                 <i class="ph ph-info"></i> Link a generic first to add alternatives
-               </span>`
-          }
+            : ''}
         </div>
       </div>
     </div>`;
@@ -5419,7 +5712,7 @@ function rxRenderList() {
             return `
           <div class="rx-list-row">
             <div style="flex:1;min-width:0">
-              <div style="font-weight:600;font-size:var(--text-sm-size)">${esc(rx.iteration_label || 'Untitled')}${(!rx.source?.trim() || !rx.reviewed_by?.trim()) ? `<span title="${[!rx.source?.trim() ? 'no source' : '', !rx.reviewed_by?.trim() ? 'not reviewed' : ''].filter(Boolean).join(', ')}" style="display:inline-flex;align-items:center;gap:3px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.35);color:#d97706;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;vertical-align:middle;margin-left:6px"><i class="ph ph-warning" style="font-size:10px"></i>${[!rx.source?.trim() ? 'no source' : '', !rx.reviewed_by?.trim() ? 'not reviewed' : ''].filter(Boolean).join(' · ')}</span>` : ''}</div>
+              <div style="font-weight:600;font-size:var(--text-sm-size)">${esc(rx.iteration_label || 'Untitled')}${(!rx.source?.trim() || !rx.reviewed_by?.trim()) ? `<span title="${[!rx.source?.trim() ? 'no source' : '', !rx.reviewed_by?.trim() ? 'not reviewed' : ''].filter(Boolean).join(', ')}" style="display:inline-flex;align-items:center;gap:3px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.35);color:#d97706;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;vertical-align:middle;margin-left:6px"><i class="ph ph-warning" style="font-size:10px"></i>${[!rx.source?.trim() ? 'no source' : '', !rx.reviewed_by?.trim() ? 'not reviewed' : ''].filter(Boolean).join(' · ')}</span>` : ''}${rxHasMissingDose(rx.id) ? '<span class="rx-dose-missing-badge"><i class="ph ph-warning" style="font-size:10px"></i> missing dose</span>' : ''}</div>
               ${rx.iteration_context ? `<div class="rx-list-meta">${esc(rx.iteration_context)}</div>` : ''}
               ${rx.duration ? `<div class="rx-list-meta"><i class="ph ph-clock" style="font-size:11px"></i> ${esc(rx.duration)}</div>` : ''}
             </div>
@@ -5442,6 +5735,213 @@ function rxRenderList() {
 function toggleRxGroup(id) {
   const el = document.getElementById(id);
   if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PHASE 9 — CONTENT QA TOOLING
+   ══════════════════════════════════════════════════════════════ */
+
+/* 9.1 — Dose Audit toggle */
+let _doseAuditVisible = false;
+
+function rxToggleDoseAudit() {
+  _doseAuditVisible = !_doseAuditVisible;
+  const wrap = document.getElementById('dose-audit-table-wrap');
+  const btn  = document.getElementById('dose-audit-btn');
+  if (!wrap) return;
+  if (_doseAuditVisible) {
+    btn.classList.add('active');
+    rxRenderDoseAuditTable();
+    wrap.style.display = '';
+  } else {
+    btn.classList.remove('active');
+    wrap.style.display = 'none';
+  }
+}
+
+/* Compute dose audit stats for all prescriptions (client-side, no extra fetch) */
+function rxComputeDoseAudit() {
+  // Build a map: prescription_id → { total, missing, crossGeneric }
+  // We need all prescription_drugs — use _rxDrugRows only covers the open rx,
+  // so we use the per-prescription cache if available, else fall back to zero counts.
+  // Since prescription_drugs are fetched per-rx on edit, we can only audit what
+  // we've already loaded. We track them in a global audit cache.
+  if (!window._auditDrugCache) window._auditDrugCache = {}; // rxId → rows[]
+
+  const results = [];
+  const filtered = _rxCondFilter
+    ? _PRESCRIPTIONS.filter(p => p.condition_id === _rxCondFilter)
+    : [..._PRESCRIPTIONS];
+
+  filtered.forEach(rx => {
+    const rows = window._auditDrugCache[rx.id] || [];
+    const drugRows = rows.filter(r => !r.is_alternative || r.is_alternative === false);
+    const allRows  = rows;
+
+    let missing     = 0;
+    let crossGeneric = 0;
+
+    allRows.forEach(r => {
+      const prod = _PRODUCT_MAP[r.product_id];
+      const drug = _DRUG_MAP[r.drug_id];
+      const hasDose = r.dose || r.dose_ar || prod?.dose || prod?.dose_ar || drug?.dose || drug?.dose_ar;
+      if (!hasDose) missing++;
+    });
+
+    // Cross-generic alts: alt whose drug_id differs from its primary's drug_id
+    const primaries = allRows.filter(r => !r.is_alternative);
+    const alts      = allRows.filter(r => r.is_alternative);
+    alts.forEach(alt => {
+      const primary = primaries.find(p => p.id === alt.alternative_to_id);
+      if (primary && primary.drug_id && alt.drug_id && primary.drug_id !== alt.drug_id) {
+        crossGeneric++;
+      }
+    });
+
+    results.push({
+      rx,
+      total: allRows.length,
+      missing,
+      crossGeneric,
+      cached: rows.length > 0
+    });
+  });
+
+  return results;
+}
+
+function rxRenderDoseAuditTable() {
+  const wrap = document.getElementById('dose-audit-table-wrap');
+  if (!wrap) return;
+
+  const rows = rxComputeDoseAudit();
+
+  if (!rows.length) {
+    wrap.innerHTML = '<div style="padding:var(--space-4);color:var(--color-text-tertiary);font-size:var(--text-sm-size)">No prescriptions to audit.</div>';
+    return;
+  }
+
+  const totalMissing = rows.reduce((s, r) => s + r.missing, 0);
+  const totalCross   = rows.reduce((s, r) => s + r.crossGeneric, 0);
+  const uncached     = rows.filter(r => !r.cached).length;
+
+  let html = `
+    <div style="padding:var(--space-3) var(--space-4);background:var(--color-surface-2);
+                border-bottom:1px solid var(--color-border);display:flex;align-items:center;
+                gap:var(--space-3);flex-wrap:wrap">
+      <strong style="font-size:var(--text-sm-size)"><i class="ph ph-stethoscope" style="color:var(--color-brand)"></i> Dose Coverage Audit</strong>
+      ${totalMissing > 0
+        ? `<span class="badge badge-red"><i class="ph ph-warning"></i> ${totalMissing} missing doses</span>`
+        : `<span class="badge badge-green"><i class="ph ph-check"></i> No missing doses</span>`}
+      ${totalCross > 0
+        ? `<span class="badge badge-blue"><i class="ph ph-shuffle"></i> ${totalCross} cross-generic alt${totalCross !== 1 ? 's' : ''}</span>`
+        : ''}
+      ${uncached > 0
+        ? `<span class="badge badge-grey" title="Open each prescription to populate drug-row data for it"><i class="ph ph-info"></i> ${uncached} rx not yet opened (drug rows unknown)</span>`
+        : ''}
+      <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="rxRenderDoseAuditTable()" title="Refresh audit">
+        <i class="ph ph-arrows-clockwise"></i> Refresh
+      </button>
+    </div>
+    <table class="dose-audit-table">
+      <thead>
+        <tr>
+          <th>Prescription</th>
+          <th>Condition</th>
+          <th style="text-align:center">Drug rows</th>
+          <th style="text-align:center">Missing doses</th>
+          <th style="text-align:center">Cross-generic alts</th>
+          <th style="text-align:center">Action</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  rows.forEach(({ rx, total, missing, crossGeneric, cached }) => {
+    const cond = _COND_MAP[rx.condition_id];
+    const label = esc(rx.iteration_label || 'Untitled');
+    const condName = cond ? esc(cond.name) : '<em style="color:var(--color-text-tertiary)">No condition</em>';
+    const missingCell = !cached
+      ? `<td style="text-align:center;color:var(--color-text-tertiary)">—</td>`
+      : missing > 0
+        ? `<td class="audit-warn" style="text-align:center"><i class="ph ph-warning"></i> ${missing}</td>`
+        : `<td class="audit-ok" style="text-align:center">0</td>`;
+    const crossCell = !cached
+      ? `<td style="text-align:center;color:var(--color-text-tertiary)">—</td>`
+      : crossGeneric > 0
+        ? `<td class="audit-cross" style="text-align:center">${crossGeneric}</td>`
+        : `<td style="text-align:center;color:var(--color-text-tertiary)">0</td>`;
+    const totalCell = !cached
+      ? `<td style="text-align:center;color:var(--color-text-tertiary)">—</td>`
+      : `<td style="text-align:center">${total}</td>`;
+
+    html += `
+        <tr>
+          <td><span class="audit-rx-link" onclick="prescriptionEdit('${rx.id}')">${label}</span></td>
+          <td>${condName}</td>
+          ${totalCell}
+          ${missingCell}
+          ${crossCell}
+          <td style="text-align:center">
+            <button class="btn btn-ghost btn-sm" onclick="prescriptionEdit('${rx.id}')" title="Open prescription">
+              <i class="ph ph-pencil"></i>
+            </button>
+          </td>
+        </tr>`;
+  });
+
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+}
+
+/* 9.2 — Missing-dose badge helper (used in rxRenderList) */
+function rxHasMissingDose(rxId) {
+  const rows = window._auditDrugCache?.[rxId];
+  if (!rows || !rows.length) return false;
+  return rows.some(r => {
+    const prod = _PRODUCT_MAP[r.product_id];
+    const drug = _DRUG_MAP[r.drug_id];
+    return !r.dose && !r.dose_ar && !prod?.dose && !prod?.dose_ar && !drug?.dose && !drug?.dose_ar;
+  });
+}
+
+/* 9.3 — Auto-fill empty doses for the currently-open prescription */
+async function rxAutoFillDoses() {
+  if (!SB.SERVICE_KEY) {
+    toast('No service key — click the key icon to enable writes.', 'error', 5000);
+    return;
+  }
+  if (!_rxDrugRows.length) {
+    toast('No drug rows to fill.', 'warning');
+    return;
+  }
+
+  let filled   = 0;
+  let unfilled = 0;
+
+  for (const row of _rxDrugRows) {
+    if (row.dose || row.dose_ar) continue; // already has its own dose
+    const prod  = _PRODUCT_MAP[row.product_id];
+    const drug  = _DRUG_MAP[row.drug_id];
+    const doseEn = prod?.dose   || drug?.dose   || null;
+    const doseAr = prod?.dose_ar || drug?.dose_ar || null;
+    if (doseEn || doseAr) {
+      await SB.patch('prescription_drugs', row.id, { dose: doseEn, dose_ar: doseAr });
+      row.dose    = doseEn;
+      row.dose_ar = doseAr;
+      filled++;
+    } else {
+      unfilled++;
+    }
+  }
+
+  // Keep audit cache in sync
+  if (window._auditDrugCache && _rxEditId) {
+    window._auditDrugCache[_rxEditId] = [..._rxDrugRows];
+  }
+
+  rxRenderUnified();
+  const msg = `Auto-fill: ${filled} filled, ${unfilled} still empty.`;
+  toast(msg, filled > 0 ? 'success' : 'warning', 5000);
 }
 
 async function rxTogglePublish(id, btn) {
@@ -5775,6 +6275,8 @@ function rxBackToList() {
   document.getElementById('rx-list-view').style.display = '';
   rxBuildCondFilter();
   rxRefreshAndRender();
+  // Phase 9: refresh audit table if it's visible
+  if (_doseAuditVisible) rxRenderDoseAuditTable();
   document.getElementById('app-main').scrollTop = 0;
 }
 
@@ -5788,7 +6290,7 @@ async function rxLoadAllRows(rxId) {
   try {
     const [drugRows, noteBlocks] = await Promise.all([
       SB.fetchAll('prescription_drugs',
-        'id,prescription_id,drug_id,product_id,dose,dose_ar,drug_note,sort_order,is_alternative,alternative_to_id',
+        'id,prescription_id,drug_id,product_id,dose,dose_ar,drug_note,sort_order,is_alternative,alternative_to_id,dose_source_pd_id',
         `&prescription_id=eq.${rxId}&order=sort_order.asc`),
       SB.fetchAll('rx_note_blocks',
         'id,prescription_id,content,content_ar,sort_order',
@@ -5796,6 +6298,9 @@ async function rxLoadAllRows(rxId) {
     ]);
     _rxDrugRows   = drugRows;
     _rxNoteBlocks = noteBlocks;
+    // Phase 9: populate audit cache so dose-audit table has data
+    if (!window._auditDrugCache) window._auditDrugCache = {};
+    window._auditDrugCache[rxId] = [...drugRows];
     rxRenderUnified();
   } catch(e) {
     container.innerHTML = `<div style="padding:var(--space-3);color:var(--color-danger);font-size:var(--text-sm-size)">Failed to load rows: ${esc(e.message)}</div>`;
@@ -5869,8 +6374,115 @@ function rxRePickDrug(rowId) {
     openDrugPicker({ mode: 'repick', rowId });
   }
 }
-function rxAddAltProduct(primaryRowId, drugId) { openDrugPicker({ mode: 'add-alt', primaryRowId, drugId }); }
-function rxPickAltProduct(altRowId, drugId) { openDrugPicker({ mode: 'repick-alt', altRowId, drugId }); }
+function rxAddAltProduct(primaryRowId) { openDrugPicker({ mode: 'add-alt', primaryRowId }); }
+function rxPickAltProduct(altRowId) { openDrugPicker({ mode: 'repick-alt', altRowId }); }
+
+// Phase 3: toggle the collapsible dose panel for an alternative row
+function rxToggleAltDose(altId) {
+  const panel = document.getElementById(`alt-dose-${altId}`);
+  if (!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    panel.querySelector('input')?.focus();
+  }
+}
+
+/* ── Phase 5.3: Quick-fill dose from product/generic reference ── */
+async function rxFillDoseFromRef(rowId, doseEn, doseAr) {
+  const card = document.getElementById(`drow-${rowId}`);
+  if (!card) return;
+  // Find the EN and AR dose inputs inside the primary dose fields grid
+  const inputs = card.querySelectorAll('.drug-row-fields input[type="text"]');
+  const enInput = inputs[0];   // first input = EN
+  const arInput = inputs[1];   // second input = AR
+  let filled = false;
+  if (enInput && doseEn) { enInput.value = doseEn; await rxSaveDrugField(rowId, 'dose', doseEn); filled = true; }
+  if (arInput && doseAr) { arInput.value = doseAr; await rxSaveDrugField(rowId, 'dose_ar', doseAr); filled = true; }
+  if (filled) {
+    rxRenderUnified();  // re-render so hint disappears now that the row has its own dose
+    toast('Dose filled — edit or clear to revert to inherited.', 'success');
+  }
+}
+
+/* ── Phase 6.3: Reorder alternatives within a primary's alt group ── */
+async function rxMoveAlt(altId, direction) {
+  // Collect all alts that share the same primary, sorted by current sort_order
+  const primaryId = _rxDrugRows.find(r => r.id === altId)?.alternative_to_id;
+  if (!primaryId) return;
+  const alts = _rxDrugRows
+    .filter(r => r.is_alternative && r.alternative_to_id === primaryId)
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+
+  const idx     = alts.findIndex(r => r.id === altId);
+  const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+  if (swapIdx < 0 || swapIdx >= alts.length) return;
+
+  const a = alts[idx];
+  const b = alts[swapIdx];
+
+  // If sort_orders are equal or null, normalise them first
+  if (a.sort_order == null || b.sort_order == null || a.sort_order === b.sort_order) {
+    alts.forEach((r, i) => { r.sort_order = i; });
+  }
+
+  // Swap
+  const tmp    = a.sort_order;
+  a.sort_order = b.sort_order;
+  b.sort_order = tmp;
+
+  try {
+    await Promise.all([
+      SB.patch('prescription_drugs', a.id, { sort_order: a.sort_order }),
+      SB.patch('prescription_drugs', b.id, { sort_order: b.sort_order }),
+    ]);
+    rxRenderUnified();
+  } catch(e) {
+    toast('Reorder failed: ' + e.message, 'error');
+  }
+}
+
+/* ── Phase 6.4: Delete all alternatives for a primary drug row ── */
+async function rxClearAlts(primaryId) {
+  const altIds = _rxDrugRows
+    .filter(r => r.is_alternative && r.alternative_to_id === primaryId)
+    .map(r => r.id);
+  if (!altIds.length) return;
+
+  const ok = await showConfirm({
+    title:   'Clear all alternatives',
+    message: `Delete all ${altIds.length} alternative${altIds.length > 1 ? 's' : ''} for this drug? This cannot be undone.`,
+    okLabel: 'Delete all',
+  });
+  if (!ok) return;
+
+  try {
+    for (const aid of altIds) {
+      await SB.delete('prescription_drugs', aid).catch(() => {});
+    }
+    _rxDrugRows = _rxDrugRows.filter(r => !(r.is_alternative && r.alternative_to_id === primaryId));
+    rxRenderUnified();
+    toast('Alternatives cleared', 'success');
+  } catch(e) {
+    toast('Failed to clear alternatives: ' + e.message, 'error');
+  }
+}
+
+/* ── Phase 7.6: Toggle dose_source_pd_id — explicit dose grouping ── */
+async function rxToggleDoseSource(altId, primaryId, useSource) {
+  const patch = useSource
+    ? { dose_source_pd_id: primaryId, dose: null, dose_ar: null }
+    : { dose_source_pd_id: null };
+  try {
+    await SB.patch('prescription_drugs', altId, patch);
+    const row = _rxDrugRows.find(r => r.id === altId);
+    if (row) Object.assign(row, patch);
+    rxRenderUnified();
+    toast(useSource ? 'Grouped with primary dose' : 'Dose source cleared — alt can now have its own dose', 'success');
+  } catch(e) {
+    toast('Failed to update dose source: ' + e.message, 'error');
+  }
+}
 
 /* ════════════════════════════════════════════════════════════
    NOTE BLOCK OPERATIONS
@@ -5940,14 +6552,37 @@ function openDrugPicker(opts) {
   _pickerMode      = opts.mode;
   _pickerRowId     = opts.rowId || opts.altRowId || null;  // altRowId for repick-alt
   _pickerPrimaryId = opts.primaryRowId || null;
-  _pickerDrugId    = opts.drugId    || null;
+  _pickerDrugId    = null;  // Phase 2: no longer locked to a drug_id
   _pickerSelected  = null;
 
   document.getElementById('picker-search').value = '';
   document.getElementById('picker-selection').innerHTML = '';
   document.getElementById('picker-confirm-btn').disabled = true;
 
-  // If locked to a drug (alt mode), show only that drug's products
+  // Phase 2 (Step 2.3): show context label in alt modes
+  const ctxLabel = document.getElementById('picker-context-label');
+  if (ctxLabel) {
+    if (opts.mode === 'add-alt' || opts.mode === 'repick-alt') {
+      // For add-alt the primary is opts.primaryRowId; for repick-alt find via alternative_to_id
+      let primaryRow = null;
+      if (opts.mode === 'add-alt') {
+        primaryRow = _rxDrugRows.find(r => r.id === opts.primaryRowId);
+      } else {
+        const altRow = _rxDrugRows.find(r => r.id === opts.altRowId);
+        primaryRow = altRow ? _rxDrugRows.find(r => r.id === altRow.alternative_to_id) : null;
+      }
+      const primaryProduct = primaryRow ? _PRODUCT_MAP[primaryRow.product_id] : null;
+      const primaryLabel = primaryProduct
+        ? `${primaryProduct.brand || ''}${primaryProduct.conc ? ' ' + primaryProduct.conc : ''}`.trim()
+        : 'primary drug';
+      ctxLabel.textContent = `Adding alternative to: ${primaryLabel}`;
+      ctxLabel.style.display = 'block';
+    } else {
+      ctxLabel.style.display = 'none';
+      ctxLabel.textContent = '';
+    }
+  }
+
   pickerFilter();
   document.getElementById('drug-picker-modal').classList.add('open');
   setTimeout(() => document.getElementById('picker-search').focus(), 80);
@@ -5964,10 +6599,8 @@ function pickerFilter() {
 
   let results = idx;
 
-  // If locked to a specific drug (for alts), filter to that drug
-  if (_pickerDrugId) {
-    results = results.filter(r => r.drug_id === _pickerDrugId);
-  }
+  // Phase 2: _pickerDrugId lock removed — alternatives can now be cross-generic.
+  // All products are visible; the picker context label shows which primary is being targeted.
 
   // Apply text search
   if (q) {
@@ -5988,11 +6621,26 @@ function pickerFilter() {
 
   container.innerHTML = results.map(r => {
     const isSelected = _pickerSelected?.product_id === r.product_id;
+    // Phase 5.2: dose preview — product dose first, fall back to generic dose
+    const p = _PRODUCT_MAP[r.product_id];
+    const d = _DRUG_MAP[r.drug_id];
+    const previewDoseAr = p?.dose_ar || d?.dose_ar || '';
+    const previewDoseEn = p?.dose    || d?.dose    || '';
+    const previewDose   = previewDoseAr || previewDoseEn;
+    const previewSource = (p?.dose || p?.dose_ar) ? 'brand' : (d?.dose || d?.dose_ar) ? 'generic' : null;
+    const dosePreviewHtml = previewDose
+      ? `<div class="picker-dose-preview">
+           <span class="picker-dose-source">${esc(previewSource)}</span>
+           ${previewDoseAr ? `<span dir="rtl" style="font-family:var(--font-ar)">${esc(previewDoseAr.substring(0,80))}${previewDoseAr.length > 80 ? '…' : ''}</span>` : ''}
+           ${previewDoseEn ? `<span>${esc(previewDoseEn.substring(0,80))}${previewDoseEn.length > 80 ? '…' : ''}</span>` : ''}
+         </div>`
+      : `<div class="picker-dose-preview picker-dose-none">No dose on record</div>`;
     return `
       <div class="picker-result-item ${isSelected ? 'selected' : ''}"
            onclick="pickerSelect(this,'${r.drug_id}','${r.product_id}')">
         <div class="picker-brand">${esc(r.brand)}${r.conc ? ' <span class="picker-conc">' + esc(r.conc) + '</span>' : ''}${r.formula ? ' <span style="color:var(--color-text-tertiary);font-size:var(--text-xs-size)">' + esc(r.formula) + '</span>' : ''}</div>
         <div class="picker-generic">${esc(r.genericName)}</div>
+        ${dosePreviewHtml}
       </div>`;
   }).join('');
 }
@@ -6131,6 +6779,38 @@ function nbGenericSelect(drugId, drugName) {
   // Hide the "create new generic" toggle — a generic is now linked
   const toggleBtn = document.getElementById('nb-new-generic-toggle-btn');
   if (toggleBtn) toggleBtn.style.display = 'none';
+  // Phase 8.1 + 8.2: show hint and auto-fill shared dose from generic
+  nbOnGenericSelected(drugId, drugName);
+}
+
+/* ── Phase 8.1: Show generic dose hint beneath shared dose fields ── */
+function nbShowGenericDoseHint() {
+  const drug   = _DRUG_MAP[_newBrandDrugId];
+  const hintEl = document.getElementById('nb-generic-dose-hint');
+  if (!hintEl) return;
+  if (drug?.dose || drug?.dose_ar) {
+    const arEl = document.getElementById('nb-generic-dose-hint-ar');
+    const enEl = document.getElementById('nb-generic-dose-hint-en');
+    if (arEl) arEl.textContent = drug.dose_ar || '';
+    if (enEl) enEl.textContent = drug.dose    || '';
+    hintEl.style.display = 'flex';
+  } else {
+    hintEl.style.display = 'none';
+  }
+}
+
+/* ── Phase 8.2: Auto-populate shared dose from generic on select ── */
+function nbOnGenericSelected(drugId, drugName) {
+  _newBrandDrugId   = drugId;
+  _newBrandDrugName = drugName;
+  const drug = _DRUG_MAP[drugId];
+  const sharedDoseEl   = document.getElementById('nb-dose-shared');
+  const sharedDoseArEl = document.getElementById('nb-dose-ar-shared');
+  // Only pre-fill if the fields are currently empty — never clobber existing input
+  if (sharedDoseEl   && !sharedDoseEl.value   && drug?.dose)    sharedDoseEl.value    = drug.dose;
+  if (sharedDoseArEl && !sharedDoseArEl.value && drug?.dose_ar) sharedDoseArEl.value  = drug.dose_ar;
+  nbSyncSharedDose();
+  nbShowGenericDoseHint();
 }
 
 function nbGenericClear() {
@@ -6138,6 +6818,9 @@ function nbGenericClear() {
   _newBrandDrugName = null;
   document.getElementById('nb-generic-search').value            = '';
   document.getElementById('nb-generic-selected').style.display  = 'none';
+  // Phase 8.1: hide dose hint when generic is cleared
+  const hintEl = document.getElementById('nb-generic-dose-hint');
+  if (hintEl) hintEl.style.display = 'none';
   // Restore the "create new generic" toggle
   const toggleBtn = document.getElementById('nb-new-generic-toggle-btn');
   if (toggleBtn) toggleBtn.style.display = '';
@@ -6326,21 +7009,14 @@ async function pickerConfirm() {
       const row = _rxDrugRows.find(r => r.id === rowId);
       const drugChanged = row && row.drug_id !== drug_id;
 
-      // If the generic drug changed, delete all existing alternatives for this row
-      if (drugChanged) {
-        const altIds = _rxDrugRows
-          .filter(r => r.is_alternative && r.alternative_to_id === rowId)
-          .map(r => r.id);
-        for (const aid of altIds) {
-          await SB.delete('prescription_drugs', aid).catch(() => {});
-        }
-        _rxDrugRows = _rxDrugRows.filter(r => !(r.is_alternative && r.alternative_to_id === rowId));
-      }
+      // Phase 2: when the generic changes, keep alternatives — they are linked to the
+      // prescription slot, not to a specific generic. Warn the user to review doses.
+      // (Pre-Phase-2 behaviour deleted all alts here; that was only safe for same-generic alts.)
 
       await SB.patch('prescription_drugs', rowId, { drug_id, product_id });
       if (row) { row.drug_id = drug_id; row.product_id = product_id; }
       rxRenderUnified();
-      toast(drugChanged ? 'Drug changed — alternatives cleared' : 'Product updated', 'success');
+      toast(drugChanged ? 'Primary drug changed. Alternatives kept — review their doses.' : 'Product updated', drugChanged ? 'warning' : 'success');
 
     } else if (mode === 'add-alt') {
       const id = genId();
@@ -6427,18 +7103,18 @@ function nbRenderRows() {
             <input type="checkbox"
               ${row.overrideDose ? 'checked' : ''}
               onchange="nbToggleOverride(${rid},this.checked)"/>
-            Override dose
+            Give this brand its own dose (overrides the shared dose above)
           </label>
           ${row.overrideDose ? `
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);flex:1">
               <input type="text"
-                placeholder="Dose (EN)"
+                placeholder="Brand-specific dose (EN)"
                 value="${esc(row.dose)}"
                 autocomplete="off"
                 style="font-size:var(--text-xs-size)"
                 oninput="nbSyncRow(${rid},'dose',this.value)"/>
               <input type="text"
-                placeholder="Dose (AR)"
+                placeholder="Brand-specific dose (AR)"
                 value="${esc(row.dose_ar)}"
                 dir="rtl"
                 autocomplete="off"
