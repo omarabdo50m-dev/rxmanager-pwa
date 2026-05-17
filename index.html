@@ -13888,46 +13888,89 @@ function _cvRenderPrescription(rx, agePrefix) {
       const libDrugId = libDrug?.id || null;
       const tagLabel = libDrug?.group || libDrug?.subgroup || null;
 
+      // ── Grouped-dose rendering ──────────────────────────────────────
+      // Build a flat list: [primary, ...alternatives].
+      // Each entry carries its effective dose (own dose or inherited primary dose).
+      // We render brand lines first, then inject a dose block once per dose-group
+      // (at the end of each group of consecutive entries sharing the same dose).
+      // ──────────────────────────────────────────────────────────────────
+      const primaryDoseEn = (d.dose    || '').trim();
+      const primaryDoseAr = (d.dose_ar || '').trim();
+
+      // Flatten: primary + alts, each annotated with its effective dose
+      const allEntries = [
+        {
+          brand:     d.resolvedBrand || d.resolvedGeneric || 'Drug',
+          brandAr:   d.resolvedBrandAr || '',
+          conc:      d.resolvedConc,
+          formula:   d.resolvedFormula,
+          libDrugId: libDrugId,
+          isPrimary: true,
+          drugNum:   ++drugIdx,
+          effectiveDoseEn: primaryDoseEn,
+          effectiveDoseAr: primaryDoseAr,
+        },
+        ...(item.alternatives || []).map(alt => {
+          const altLibDrug = _LIB.find(lib => lib.name && alt.resolvedGeneric &&
+            lib.name.toLowerCase() === alt.resolvedGeneric.toLowerCase()) || null;
+          const altDoseEn = (alt.dose    || '').trim();
+          const altDoseAr = (alt.dose_ar || '').trim();
+          // Use alt's own dose if it has one, otherwise inherit the primary's dose
+          const effectiveDoseEn = altDoseEn || primaryDoseEn;
+          const effectiveDoseAr = altDoseAr || primaryDoseAr;
+          return {
+            brand:     alt.resolvedBrand || alt.resolvedGeneric || 'Drug',
+            brandAr:   alt.resolvedBrandAr || '',
+            conc:      alt.resolvedConc,
+            formula:   alt.resolvedFormula,
+            libDrugId: altLibDrug?.id || null,
+            isPrimary: false,
+            drugNum:   null,
+            effectiveDoseEn,
+            effectiveDoseAr,
+          };
+        }),
+      ];
+
+      // Build brand-lines HTML + inject dose block at each group boundary
+      let brandLinesHtml = '';
+      for (let ei = 0; ei < allEntries.length; ei++) {
+        const entry = allEntries[ei];
+        brandLinesHtml += _renderBrandLine({
+          brand:     entry.brand,
+          brandAr:   entry.brandAr,
+          conc:      entry.conc,
+          formula:   entry.formula,
+          libDrugId: entry.libDrugId,
+          isPrimary: entry.isPrimary,
+          drugNum:   entry.drugNum,
+          altDoseEn: null, // doses injected as group blocks below, not per-line
+          altDoseAr: null,
+        });
+
+        // Check if this entry is the last in its dose-group
+        const nextEntry = allEntries[ei + 1];
+        const isLastInGroup = !nextEntry ||
+          nextEntry.effectiveDoseEn !== entry.effectiveDoseEn ||
+          nextEntry.effectiveDoseAr !== entry.effectiveDoseAr;
+
+        if (isLastInGroup && (entry.effectiveDoseAr || entry.effectiveDoseEn)) {
+          // Inject the shared dose block once for this group
+          brandLinesHtml += entry.effectiveDoseAr
+            ? `<div class="cv-dose-ar" dir="rtl">${esc(entry.effectiveDoseAr)}</div>`
+            : '';
+          brandLinesHtml += entry.effectiveDoseEn
+            ? `<div class="cv-dose-en">${esc(entry.effectiveDoseEn)}</div>`
+            : '';
+        }
+      }
+
       html += `<div class="cv-rx-drug-row">
         <!-- Line 1: № · Brand name + conc + formula · search icon -->
+        <!-- Doses are injected inline after each dose-group boundary  -->
         <div class="cv-rx-brand-lines">
-          ${_renderBrandLine({
-            brand:     d.resolvedBrand || d.resolvedGeneric || 'Drug',
-            brandAr:   d.resolvedBrandAr || '',
-            conc:      d.resolvedConc,
-            formula:   d.resolvedFormula,
-            libDrugId: libDrugId,
-            isPrimary: true,
-            drugNum:   ++drugIdx
-          })}
-          ${(item.alternatives && item.alternatives.length
-            ? item.alternatives.map(alt => {
-                const altLibDrug = _LIB.find(lib => lib.name && alt.resolvedGeneric &&
-                  lib.name.toLowerCase() === alt.resolvedGeneric.toLowerCase()) || null;
-                // Only show alt dose if it differs from the primary's dose
-                const altDoseEn = (alt.dose    || '').trim();
-                const altDoseAr = (alt.dose_ar || '').trim();
-                const primaryDoseEn = (d.dose    || '').trim();
-                const primaryDoseAr = (d.dose_ar || '').trim();
-                const altHasOwnDose = altDoseEn && altDoseEn !== primaryDoseEn;
-                const altHasOwnDoseAr = altDoseAr && altDoseAr !== primaryDoseAr;
-                return _renderBrandLine({
-                  brand:     alt.resolvedBrand || alt.resolvedGeneric || 'Drug',
-                  conc:      alt.resolvedConc,
-                  brandAr:   alt.resolvedBrandAr || '',
-                  formula:   alt.resolvedFormula,
-                  libDrugId: altLibDrug?.id || null,
-                  isPrimary: false,
-                  drugNum:   null,
-                  altDoseEn: altHasOwnDose   ? altDoseEn   : null,
-                  altDoseAr: altHasOwnDoseAr ? altDoseAr   : null,
-                });
-              }).join('')
-            : '')}
+          ${brandLinesHtml}
         </div>
-        <!-- Line 2: Arabic dose — right-aligned via dir=rtl -->
-        ${d.dose_ar ? `<div class="cv-dose-ar" dir="rtl">${esc(d.dose_ar)}</div>` : ''}
-        ${d.dose    ? `<div class="cv-dose-en">${esc(d.dose)}</div>` : ''}
         <!-- Line 2b: Drug note — right-aligned, rtl/ltr follows text language -->
         ${d.drug_note ? (() => {
           const isAr = isArabicQuery(d.drug_note);
