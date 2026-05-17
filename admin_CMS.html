@@ -2819,6 +2819,74 @@ function _checkGatePassword() {
             <span style="font-size:var(--text-xs-size);background:var(--color-brand-light);color:var(--color-brand);border:1px solid var(--color-brand);border-radius:var(--radius-full);padding:2px 10px;font-weight:700" id="nb-generic-pill"></span>
             <button class="btn-icon" style="width:18px;height:18px;font-size:11px" onclick="nbGenericClear()" title="Clear generic"><i class="ph ph-x"></i></button>
           </div>
+
+          <!-- "Create new generic" toggle link -->
+          <div style="margin-top:var(--space-2)">
+            <button class="btn btn-ghost btn-sm" onclick="nbToggleNewGenericPanel()"
+              id="nb-new-generic-toggle-btn"
+              style="font-size:var(--text-xs-size);padding:2px 8px;border-style:dashed">
+              <i class="ph ph-plus-circle"></i> Create new generic
+            </button>
+          </div>
+
+          <!-- Inline new-generic panel (hidden by default) -->
+          <div id="nb-new-generic-panel"
+            style="display:none;margin-top:var(--space-2);padding:var(--space-3);
+              border:1px solid var(--color-brand);border-radius:var(--radius-md);
+              background:var(--color-brand-light, #E0EFFF)">
+
+            <div style="font-size:var(--text-xs-size);font-weight:700;color:var(--color-brand);
+              margin-bottom:var(--space-2)">
+              <i class="ph ph-flask"></i> New generic drug
+            </div>
+
+            <!-- Name EN -->
+            <div style="margin-bottom:var(--space-2)">
+              <input type="text" id="nb-ng-name"
+                placeholder="Generic name (EN) *"
+                autocomplete="off"
+                style="width:100%"/>
+              <span id="nb-ng-name-err"
+                style="display:none;font-size:var(--text-xs-size);color:var(--color-danger)">
+                Name is required
+              </span>
+            </div>
+
+            <!-- Name AR -->
+            <div style="margin-bottom:var(--space-2)">
+              <input type="text" id="nb-ng-name-ar"
+                placeholder="الاسم بالعربي (اختياري)"
+                dir="rtl"
+                autocomplete="off"
+                style="width:100%"/>
+            </div>
+
+            <!-- Group -->
+            <div style="margin-bottom:var(--space-2)">
+              <select id="nb-ng-group" style="width:100%"
+                onchange="nbNewGenericGroupChanged()">
+                <option value="">— Drug group (optional) —</option>
+              </select>
+            </div>
+
+            <!-- Subgroup -->
+            <div style="margin-bottom:var(--space-3)">
+              <select id="nb-ng-subgroup" style="width:100%" disabled>
+                <option value="">— Subgroup —</option>
+              </select>
+            </div>
+
+            <div style="display:flex;gap:var(--space-2)">
+              <button class="btn btn-primary btn-sm" style="flex:1"
+                onclick="nbCreateNewGeneric()">
+                <i class="ph ph-check"></i> Create generic &amp; link
+              </button>
+              <button class="btn btn-ghost btn-sm"
+                onclick="nbToggleNewGenericPanel()">
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Shared dose -->
@@ -2847,6 +2915,15 @@ function _checkGatePassword() {
         <div id="nb-selection-section" style="display:none;margin-top:var(--space-4);padding-top:var(--space-3);border-top:1px solid var(--color-border)">
           <label class="form-label" style="margin-bottom:var(--space-2)">Add to prescription</label>
           <div id="nb-selection-list"></div>
+        </div>
+
+        <!-- Generic warning -->
+        <div id="nb-generic-warn" style="display:none;margin-top:var(--space-3);
+          padding:var(--space-2) var(--space-3);border-radius:var(--radius-sm);
+          background:var(--color-caution-light,#fff8e1);border:1px solid var(--color-caution);
+          font-size:var(--text-xs-size);color:var(--color-caution);font-weight:600">
+          <i class="ph ph-warning"></i> No generic linked — brands will be saved without a drug link.
+          You can link them later in Products.
         </div>
 
         <!-- Save button -->
@@ -5987,6 +6064,13 @@ function pickerShowNewBrandForm() {
     const el = document.getElementById(id); if (el) el.value = '';
   });
 
+  // Restore create-new-generic toggle and hide panel
+  const toggleBtn = document.getElementById('nb-new-generic-toggle-btn');
+  if (toggleBtn) toggleBtn.style.display = '';
+  const panel = document.getElementById('nb-new-generic-panel');
+  if (panel) panel.style.display = 'none';
+  document.getElementById('nb-generic-search').style.display = '';
+
   // Reset batch state and start with one empty row
   _nbRows       = [];
   _nbSelection  = {};
@@ -6028,6 +6112,13 @@ function nbGenericFilter(q) {
     return;
   }
 
+  // Auto-select if there is exactly one match
+  if (hits.length === 1) {
+    nbGenericSelect(hits[0].id, hits[0].name);
+    box.style.display = 'none';
+    return;
+  }
+
   box.innerHTML = hits.map(d => `
     <div onclick="nbGenericSelect('${d.id}', ${JSON.stringify(d.name)})"
       style="padding:8px 12px;cursor:pointer;font-size:var(--text-sm-size);border-bottom:1px solid var(--color-border)"
@@ -6042,10 +6133,13 @@ function nbGenericFilter(q) {
 function nbGenericSelect(drugId, drugName) {
   _newBrandDrugId   = drugId;
   _newBrandDrugName = drugName;
-  document.getElementById('nb-generic-search').value   = '';
-  document.getElementById('nb-generic-results').style.display  = 'none';
+  document.getElementById('nb-generic-search').value            = '';
+  document.getElementById('nb-generic-results').style.display   = 'none';
   document.getElementById('nb-generic-pill').textContent        = drugName;
-  document.getElementById('nb-generic-selected').style.display = 'flex';
+  document.getElementById('nb-generic-selected').style.display  = 'flex';
+  // Hide the "create new generic" toggle — a generic is now linked
+  const toggleBtn = document.getElementById('nb-new-generic-toggle-btn');
+  if (toggleBtn) toggleBtn.style.display = 'none';
 }
 
 function nbGenericClear() {
@@ -6053,6 +6147,126 @@ function nbGenericClear() {
   _newBrandDrugName = null;
   document.getElementById('nb-generic-search').value            = '';
   document.getElementById('nb-generic-selected').style.display  = 'none';
+  // Restore the "create new generic" toggle
+  const toggleBtn = document.getElementById('nb-new-generic-toggle-btn');
+  if (toggleBtn) toggleBtn.style.display = '';
+}
+
+// ── New-generic inline panel ──────────────────────────────────────────────────
+function nbToggleNewGenericPanel() {
+  const panel   = document.getElementById('nb-new-generic-panel');
+  const toggleBtn = document.getElementById('nb-new-generic-toggle-btn');
+  if (!panel) return;
+  const open = panel.style.display === 'none';
+  panel.style.display = open ? '' : 'none';
+  if (open) {
+    // Populate the group select from DRUG_TAXONOMY
+    const grpSel = document.getElementById('nb-ng-group');
+    if (grpSel && grpSel.options.length <= 1) {
+      Object.keys(DRUG_TAXONOMY).sort().forEach(g => {
+        const opt = document.createElement('option');
+        opt.value = g; opt.textContent = g;
+        grpSel.appendChild(opt);
+      });
+    }
+    // Hide the search field while panel is open
+    document.getElementById('nb-generic-search').style.display = 'none';
+    document.getElementById('nb-generic-results').style.display = 'none';
+    if (toggleBtn) toggleBtn.style.display = 'none';
+    setTimeout(() => document.getElementById('nb-ng-name')?.focus(), 40);
+  } else {
+    document.getElementById('nb-generic-search').style.display = '';
+    if (toggleBtn) toggleBtn.style.display = '';
+  }
+}
+
+function nbNewGenericGroupChanged() {
+  const group  = document.getElementById('nb-ng-group')?.value || '';
+  const subSel = document.getElementById('nb-ng-subgroup');
+  if (!subSel) return;
+  subSel.innerHTML = '<option value="">— Subgroup —</option>';
+  const subs = DRUG_TAXONOMY[group] || [];
+  subs.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s; opt.textContent = s;
+    subSel.appendChild(opt);
+  });
+  subSel.disabled = !subs.length;
+}
+
+async function nbCreateNewGeneric() {
+  const nameVal = document.getElementById('nb-ng-name')?.value.trim() || '';
+  const errEl   = document.getElementById('nb-ng-name-err');
+
+  if (!nameVal) {
+    if (errEl) errEl.style.display = 'block';
+    document.getElementById('nb-ng-name')?.focus();
+    return;
+  }
+  if (errEl) errEl.style.display = 'none';
+
+  const nameAr   = document.getElementById('nb-ng-name-ar')?.value.trim()  || null;
+  const group    = document.getElementById('nb-ng-group')?.value            || null;
+  const subgroup = document.getElementById('nb-ng-subgroup')?.value         || null;
+
+  const btn = document.querySelector('#nb-new-generic-panel .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Creating…'; }
+
+  try {
+    const id = genId();
+    const stub = {
+      id,
+      name:         nameVal,
+      name_ar:      nameAr,
+      group_name:   group    || null,
+      subgroup:     subgroup || null,
+      is_published: false,
+    };
+
+    await SB.insert('drugs', stub);
+
+    // Build full local entry (mirrors drugNew() pattern)
+    const entry = {
+      ...stub,
+      therapeutic_class: null, pharmacological_class: null,
+      moa: null, common_uses: null,
+      dose: null, dose_ar: null, max_dose: null,
+      ped_dose: null, ped_dose_ar: null, ped_age_limit: null,
+      pregnancy: null, lactation: null, lactation_note: null,
+      crosses_bbb: null, crosses_placenta: null,
+      metabolism: null, elimination: null,
+      interactions: null, dose_adjustments: null,
+      side_effects: null, contra: null, additional_info: null,
+      combinations: null, source: null, last_updated: null,
+    };
+    _DRUGS.push(entry);
+    _DRUG_MAP[id] = entry;
+    updateStats();
+
+    // Auto-select the newly created generic
+    nbGenericSelect(id, nameVal);
+
+    // Close the panel and restore the UI
+    document.getElementById('nb-new-generic-panel').style.display = 'none';
+    document.getElementById('nb-generic-search').style.display    = '';
+    const toggleBtn = document.getElementById('nb-new-generic-toggle-btn');
+    if (toggleBtn) toggleBtn.style.display = 'none'; // hide — generic is now linked
+
+    // Reset panel fields for next time
+    ['nb-ng-name','nb-ng-name-ar'].forEach(elId => {
+      const el = document.getElementById(elId); if (el) el.value = '';
+    });
+    const grpSel = document.getElementById('nb-ng-group');
+    const subSel = document.getElementById('nb-ng-subgroup');
+    if (grpSel) grpSel.value = '';
+    if (subSel) { subSel.innerHTML = '<option value="">— Subgroup —</option>'; subSel.disabled = true; }
+
+    toast(`Generic "${nameVal}" created & linked`, 'success', 4000);
+
+  } catch(e) {
+    toast('Failed to create generic: ' + e.message, 'error');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ph ph-check"></i> Create generic &amp; link'; }
+  }
 }
 
 // ── Step 3: nbAddBrandRow() ───────────────────────────────────────────────────
@@ -6363,6 +6577,17 @@ async function pickerCreateAndSelectBatch() {
     }
   });
   if (hasError) return;
+
+  // 1b. Warn if no generic linked — soft warning, not a hard block
+  if (!_newBrandDrugId) {
+    const genericWarnEl = document.getElementById('nb-generic-warn');
+    if (genericWarnEl) genericWarnEl.style.display = 'block';
+    // Give them 1 second to see the warning, then allow saving anyway
+    await new Promise(r => setTimeout(r, 1000));
+  } else {
+    const genericWarnEl = document.getElementById('nb-generic-warn');
+    if (genericWarnEl) genericWarnEl.style.display = 'none';
+  }
 
   // 2. At least one row must exist
   if (!_nbRows.length) return;
