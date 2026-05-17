@@ -13797,7 +13797,7 @@ function renderConditionViewer(data) {
 //   • "or" is vertically aligned with the № of the primary drug above
 //   • the alt brand name starts at the same horizontal position as the primary brand name
 // No extra spacer between the left cell and the brand content.
-function _renderBrandLine({ brand, brandAr, conc, formula, libDrugId, isPrimary, drugNum }) {
+function _renderBrandLine({ brand, brandAr, conc, formula, libDrugId, isPrimary, drugNum, altDoseEn, altDoseAr }) {
   const searchTerms = [brand, conc, formula].filter(Boolean).join(' ');
   const googleImgUrl = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(searchTerms)}`;
 
@@ -13818,6 +13818,11 @@ function _renderBrandLine({ brand, brandAr, conc, formula, libDrugId, isPrimary,
                 display:block">${esc(brandAr)}</span>`
     : '';
 
+  // Per-alternative dose lines (only rendered when alt has its own dose)
+  const altDoseHtml = (!isPrimary && (altDoseAr || altDoseEn))
+    ? `${altDoseAr ? `<div class="cv-dose-ar" dir="rtl" style="font-size:var(--text-sm-size);margin-top:2px">${esc(altDoseAr)}</div>` : ''}${altDoseEn ? `<div class="cv-dose-en" style="font-size:var(--text-sm-size);margin-top:1px">${esc(altDoseEn)}</div>` : ''}`
+    : '';
+
   return `
     <div class="cv-rx-brand-line${isPrimary ? '' : ' cv-rx-brand-line--alt'}"
          style="display:flex;align-items:flex-start;gap:var(--space-2)">
@@ -13825,6 +13830,7 @@ function _renderBrandLine({ brand, brandAr, conc, formula, libDrugId, isPrimary,
       <div style="flex:1;min-width:0">
         ${brandSpan}${conc ? ` <span style="font-size:var(--text-base-size);font-weight:500;color:var(--color-text-secondary)">${esc(conc)}</span>` : ''}${formula ? ` <span class="cv-rx-formula-tag">${esc(formula)}</span>` : ''}
         ${brandArHtml}
+        ${altDoseHtml}
       </div>
       <a href="${googleImgUrl}" target="_blank" rel="noopener"
          class="cv-rx-img-btn"
@@ -13898,6 +13904,13 @@ function _cvRenderPrescription(rx, agePrefix) {
             ? item.alternatives.map(alt => {
                 const altLibDrug = _LIB.find(lib => lib.name && alt.resolvedGeneric &&
                   lib.name.toLowerCase() === alt.resolvedGeneric.toLowerCase()) || null;
+                // Only show alt dose if it differs from the primary's dose
+                const altDoseEn = (alt.dose    || '').trim();
+                const altDoseAr = (alt.dose_ar || '').trim();
+                const primaryDoseEn = (d.dose    || '').trim();
+                const primaryDoseAr = (d.dose_ar || '').trim();
+                const altHasOwnDose = altDoseEn && altDoseEn !== primaryDoseEn;
+                const altHasOwnDoseAr = altDoseAr && altDoseAr !== primaryDoseAr;
                 return _renderBrandLine({
                   brand:     alt.resolvedBrand || alt.resolvedGeneric || 'Drug',
                   conc:      alt.resolvedConc,
@@ -13905,7 +13918,9 @@ function _cvRenderPrescription(rx, agePrefix) {
                   formula:   alt.resolvedFormula,
                   libDrugId: altLibDrug?.id || null,
                   isPrimary: false,
-                  drugNum:   null
+                  drugNum:   null,
+                  altDoseEn: altHasOwnDose   ? altDoseEn   : null,
+                  altDoseAr: altHasOwnDoseAr ? altDoseAr   : null,
                 });
               }).join('')
             : '')}

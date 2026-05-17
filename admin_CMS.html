@@ -2882,7 +2882,7 @@ function _checkGatePassword() {
 
         <!-- Shared dose -->
         <div class="form-row" style="margin-top:var(--space-3);margin-bottom:0">
-          <label class="form-label">Shared dose <span style="color:var(--color-text-tertiary);font-weight:400;text-transform:none;letter-spacing:0"> — applies to all brands unless overridden</span></label>
+          <label class="form-label">Generic dose <span style="color:var(--color-text-tertiary);font-weight:400;text-transform:none;letter-spacing:0"> — saved to the linked generic · overridable per brand</span></label>
           <div class="form-row-inline" style="margin-bottom:0">
             <input type="text" id="nb-dose-shared" placeholder="e.g. 15ml twice daily" autocomplete="off" oninput="nbSyncSharedDose()"/>
             <input type="text" id="nb-dose-ar-shared" placeholder="الجرعة بالعربي" dir="rtl" autocomplete="off" oninput="nbSyncSharedDose()"/>
@@ -6532,7 +6532,7 @@ function nbRenderSelectionList() {
           ${sel.checked ? 'checked' : ''}
           onchange="nbSetSelection(${row._id},'checked',this.checked)"/>
         <span style="flex:1;font-size:var(--text-sm-size);font-weight:600">
-          ${esc(row.brand)}
+          ${esc(row.brand)}${row.conc ? `<span style="font-weight:400;color:var(--color-text-secondary);margin-left:4px">${esc(row.conc)}</span>` : ''}${row.formula ? `<span style="font-weight:400;color:var(--color-text-tertiary);margin-left:4px;font-size:var(--text-xs-size)">${esc(row.formula)}</span>` : ''}
         </span>
         <select style="font-size:var(--text-xs-size);padding:3px 6px;width:auto"
           onchange="nbSetSelection(${row._id},'role',this.value)"
@@ -6625,6 +6625,21 @@ async function pickerCreateAndSelectBatch() {
     }
 
     updateStats();   // refreshes needs-review badge count
+
+    // 3b. If a generic is linked and shared dose was provided, save it to the drug record
+    if (_newBrandDrugId && (sharedDose || sharedDoseAr)) {
+      const drugPatches = {};
+      if (sharedDose)   drugPatches.dose    = sharedDose;
+      if (sharedDoseAr) drugPatches.dose_ar = sharedDoseAr;
+      await SB.patch('drugs', _newBrandDrugId, drugPatches);
+      // Update in-memory drug record
+      if (_DRUG_MAP[_newBrandDrugId]) {
+        if (sharedDose)   _DRUG_MAP[_newBrandDrugId].dose    = sharedDose;
+        if (sharedDoseAr) _DRUG_MAP[_newBrandDrugId].dose_ar = sharedDoseAr;
+        const idx = _DRUGS.findIndex(d => d.id === _newBrandDrugId);
+        if (idx >= 0) _DRUGS[idx] = _DRUG_MAP[_newBrandDrugId];
+      }
+    }
 
     // 4. Add selected brands to the prescription
     let primaryRowId = null;   // prescription_drugs row id of the primary
