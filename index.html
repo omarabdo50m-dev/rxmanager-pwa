@@ -7799,6 +7799,57 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 #condViewerScr.lang-ar .cv-rx-note-text-ar { display:block; }
 #condViewerScr.lang-en .cv-rx-note-text-en { display:block; }
 
+/* ── TEXT BLOCK (free text: heading / body / bullets) ─────── */
+.cv-rx-text-block {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+/* Heading variant */
+.cv-rx-text-block.is-heading .cv-rx-text-content {
+  font-size: var(--text-base-size);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.4;
+}
+/* Body variant */
+.cv-rx-text-block.is-body .cv-rx-text-content {
+  font-size: var(--text-sm-size);
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+/* Bullets variant */
+.cv-rx-text-block.is-bullets {
+  padding-left: var(--space-3);
+  padding-right: var(--space-3);
+}
+.cv-rx-text-block.is-bullets .cv-rx-text-bullets {
+  margin: 0;
+  padding-left: var(--space-5);
+  list-style: disc;
+}
+.cv-rx-text-block.is-bullets .cv-rx-text-bullets li {
+  font-size: var(--text-sm-size);
+  color: var(--color-text-secondary);
+  line-height: 1.65;
+  margin-bottom: 2px;
+}
+/* RTL support */
+.cv-rx-text-block.is-rtl {
+  direction: rtl;
+  text-align: right;
+}
+.cv-rx-text-block.is-rtl.is-bullets .cv-rx-text-bullets {
+  padding-left: 0;
+  padding-right: var(--space-5);
+}
+.cv-rx-text-content {
+  display: block;
+  min-width: 0;
+}
+
 /* Duration bar — Phase 10: compact inline badge inside card */
 .cv-rx-duration-bar {
   display:flex;
@@ -12386,6 +12437,11 @@ function _resolveRpcItem(item) {
     return { ...(item.note || item), _type: 'note_block' };
   }
 
+  // Text blocks — pass through as-is, just ensure _type is set
+  if (item._type === 'text_block') {
+    return { ...(item.text || item), _type: 'text_block' };
+  }
+
   // Drug items
   const pd      = item.drug     || {};
   const product = item.product  || {};
@@ -13140,6 +13196,10 @@ async function _fetchConditionFullRpc(conditionId) {
         // Note blocks: unwrap .note sub-object, keep _type
         return { ...(item.note || item), _type: 'note_block' };
       }
+      if (item._type === 'text_block') {
+        // Text blocks: unwrap .text sub-object if present, keep _type
+        return { ...(item.text || item), _type: 'text_block' };
+      }
       // Drug items: use _resolveRpcItem so alternatives are also resolved recursively
       return _resolveRpcItem(item);
     });
@@ -13256,7 +13316,7 @@ async function fetchConditionData(conditionId) {
     let rxWithDrugs = [];
     if (prescriptions.length) {
       const rxIds = prescriptions.map(r => '"' + r.id + '"').join(',');
-      const [drugRes, noteRes] = await Promise.all([
+      const [drugRes, noteRes, textRes] = await Promise.all([
         fetch(
           base + 'prescription_drugs?prescription_id=in.(' + rxIds + ')&select=*&order=sort_order.asc',
           { headers }
@@ -13265,16 +13325,23 @@ async function fetchConditionData(conditionId) {
           base + 'rx_note_blocks?prescription_id=in.(' + rxIds + ')&select=*&order=sort_order.asc',
           { headers }
         ),
+        fetch(
+          base + 'rx_text_blocks?prescription_id=in.(' + rxIds + ')&select=*&order=sort_order.asc',
+          { headers }
+        ),
       ]);
       if (!drugRes.ok) throw new Error('prescription_drugs fetch failed: ' + drugRes.status);
       const allDrugs = await drugRes.json();
       // Degrade gracefully if note blocks fetch fails — don't crash the whole render
       const allNotes = noteRes.ok ? await noteRes.json() : [];
       if (!noteRes.ok) console.warn('rx_note_blocks fetch failed:', noteRes.status, '— rendering without note blocks');
+      const allTexts = textRes.ok ? await textRes.json() : [];
+      if (!textRes.ok) console.warn('rx_text_blocks fetch failed:', textRes.status, '— rendering without text blocks');
 
       // Group drugs and notes by prescription_id
       const drugsByRx = {};
       const notesByRx = {};
+      const textsByRx = {};
       allDrugs.forEach(d => {
         if (!drugsByRx[d.prescription_id]) drugsByRx[d.prescription_id] = [];
         drugsByRx[d.prescription_id].push(d);
@@ -13301,15 +13368,20 @@ async function fetchConditionData(conditionId) {
         if (!notesByRx[n.prescription_id]) notesByRx[n.prescription_id] = [];
         notesByRx[n.prescription_id].push(n);
       });
+      allTexts.forEach(t => {
+        if (!textsByRx[t.prescription_id]) textsByRx[t.prescription_id] = [];
+        textsByRx[t.prescription_id].push(t);
+      });
 
-      // Merge drugs and notes into single sorted array for each prescription
+      // Merge drugs, notes, and text blocks into single sorted array for each prescription
       // Iterate ALL prescriptions (not just drugsByRx keys) so prescriptions
       // with no drugs — or only notes — still get a mergedByRx entry.
       const mergedByRx = {};
       prescriptions.forEach(rx => {
         const drugs = (drugsByRx[rx.id] || []).map(d => ({ ...d, _type: 'drug' }));
         const notes = (notesByRx[rx.id] || []).map(n => ({ ...n, _type: 'note_block' }));
-        mergedByRx[rx.id] = [...drugs, ...notes].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+        const texts = (textsByRx[rx.id] || []).map(t => ({ ...t, _type: 'text_block' }));
+        mergedByRx[rx.id] = [...drugs, ...notes, ...texts].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
       });
 
       // Collect unique product and drug IDs from primaries AND their alternatives
@@ -13457,16 +13529,19 @@ async function _fetchSiblingCondition(conditionId) {
   const rxIds = prescriptions.map(r => '"' + r.id + '"').join(',');
   const toIn = arr => arr.map(id => '"' + id + '"').join(',');
 
-  const [drugRes, noteRes] = await Promise.all([
+  const [drugRes, noteRes, textRes] = await Promise.all([
     fetch(base + 'prescription_drugs?prescription_id=in.(' + rxIds + ')&select=*&order=sort_order.asc', { headers }),
     fetch(base + 'rx_note_blocks?prescription_id=in.(' + rxIds + ')&select=*&order=sort_order.asc', { headers }),
+    fetch(base + 'rx_text_blocks?prescription_id=in.(' + rxIds + ')&select=*&order=sort_order.asc', { headers }),
   ]);
   const allDrugs = drugRes.ok ? await drugRes.json() : [];
   const allNotes = noteRes.ok ? await noteRes.json() : [];
+  const allTexts = textRes.ok ? await textRes.json() : [];
 
-  const drugsByRx = {}, notesByRx = {};
+  const drugsByRx = {}, notesByRx = {}, textsByRx = {};
   allDrugs.forEach(d => { if (!drugsByRx[d.prescription_id]) drugsByRx[d.prescription_id] = []; drugsByRx[d.prescription_id].push(d); });
   allNotes.forEach(n => { if (!notesByRx[n.prescription_id]) notesByRx[n.prescription_id] = []; notesByRx[n.prescription_id].push(n); });
+  allTexts.forEach(t => { if (!textsByRx[t.prescription_id]) textsByRx[t.prescription_id] = []; textsByRx[t.prescription_id].push(t); });
 
   // Phase 2-A (sibling): attach alternatives to their primaries; remove alts from top-level
   Object.keys(drugsByRx).forEach(rxId => {
@@ -13508,7 +13583,8 @@ async function _fetchSiblingCondition(conditionId) {
       return { ...resolved, _type: 'drug', alternatives: resolvedAlts };
     });
     const notes = (notesByRx[rx.id] || []).map(n => ({ ...n, _type: 'note_block' }));
-    const items = [...drugs, ...notes].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    const texts = (textsByRx[rx.id] || []).map(t => ({ ...t, _type: 'text_block' }));
+    const items = [...drugs, ...notes, ...texts].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
     return { ...rx, items };
   });
 
@@ -13935,6 +14011,32 @@ function _cvRenderPrescription(rx, agePrefix) {
           <i class="ph ph-note cv-rx-note-ico"></i>
           <span class="cv-rx-note-text" style="${noteFontFamily}">${esc(contentText)}</span>
         </div>`;
+        return;
+      }
+
+      // Handle rx_text_block
+      if (item._type === 'text_block') {
+        const blockType = item.block_type || 'body';
+        const rawContent = item.content || item.content_ar || '';
+        const firstChar = rawContent.trimStart()[0] || '';
+        const isRtl = /[\u0600-\u06FF]/.test(firstChar);
+        const fontFamily = isRtl
+          ? 'font-family:\'IBM Plex Sans Arabic\',\'IBM Plex Sans\',system-ui,sans-serif;'
+          : '';
+        const rtlClass = isRtl ? ' is-rtl' : '';
+
+        if (blockType === 'bullets') {
+          const lines = rawContent.split('\n').map(l => l.trim()).filter(Boolean);
+          const lis = lines.map(l => `<li style="${fontFamily}">${esc(l)}</li>`).join('');
+          html += `<div class="cv-rx-text-block is-bullets${rtlClass}">
+            <ul class="cv-rx-text-bullets">${lis}</ul>
+          </div>`;
+        } else {
+          const typeClass = blockType === 'heading' ? 'is-heading' : 'is-body';
+          html += `<div class="cv-rx-text-block ${typeClass}${rtlClass}">
+            <span class="cv-rx-text-content" style="${fontFamily}">${esc(rawContent)}</span>
+          </div>`;
+        }
         return;
       }
 

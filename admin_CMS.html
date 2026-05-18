@@ -1407,8 +1407,76 @@ input[dir=rtl], textarea[dir=rtl] {
   border-radius: var(--radius-full);
   margin-bottom: var(--space-2);
 }
-.row-type-drug { background: var(--color-brand-light); color: var(--color-brand); }
-.row-type-note { background: var(--color-caution-light); color: var(--color-caution); }
+.row-type-drug  { background: var(--color-brand-light);   color: var(--color-brand);   }
+.row-type-note  { background: var(--color-caution-light); color: var(--color-caution); }
+.row-type-text  { background: #e8f5e9; color: #2e7d32; }
+
+/* ── TEXT BLOCK ──────────────────────────────────────────── */
+.text-block {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+.text-block-body { flex: 1; min-width: 0; }
+.text-block-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+.text-block-format-bar {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  flex-wrap: wrap;
+}
+.text-block-format-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-xs-size);
+  padding: 3px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background .1s, color .1s;
+}
+.text-block-format-btn:hover { background: var(--color-brand-light); color: var(--color-brand); border-color: var(--color-brand); }
+.text-block-type-select {
+  font-size: var(--text-xs-size);
+  padding: 3px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+.text-block-textarea {
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: var(--text-sm-size);
+  line-height: 1.6;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  color: var(--color-text-primary);
+  box-sizing: border-box;
+}
+.text-block-hint {
+  font-size: var(--text-xs-size);
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-1);
+}
 
 /* ── Specialties panel ────────────────────────── */
 .spec-item {
@@ -2676,6 +2744,9 @@ function _checkGatePassword() {
               </button>
               <button class="btn btn-ghost btn-sm" onclick="rxAddNoteBlock()">
                 <i class="ph ph-plus"></i> Add Note Block
+              </button>
+              <button class="btn btn-ghost btn-sm" onclick="rxAddTextBlock()">
+                <i class="ph ph-plus"></i> Add Text Block
               </button>
             </div>
           </div>
@@ -5301,6 +5372,7 @@ let _condRxs         = [];     // prescriptions for currently-editing condition 
 let _rxEditId        = null;   // currently-editing prescription id
 let _rxDrugRows      = [];     // prescription_drugs for current rx
 let _rxNoteBlocks    = [];     // rx_note_blocks for current rx
+let _rxTextBlocks    = [];     // rx_text_blocks for current rx
 let _rxCondFilter    = '';     // active condition filter in list
 
 /* ════════════════════════════════════════════════════════════
@@ -5336,7 +5408,8 @@ function rxBuildUnifiedRows() {
     }));
   
   const notes = _rxNoteBlocks.map(b => ({ ...b, _type: 'note' }));
-  return [...drugs, ...notes].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+  const texts = _rxTextBlocks.map(b => ({ ...b, _type: 'text' }));
+  return [...drugs, ...notes, ...texts].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 }
 
 /**
@@ -5362,16 +5435,20 @@ async function rxMoveRow(rowId, rowType, direction) {
 
   // Persist both changed rows (each may be drug or note)
   const saves = [a, b].map(r => {
-    const table = r._type === 'note' ? 'rx_note_blocks' : 'prescription_drugs';
-    // Update in-memory stores
     if (r._type === 'note') {
+      const table = 'rx_note_blocks';
       const nb = _rxNoteBlocks.find(x => x.id === r.id);
       if (nb) nb.sort_order = r.sort_order;
+      return autoSave(table, r.id, 'sort_order', r.sort_order);
+    } else if (r._type === 'text') {
+      const tb = _rxTextBlocks.find(x => x.id === r.id);
+      if (tb) tb.sort_order = r.sort_order;
+      return autoSave('rx_text_blocks', r.id, 'sort_order', r.sort_order);
     } else {
       const dr = _rxDrugRows.find(x => x.id === r.id);
       if (dr) dr.sort_order = r.sort_order;
+      return autoSave('prescription_drugs', r.id, 'sort_order', r.sort_order);
     }
-    return autoSave(table, r.id, 'sort_order', r.sort_order);
   });
   await Promise.all(saves);
   rxRenderUnified();
@@ -5382,7 +5459,7 @@ function rxRenderUnified() {
   const unified = rxBuildUnifiedRows();
 
   if (!unified.length) {
-    container.innerHTML = `<div class="empty-state" style="padding:var(--space-5)"><i class="ph ph-list-bullets"></i><p>No rows yet — add a drug or note block below.</p></div>`;
+    container.innerHTML = `<div class="empty-state" style="padding:var(--space-5)"><i class="ph ph-list-bullets"></i><p>No rows yet — add a drug, note, or text block below.</p></div>`;
     return;
   }
 
@@ -5407,8 +5484,10 @@ function rxRenderUnified() {
 
     if (row._type === 'drug') {
       html += rxRenderDrugRowCard(row, orderBtns, idx);
-    } else {
+    } else if (row._type === 'note') {
       html += rxRenderNoteBlockCard(row, orderBtns);
+    } else {
+      html += rxRenderTextBlockCard(row, orderBtns);
     }
   });
 
@@ -5682,6 +5761,52 @@ function rxRenderNoteBlockCard(nb, orderBtns) {
       </div>
       <div>
         <button class="btn btn-danger btn-sm" onclick="rxDeleteNoteBlock('${nb.id}')">
+          <i class="ph ph-trash"></i>
+        </button>
+      </div>
+    </div>`;
+}
+
+/* ── TEXT BLOCK CARD RENDERER ────────────────────────────────── */
+function rxRenderTextBlockCard(tb, orderBtns) {
+  const blockType = esc(tb.block_type ?? 'body');
+  const blockTypeLabel = { heading: 'Heading', body: 'Body', bullets: 'Bullet List' }[tb.block_type ?? 'body'] ?? 'Body';
+  return `
+    <div class="text-block" id="tb-${tb.id}">
+      ${orderBtns}
+      <div class="text-block-body">
+        <div class="row-type-badge row-type-text"><i class="ph ph-text-t"></i> Text</div>
+        <div class="text-block-format-bar">
+          <label style="font-size:var(--text-xs-size);color:var(--color-text-secondary);display:flex;align-items:center;gap:var(--space-2);">
+            Block type:
+            <select class="text-block-type-select"
+              onchange="rxSaveTextField('${tb.id}','block_type',this.value)">
+              <option value="heading"  ${tb.block_type === 'heading'  ? 'selected' : ''}>Heading</option>
+              <option value="body"     ${(tb.block_type ?? 'body') === 'body'     ? 'selected' : ''}>Body</option>
+              <option value="bullets"  ${tb.block_type === 'bullets'  ? 'selected' : ''}>Bullet List</option>
+            </select>
+          </label>
+          ${tb.block_type === 'bullets'
+            ? `<span class="text-block-hint"><i class="ph ph-info"></i> One bullet per line — each line becomes a list item in the app</span>`
+            : ''}
+        </div>
+        <div class="text-block-fields">
+          <div>
+            <div class="drug-row-field-label">Content (EN)</div>
+            <textarea class="text-block-textarea" rows="3"
+              placeholder="${tb.block_type === 'bullets' ? 'Line 1\nLine 2\nLine 3' : tb.block_type === 'heading' ? 'Heading text' : 'Body text'}"
+              onblur="rxSaveTextField('${tb.id}','content',this.value)">${esc(tb.content ?? '')}</textarea>
+          </div>
+          <div>
+            <div class="drug-row-field-label">Content (AR)</div>
+            <textarea class="text-block-textarea" rows="3" dir="rtl" style="font-family:var(--font-ar)"
+              placeholder="${tb.block_type === 'bullets' ? 'سطر 1\nسطر 2' : tb.block_type === 'heading' ? 'عنوان' : 'نص'}"
+              onblur="rxSaveTextField('${tb.id}','content_ar',this.value)">${esc(tb.content_ar ?? '')}</textarea>
+          </div>
+        </div>
+      </div>
+      <div>
+        <button class="btn btn-danger btn-sm" onclick="rxDeleteTextBlock('${tb.id}')">
           <i class="ph ph-trash"></i>
         </button>
       </div>
@@ -6334,6 +6459,7 @@ function rxBackToList() {
   _rxEditId = null;
   _rxDrugRows = [];
   _rxNoteBlocks = [];
+  _rxTextBlocks = [];
   document.getElementById('rx-edit-view').style.display = 'none';
   document.getElementById('rx-list-view').style.display = '';
   rxBuildCondFilter();
@@ -6351,16 +6477,20 @@ async function rxLoadAllRows(rxId) {
   const container = document.getElementById('rx-unified-list');
   container.innerHTML = `<div style="padding:var(--space-3);color:var(--color-text-tertiary);font-size:var(--text-sm-size)">Loading…</div>`;
   try {
-    const [drugRows, noteBlocks] = await Promise.all([
+    const [drugRows, noteBlocks, textBlocks] = await Promise.all([
       SB.fetchAll('prescription_drugs',
         'id,prescription_id,drug_id,product_id,dose,dose_ar,drug_note,sort_order,is_alternative,alternative_to_id,dose_source_pd_id',
         `&prescription_id=eq.${rxId}&order=sort_order.asc`),
       SB.fetchAll('rx_note_blocks',
         'id,prescription_id,content,content_ar,sort_order',
         `&prescription_id=eq.${rxId}&order=sort_order.asc`),
+      SB.fetchAll('rx_text_blocks',
+        'id,prescription_id,content,content_ar,block_type,sort_order',
+        `&prescription_id=eq.${rxId}&order=sort_order.asc`),
     ]);
     _rxDrugRows   = drugRows;
     _rxNoteBlocks = noteBlocks;
+    _rxTextBlocks = textBlocks;
     // Phase 9: populate audit cache so dose-audit table has data
     if (!window._auditDrugCache) window._auditDrugCache = {};
     window._auditDrugCache[rxId] = [...drugRows];
@@ -6586,6 +6716,54 @@ async function rxDeleteNoteBlock(nbId) {
     _rxNoteBlocks = _rxNoteBlocks.filter(b => b.id !== nbId);
     rxRenderUnified();
     toast('Note block deleted', 'success');
+  } catch(e) {
+    toast('Failed to delete: ' + e.message, 'error');
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   TEXT BLOCK OPERATIONS
+   ════════════════════════════════════════════════════════════ */
+
+async function rxSaveTextField(tbId, field, value) {
+  const tb = _rxTextBlocks.find(b => b.id === tbId);
+  const v = (field === 'content') ? (value ?? '') : (value === '' ? null : value);
+  if (tb) tb[field] = v;
+  if (field === 'block_type') {
+    // Re-render to update placeholder/hint immediately
+    rxRenderUnified();
+  }
+  await autoSave('rx_text_blocks', tbId, field, v);
+}
+
+async function rxAddTextBlock() {
+  if (!_rxEditId) return;
+  const id = genId();
+  const unified = rxBuildUnifiedRows();
+  const maxOrder = unified.length ? Math.max(...unified.map(r => r.sort_order ?? 0)) + 1 : 0;
+  const stub = { id, prescription_id: _rxEditId, content: '', content_ar: null, block_type: 'body', sort_order: maxOrder };
+  try {
+    await SB.insert('rx_text_blocks', stub);
+    _rxTextBlocks.push(stub);
+    rxRenderUnified();
+    toast('Text block added', 'success');
+  } catch(e) {
+    toast('Failed to add text block: ' + e.message, 'error');
+  }
+}
+
+async function rxDeleteTextBlock(tbId) {
+  const ok = await showConfirm({
+    title: 'Delete Text Block',
+    message: 'Remove this text block?',
+    okLabel: 'Delete',
+  });
+  if (!ok) return;
+  try {
+    await SB.delete('rx_text_blocks', tbId);
+    _rxTextBlocks = _rxTextBlocks.filter(b => b.id !== tbId);
+    rxRenderUnified();
+    toast('Text block deleted', 'success');
   } catch(e) {
     toast('Failed to delete: ' + e.message, 'error');
   }
