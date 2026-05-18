@@ -1427,12 +1427,14 @@ input[dir=rtl], textarea[dir=rtl] {
   display: block;
 }
 .text-block-pane {}
-/* ── Rich text editor (replaces old textarea + H/B/• buttons) ── */
+/* ── Text block editor: textarea + live preview ── */
 .tb-editor-wrap {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: var(--color-surface-2);
   overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr;
 }
 .tb-editor-wrap:focus-within {
   border-color: var(--color-brand);
@@ -1441,7 +1443,7 @@ input[dir=rtl], textarea[dir=rtl] {
 .tb-toolbar {
   display: flex;
   gap: 2px;
-  padding: 5px 7px;
+  padding: 5px 8px;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-surface);
   align-items: center;
@@ -1451,66 +1453,103 @@ input[dir=rtl], textarea[dir=rtl] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 28px;
   height: 26px;
-  padding: 0 6px;
+  padding: 0 8px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   border: 1px solid transparent;
   border-radius: 5px;
   background: none;
   color: var(--color-text-secondary);
   cursor: pointer;
   transition: background .1s, color .1s, border-color .1s;
-  flex-shrink: 0;
-  line-height: 1;
-  user-select: none;
   white-space: nowrap;
+  user-select: none;
+  gap: 4px;
 }
 .tb-btn:hover { background: var(--color-surface-2); color: var(--color-text-primary); border-color: var(--color-border); }
-.tb-btn.active { background: var(--color-brand-light); color: var(--color-brand); border-color: var(--color-brand); }
-.tb-btn i { font-size: 14px; pointer-events: none; }
-.tb-sep {
-  width: 1px; height: 18px;
-  background: var(--color-border);
-  margin: 0 3px;
-  flex-shrink: 0;
+.tb-btn.active-tab { background: var(--color-surface-2); color: var(--color-text-primary); border-color: var(--color-border); }
+.tb-btn i { font-size: 13px; pointer-events: none; }
+.tb-sep { width: 1px; height: 18px; background: var(--color-border); margin: 0 4px; flex-shrink: 0; }
+/* Two-pane layout: textarea left, preview right */
+.tb-panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 130px;
 }
-.tb-editable {
-  min-height: 100px;
-  max-height: 360px;
+.tb-pane-edit {
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+}
+.tb-pane-preview {
+  padding: 10px 12px;
   overflow-y: auto;
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--text-sm-size);
-  line-height: 1.75;
+  max-height: 280px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.tb-textarea {
+  flex: 1;
+  width: 100%;
+  min-height: 130px;
+  resize: none;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.7;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
   color: var(--color-text-primary);
+  box-sizing: border-box;
   outline: none;
-  word-break: break-word;
 }
-.tb-editable:empty:before {
-  content: attr(data-placeholder);
+.tb-textarea::placeholder { color: var(--color-text-tertiary); }
+/* Syntax highlighting via color classes on the textarea lines label */
+.tb-pane-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
   color: var(--color-text-tertiary);
-  pointer-events: none;
+  padding: 5px 12px 3px;
 }
-/* Styles rendered inside the editor */
-.tb-editable h3 {
-  font-size: var(--text-base-size);
+/* Preview styles — mirror exactly what the app renders */
+.tb-preview-heading {
+  font-size: 14px;
   font-weight: 700;
   color: var(--color-text-primary);
-  margin: 6px 0 2px;
   line-height: 1.4;
+  margin: 5px 0 2px;
 }
-.tb-editable h3:first-child { margin-top: 0; }
-.tb-editable p {
-  margin: 1px 0;
+.tb-preview-heading:first-child { margin-top: 0; }
+.tb-preview-body {
+  font-size: 13px;
   color: var(--color-text-secondary);
+  line-height: 1.65;
+  margin: 1px 0;
 }
-.tb-editable ul, .tb-editable ol {
-  margin: 3px 0;
-  padding-inline-start: 22px;
+.tb-preview-bullets {
+  margin: 3px 0 3px 0;
+  padding-left: 20px;
+  padding-right: 0;
+  list-style: disc;
 }
-.tb-editable li { color: var(--color-text-secondary); margin-bottom: 1px; }
-.tb-editable b, .tb-editable strong { color: var(--color-text-primary); }
+.tb-preview-bullets[dir="rtl"] {
+  padding-left: 0;
+  padding-right: 20px;
+}
+.tb-preview-bullets li {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.65;
+  margin-bottom: 1px;
+}
+.tb-preview-empty {
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  font-style: italic;
+}
 
 /* ── Specialties panel ────────────────────────── */
 .spec-item {
@@ -5804,11 +5843,10 @@ function rxRenderNoteBlockCard(nb, orderBtns) {
 /* ── TEXT BLOCK CARD RENDERER ────────────────────────────────── */
 function rxRenderTextBlockCard(tb, orderBtns) {
   const id = tb.id;
-  const edId = 'tbed-' + id;
+  const taId = 'tbta-' + id;
+  const pvId = 'tbpv-' + id;
   // Existing content — prefer content field; fall back to content_ar for old rows
   const existingContent = tb.content || tb.content_ar || '';
-  // Convert stored markdown → HTML for the editor
-  const initialHtml = tbMarkdownToHtml(existingContent);
 
   return `
     <div class="text-block" id="tb-${id}">
@@ -5818,25 +5856,36 @@ function rxRenderTextBlockCard(tb, orderBtns) {
         <div class="text-block-cols">
           <div class="text-block-pane">
             <div class="drug-row-field-label">Content</div>
-            <div class="tb-editor-wrap" id="tbwrap-${id}">
+            <div class="tb-editor-wrap">
               <div class="tb-toolbar">
-                <button class="tb-btn" title="Heading" onmousedown="tbCmd(event,'${edId}','heading')" type="button"><b>H</b></button>
-                <button class="tb-btn" title="Bold" onmousedown="tbCmd(event,'${edId}','bold')" type="button"><i class="ph ph-text-b"></i></button>
-                <button class="tb-btn" title="Italic" onmousedown="tbCmd(event,'${edId}','italic')" type="button"><i class="ph ph-text-italic"></i></button>
+                <span style="font-size:10px;color:var(--color-text-tertiary);margin-right:4px">Insert:</span>
+                <button class="tb-btn" title="Heading prefix" onclick="tbInsert('${taId}','# ')" type="button">
+                  <i class="ph ph-text-h"></i> H
+                </button>
+                <button class="tb-btn" title="Bullet prefix" onclick="tbInsert('${taId}','- ')" type="button">
+                  <i class="ph ph-list-bullets"></i> •
+                </button>
                 <div class="tb-sep"></div>
-                <button class="tb-btn" title="Bullet list" onmousedown="tbCmd(event,'${edId}','bullet')" type="button"><i class="ph ph-list-bullets"></i></button>
-                <button class="tb-btn" title="Numbered list" onmousedown="tbCmd(event,'${edId}','ordered')" type="button"><i class="ph ph-list-numbers"></i></button>
-                <div class="tb-sep"></div>
-                <button class="tb-btn" title="Align left" onmousedown="tbCmd(event,'${edId}','alignLeft')" type="button"><i class="ph ph-text-align-left"></i></button>
-                <button class="tb-btn" title="Align right (Arabic)" onmousedown="tbCmd(event,'${edId}','alignRight')" type="button"><i class="ph ph-text-align-right"></i></button>
+                <span style="font-size:10px;color:var(--color-text-tertiary)">Direction auto-detected per line</span>
               </div>
-              <div id="${edId}"
-                class="tb-editable"
-                contenteditable="true"
-                data-placeholder="Type here — supports Arabic &amp; English, direction auto-detected…"
-                data-tbid="${id}"
-                oninput="tbEditorInput(this)"
-                onblur="tbEditorSave(this)">${initialHtml}</div>
+              <div class="tb-panes">
+                <div class="tb-pane-edit">
+                  <div class="tb-pane-label">Markdown</div>
+                  <textarea
+                    id="${taId}"
+                    class="tb-textarea"
+                    placeholder="# Heading
+Body paragraph
+- Bullet item
+
+استخدم # للعنوان و - للنقطة"
+                    oninput="tbLivePreview('${taId}','${pvId}')"
+                    onblur="rxSaveTextField('${id}', this.value)">${esc(existingContent)}</textarea>
+                </div>
+                <div class="tb-pane-preview" id="${pvId}">
+                  ${tbPreviewHtml(existingContent)}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -6762,158 +6811,109 @@ async function rxDeleteNoteBlock(nbId) {
    ════════════════════════════════════════════════════════════ */
 
 /* ── Text block toolbar formatter ────────────────────────────── */
-// ── Rich text editor helpers ─────────────────────────────────────────────────
+// ── Text block editor helpers ────────────────────────────────────────────────
 
-// Convert stored markdown (# heading, - bullet) → editor HTML
-function tbMarkdownToHtml(md) {
-  if (!md) return '';
-  const lines = md.split('\n');
-  let html = '';
-  let inUl = false;
-  const hasRtl = str => /[\u0590-\u05FF\u0600-\u06FF]/.test(str);
-  const fontAttr = str => hasRtl(str) ? ' style="font-family:var(--font-ar)"' : '';
-  const closeUl = () => { if (inUl) { html += '</ul>'; inUl = false; } };
-
-  lines.forEach(raw => {
-    const dir = hasRtl(raw) ? 'rtl' : 'ltr';
-    const fa = fontAttr(raw);
-    if (/^# /.test(raw)) {
-      closeUl();
-      html += `<h3 dir="${dir}"${fa}>${escHtml(raw.slice(2).trim())}</h3>`;
-    } else if (/^- /.test(raw)) {
-      if (!inUl) { html += `<ul dir="${dir}">`; inUl = true; }
-      html += `<li dir="${dir}"${fa}>${escHtml(raw.slice(2))}</li>`;
-    } else {
-      closeUl();
-      if (raw.trim()) html += `<p dir="${dir}"${fa}>${escHtml(raw)}</p>`;
-      else html += '<p><br></p>';
-    }
-  });
-  closeUl();
-  return html;
+// Insert a prefix (# or -) at the start of the current line in the textarea
+function tbInsert(taId, prefix) {
+  const ta = document.getElementById(taId);
+  if (!ta) return;
+  const start = ta.selectionStart;
+  const val   = ta.value;
+  const lineStart = val.lastIndexOf('\n', start - 1) + 1;
+  const lineEnd   = val.indexOf('\n', start);
+  const lineEndActual = lineEnd === -1 ? val.length : lineEnd;
+  const line    = val.slice(lineStart, lineEndActual);
+  // Toggle: if line already has this prefix, remove it; else add it
+  const stripped = line.replace(/^(# |- )/, '');
+  const alreadyHas = line.startsWith(prefix);
+  const newLine = alreadyHas ? stripped : prefix + stripped;
+  ta.value = val.slice(0, lineStart) + newLine + val.slice(lineEndActual);
+  const offset = newLine.length - line.length;
+  ta.selectionStart = ta.selectionEnd = Math.max(lineStart, start + offset);
+  ta.focus();
+  // Update auto-dir and preview
+  tbAutoDir(ta);
+  const pvId = taId.replace('tbta-', 'tbpv-');
+  tbLivePreview(taId, pvId);
 }
 
-// Convert editor HTML → stored markdown
-function tbHtmlToMarkdown(el) {
-  let md = '';
-  el.childNodes.forEach(node => {
-    if (node.nodeType === Node.TEXT_NODE) {
-      if (node.textContent.trim()) md += node.textContent.trim() + '\n';
-      return;
-    }
-    const tag = (node.tagName || '').toLowerCase();
-    if (tag === 'h1' || tag === 'h2' || tag === 'h3') {
-      const t = node.textContent.trim();
-      if (t) md += '# ' + t + '\n';
-    } else if (tag === 'ul' || tag === 'ol') {
-      node.querySelectorAll('li').forEach(li => {
-        const t = li.textContent.trim();
-        if (t) md += '- ' + t + '\n';
-      });
-    } else if (tag === 'p' || tag === 'div') {
-      const nested = node.querySelectorAll('ul li, ol li');
-      if (nested.length) {
-        nested.forEach(li => { const t = li.textContent.trim(); if (t) md += '- ' + t + '\n'; });
-      } else {
-        const t = node.textContent.trim();
-        if (t) md += t + '\n';
+// Auto-set textarea direction based on dominant script
+function tbAutoDir(ta) {
+  const val = ta.value;
+  const ar = (val.match(/[\u0600-\u06FF]/g) || []).length;
+  const en = (val.match(/[A-Za-z]/g) || []).length;
+  if (ar > en) {
+    ta.dir = 'rtl';
+    ta.style.fontFamily = 'var(--font-ar)';
+  } else {
+    ta.dir = 'ltr';
+    ta.style.fontFamily = 'var(--mono)';
+  }
+}
+
+// Build preview HTML from markdown — mirrors the app renderer exactly
+function tbPreviewHtml(md) {
+  if (!md || !md.trim()) {
+    return '<div class="tb-preview-empty">Preview will appear here…</div>';
+  }
+  const hasRtl  = str => /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077F]/.test(str);
+  const dirAttr = str => hasRtl(str) ? 'rtl' : 'ltr';
+  const fontStyle = str => hasRtl(str)
+    ? "font-family:'IBM Plex Sans Arabic',sans-serif;"
+    : '';
+
+  const lines = md.split('\n');
+  let html = '';
+  let bullets = [];
+
+  const flushBullets = () => {
+    if (!bullets.length) return;
+    // Use direction of the first bullet to set the list dir
+    const d = dirAttr(bullets[0].text);
+    const lis = bullets.map(({text, d: ld, f}) =>
+      `<li style="text-align:${ld==='rtl'?'right':'left'};${f}" dir="${ld}">${escHtml(text)}</li>`
+    ).join('');
+    html += `<ul class="tb-preview-bullets" dir="${d}">${lis}</ul>`;
+    bullets = [];
+  };
+
+  lines.forEach(raw => {
+    if (/^# /.test(raw)) {
+      flushBullets();
+      const text = raw.slice(2).trim();
+      if (text) {
+        const d = dirAttr(text), f = fontStyle(text);
+        const align = d === 'rtl' ? 'right' : 'left';
+        html += `<div class="tb-preview-heading" style="text-align:${align};${f}" dir="${d}">${escHtml(text)}</div>`;
       }
+    } else if (/^- /.test(raw)) {
+      const text = raw.slice(2);
+      bullets.push({ text, d: dirAttr(text), f: fontStyle(text) });
     } else {
-      const t = node.textContent.trim();
-      if (t) md += t + '\n';
+      flushBullets();
+      const text = raw.trim();
+      if (text) {
+        const d = dirAttr(text), f = fontStyle(text);
+        const align = d === 'rtl' ? 'right' : 'left';
+        html += `<div class="tb-preview-body" style="text-align:${align};${f}" dir="${d}">${escHtml(text)}</div>`;
+      }
     }
   });
-  return md.trimEnd();
+  flushBullets();
+  return html || '<div class="tb-preview-empty">Preview will appear here…</div>';
+}
+
+// Called oninput — updates the live preview pane
+function tbLivePreview(taId, pvId) {
+  const ta = document.getElementById(taId);
+  const pv = document.getElementById(pvId);
+  if (!ta || !pv) return;
+  tbAutoDir(ta);
+  pv.innerHTML = tbPreviewHtml(ta.value);
 }
 
 function escHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-// Toolbar button — onmousedown to avoid stealing focus from the editor
-function tbCmd(event, edId, cmd) {
-  event.preventDefault();
-  const el = document.getElementById(edId);
-  if (!el) return;
-  el.focus();
-
-  if (cmd === 'heading') {
-    const sel = window.getSelection();
-    if (!sel || !sel.rangeCount) return;
-    let block = sel.getRangeAt(0).commonAncestorContainer;
-    while (block && block.parentElement !== el) block = block.parentElement;
-    document.execCommand('formatBlock', false, block && block.tagName === 'H3' ? 'p' : 'h3');
-  } else if (cmd === 'bold')    { document.execCommand('bold',   false, null); }
-  else if (cmd === 'italic')    { document.execCommand('italic', false, null); }
-  else if (cmd === 'bullet')    { document.execCommand('insertUnorderedList', false, null); }
-  else if (cmd === 'ordered')   { document.execCommand('insertOrderedList',   false, null); }
-  else if (cmd === 'alignLeft' || cmd === 'alignRight') {
-    document.execCommand(cmd === 'alignLeft' ? 'justifyLeft' : 'justifyRight', false, null);
-    const sel = window.getSelection();
-    if (sel && sel.rangeCount) {
-      let block = sel.getRangeAt(0).commonAncestorContainer;
-      while (block && block.parentElement !== el) block = block.parentElement;
-      if (block && block !== el) {
-        block.dir = cmd === 'alignLeft' ? 'ltr' : 'rtl';
-        block.style.fontFamily = cmd === 'alignRight' ? 'var(--font-ar)' : '';
-      }
-    }
-  }
-  tbUpdateToolbarState(el);
-  el.dispatchEvent(new Event('input', { bubbles: true }));
-}
-
-// Auto-detect direction of the current paragraph while typing
-function tbEditorInput(el) {
-  const sel = window.getSelection();
-  if (sel && sel.rangeCount) {
-    let block = sel.getRangeAt(0).commonAncestorContainer;
-    while (block && block !== el && block.parentElement !== el) block = block.parentElement;
-    if (block && block !== el) {
-      const text = block.textContent || '';
-      const ar = (text.match(/[\u0600-\u06FF]/g) || []).length;
-      const en = (text.match(/[A-Za-z]/g) || []).length;
-      if (ar > en) {
-        block.dir = 'rtl';
-        block.style.fontFamily = 'var(--font-ar)';
-        if (!['UL','OL'].includes(block.tagName)) block.style.textAlign = 'right';
-      } else if (en > 0) {
-        block.dir = 'ltr';
-        block.style.fontFamily = '';
-        if (!['UL','OL'].includes(block.tagName)) block.style.textAlign = 'left';
-      }
-    }
-  }
-  tbUpdateToolbarState(el);
-}
-
-// Highlight active toolbar state
-function tbUpdateToolbarState(el) {
-  const wrap = el.closest('.tb-editor-wrap');
-  if (!wrap) return;
-  wrap.querySelectorAll('.tb-btn').forEach(b => b.classList.remove('active'));
-  if (document.queryCommandState('bold'))   wrap.querySelector('[title="Bold"]')?.classList.add('active');
-  if (document.queryCommandState('italic')) wrap.querySelector('[title="Italic"]')?.classList.add('active');
-  const sel = window.getSelection();
-  if (sel && sel.rangeCount) {
-    let node = sel.getRangeAt(0).commonAncestorContainer;
-    while (node && node !== el) {
-      if (node.tagName === 'H3') { wrap.querySelector('[title="Heading"]')?.classList.add('active'); break; }
-      if (node.tagName === 'UL') { wrap.querySelector('[title="Bullet list"]')?.classList.add('active'); break; }
-      if (node.tagName === 'OL') { wrap.querySelector('[title="Numbered list"]')?.classList.add('active'); break; }
-      node = node.parentElement;
-    }
-  }
-}
-
-// Save on blur — serialize HTML → markdown
-async function tbEditorSave(el) {
-  const tbId = el.dataset.tbid;
-  if (!tbId) return;
-  const markdown = tbHtmlToMarkdown(el);
-  const tb = _rxTextBlocks.find(b => b.id === tbId);
-  if (tb) tb.content = markdown;
-  await autoSave('rx_text_blocks', tbId, 'content', markdown);
 }
 
 async function rxSaveTextField(tbId, value) {

@@ -7806,16 +7806,20 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   display: flex;
   flex-direction: column;
   gap: 4px;
+  /* Establish a neutral direction baseline — each child overrides via dir= attribute */
+  direction: ltr;
+  unicode-bidi: isolate;
 }
-/* Headings and body lines: direction is set per-element via dir= attribute.
-   text-align follows direction so LTR lines left-align and RTL lines right-align,
-   matching the visual indent of Arabic bullet lists. */
+/* Each element manages its own direction via the dir= attribute set by JS.
+   text-align follows direction: LTR → left, RTL → right.
+   This gives English text proper left margin and Arabic text proper right margin. */
 .cv-rx-text-heading {
   font-size: var(--text-base-size);
   font-weight: 700;
   color: var(--color-text-primary);
   line-height: 1.4;
   margin-top: 4px;
+  unicode-bidi: isolate;
 }
 .cv-rx-text-heading[dir="ltr"] { text-align: left; }
 .cv-rx-text-heading[dir="rtl"] { text-align: right; }
@@ -7825,17 +7829,19 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   font-weight: 400;
   color: var(--color-text-secondary);
   line-height: 1.65;
+  unicode-bidi: isolate;
 }
 .cv-rx-text-body[dir="ltr"] { text-align: left; }
 .cv-rx-text-body[dir="rtl"] { text-align: right; }
-/* Bullet lists: padding always on the leading side of the list's direction */
+/* Bullet lists: indent on the leading side, text-align follows dir */
 .cv-rx-text-bullets {
-  margin: 2px 0 2px 0;
+  margin: 2px 0;
   padding-left: var(--space-5);
   padding-right: 0;
   list-style: disc;
-  text-align: left;
+  unicode-bidi: isolate;
 }
+.cv-rx-text-bullets[dir="ltr"] { text-align: left; }
 .cv-rx-text-bullets[dir="rtl"] {
   padding-left: 0;
   padding-right: var(--space-5);
@@ -7846,8 +7852,8 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   color: var(--color-text-secondary);
   line-height: 1.65;
   margin-bottom: 1px;
+  unicode-bidi: isolate;
 }
-/* Per-li direction — set in JS for mixed-script bullet lists */
 .cv-rx-text-bullets li[dir="ltr"] { text-align: left; }
 .cv-rx-text-bullets li[dir="rtl"] { text-align: right; }
 
