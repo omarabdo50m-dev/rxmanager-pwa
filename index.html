@@ -12441,7 +12441,9 @@ function _resolveRpcItem(item) {
 
   // Resolve alternatives — each alt from the RPC is a full {_type, drug, product, generic}
   // object, so we resolve recursively. Flat legacy shapes are handled as fallback.
-  const resolvedAlts = (pd.alternatives || []).map(alt => {
+  // NOTE: alternatives live on item (top-level of the RPC jsonb item), NOT inside pd
+  // (which is just the raw prescription_drugs DB row and has no alternatives field).
+  const resolvedAlts = (item.alternatives || []).map(alt => {
     if (!alt) return null;
     if (alt.drug || alt.product || alt.generic) {
       return _resolveRpcItem(alt);
@@ -14003,15 +14005,24 @@ function _cvRenderPrescription(rx, agePrefix) {
 
       // Handle rx_text_block
       if (item._type === 'text_block') {
+        // Single unified content field. Direction is auto-detected per line so mixed
+        // EN/AR content renders correctly regardless of the language toggle state.
         const rawContent = item.content || item.content_ar || '';
         if (!rawContent.trim()) return;
 
-        const firstMeaningfulChar = rawContent.trimStart()[0] || '';
-        const isRtl = /[\u0600-\u06FF]/.test(firstMeaningfulChar);
-        const fontFamily = isRtl
-          ? 'font-family:\'IBM Plex Sans Arabic\',\'IBM Plex Sans\',system-ui,sans-serif;'
+        const _hasRtl = str => /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077F]/.test(str);
+        const lineDir  = str => _hasRtl(str) ? 'rtl' : 'ltr';
+        const lineFont = str => _hasRtl(str)
+          ? "font-family:'IBM Plex Sans Arabic','IBM Plex Sans',system-ui,sans-serif;"
           : '';
+        // Block-level direction: whichever script dominates
+        const arabicCount = (rawContent.match(/[\u0600-\u06FF]/g) || []).length;
+        const latinCount  = (rawContent.match(/[A-Za-z]/g) || []).length;
+        const isRtl = arabicCount >= latinCount;
         const dir = isRtl ? 'rtl' : 'ltr';
+        const fontFamily = isRtl
+          ? "font-family:'IBM Plex Sans Arabic','IBM Plex Sans',system-ui,sans-serif;"
+          : '';
 
         // Parse each line: # = heading, - = bullet, else body
         const lines = rawContent.split('\n');
@@ -14020,23 +14031,30 @@ function _cvRenderPrescription(rx, agePrefix) {
 
         const flushBullets = () => {
           if (!bulletBuffer.length) return;
-          const lis = bulletBuffer.map(t => `<li style="${fontFamily}">${esc(t)}</li>`).join('');
+          const lis = bulletBuffer.map(({text, d, f}) => `<li style="${f}" dir="${d}">${esc(text)}</li>`).join('');
           blockHtml += `<ul class="cv-rx-text-bullets" dir="${dir}">${lis}</ul>`;
           bulletBuffer = [];
         };
 
         lines.forEach(rawLine => {
-          const line = rawLine; // preserve leading spaces intentionally stripped only for prefix detection
+          const line = rawLine;
           if (/^# /.test(line)) {
             flushBullets();
             const text = line.slice(2).trim();
-            if (text) blockHtml += `<div class="cv-rx-text-heading" style="${fontFamily}" dir="${dir}">${esc(text)}</div>`;
+            if (text) {
+              const d = lineDir(text), f = lineFont(text);
+              blockHtml += `<div class="cv-rx-text-heading" style="${f}" dir="${d}">${esc(text)}</div>`;
+            }
           } else if (/^- /.test(line)) {
-            bulletBuffer.push(line.slice(2));
+            const text = line.slice(2);
+            bulletBuffer.push({ text, d: lineDir(text), f: lineFont(text) });
           } else {
             flushBullets();
             const text = line.trim();
-            if (text) blockHtml += `<div class="cv-rx-text-body" style="${fontFamily}" dir="${dir}">${esc(text)}</div>`;
+            if (text) {
+              const d = lineDir(text), f = lineFont(text);
+              blockHtml += `<div class="cv-rx-text-body" style="${f}" dir="${d}">${esc(text)}</div>`;
+            }
           }
         });
         flushBullets();

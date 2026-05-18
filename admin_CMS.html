@@ -1424,11 +1424,8 @@ input[dir=rtl], textarea[dir=rtl] {
 }
 .text-block-body { flex: 1; min-width: 0; }
 .text-block-cols {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-3);
+  display: block;
 }
-/* Each language editor pane */
 .text-block-pane {}
 .text-block-toolbar {
   display: flex;
@@ -5776,13 +5773,9 @@ function rxRenderNoteBlockCard(nb, orderBtns) {
 /* ── TEXT BLOCK CARD RENDERER ────────────────────────────────── */
 function rxRenderTextBlockCard(tb, orderBtns) {
   const id = tb.id;
-  const toolbar = (taId) => `
-    <div class="text-block-toolbar">
-      <button class="tb-fmt-btn" title="Heading" onclick="tbFmt('${taId}','heading')" type="button">H</button>
-      <button class="tb-fmt-btn" title="Body" onclick="tbFmt('${taId}','body')" type="button">B</button>
-      <div class="tb-fmt-sep"></div>
-      <button class="tb-fmt-btn" title="Bullet" onclick="tbFmt('${taId}','bullet')" type="button">•</button>
-    </div>`;
+  const taId = 'tbta-' + id;
+  // Existing content — prefer content field; fall back to content_ar for old rows
+  const existingContent = tb.content || tb.content_ar || '';
 
   return `
     <div class="text-block" id="tb-${id}">
@@ -5791,20 +5784,18 @@ function rxRenderTextBlockCard(tb, orderBtns) {
         <div class="row-type-badge row-type-text"><i class="ph ph-text-t"></i> Text</div>
         <div class="text-block-cols">
           <div class="text-block-pane">
-            <div class="drug-row-field-label">Content (EN)</div>
-            ${toolbar('tbta-en-' + id)}
-            <textarea id="tbta-en-${id}" class="text-block-textarea" rows="4"
-              placeholder="# Heading&#10;Body paragraph&#10;- Bullet item"
-              onblur="rxSaveTextField('${id}','content',this.value)">${esc(tb.content ?? '')}</textarea>
-            <div class="text-block-syntax-hint"># Heading &nbsp;·&nbsp; plain Body &nbsp;·&nbsp; - Bullet</div>
-          </div>
-          <div class="text-block-pane">
-            <div class="drug-row-field-label">Content (AR)</div>
-            ${toolbar('tbta-ar-' + id)}
-            <textarea id="tbta-ar-${id}" class="text-block-textarea" rows="4" dir="rtl" style="font-family:var(--font-ar)"
-              placeholder="# عنوان&#10;نص عادي&#10;- عنصر"
-              onblur="rxSaveTextField('${id}','content_ar',this.value)">${esc(tb.content_ar ?? '')}</textarea>
-            <div class="text-block-syntax-hint" dir="rtl" style="font-family:var(--font-ar)">عنوان # &nbsp;·&nbsp; نص عادي &nbsp;·&nbsp; - نقطة</div>
+            <div class="drug-row-field-label">Content</div>
+            <div class="text-block-toolbar">
+              <button class="tb-fmt-btn" title="Heading" onclick="tbFmt('${taId}','heading')" type="button">H</button>
+              <button class="tb-fmt-btn" title="Body" onclick="tbFmt('${taId}','body')" type="button">B</button>
+              <div class="tb-fmt-sep"></div>
+              <button class="tb-fmt-btn" title="Bullet" onclick="tbFmt('${taId}','bullet')" type="button">•</button>
+            </div>
+            <textarea id="${taId}" class="text-block-textarea" rows="5"
+              placeholder="# Heading / عنوان&#10;Body paragraph / نص&#10;- Bullet / - نقطة"
+              oninput="tbAutoDir(this)"
+              onblur="rxSaveTextField('${id}', this.value)">${esc(existingContent)}</textarea>
+            <div class="text-block-syntax-hint"># Heading &nbsp;·&nbsp; plain Body &nbsp;·&nbsp; - Bullet &nbsp;— direction auto-detected per line</div>
           </div>
         </div>
       </div>
@@ -6696,7 +6687,7 @@ async function rxAddNoteBlock() {
   const id = genId();
   const unified = rxBuildUnifiedRows();
   const maxOrder = unified.length ? Math.max(...unified.map(r => r.sort_order ?? 0)) + 1 : 0;
-  const stub = { id, prescription_id: _rxEditId, content: '', content_ar: null, sort_order: maxOrder };
+  const stub = { id, prescription_id: _rxEditId, content: '', sort_order: maxOrder };
   try {
     await SB.insert('rx_note_blocks', stub);
     _rxNoteBlocks.push(stub);
@@ -6760,11 +6751,29 @@ function tbFmt(taId, type) {
   ta.dispatchEvent(new Event('input'));
 }
 
-async function rxSaveTextField(tbId, field, value) {
+// Auto-set textarea direction based on dominant script in current content.
+// Called on every input event so the textarea feels responsive as you type.
+function tbAutoDir(ta) {
+  const val = ta.value;
+  const arabicCount = (val.match(/[؀-ۿ]/g) || []).length;
+  const latinCount  = (val.match(/[A-Za-z]/g) || []).length;
+  if (arabicCount > latinCount) {
+    ta.dir = 'rtl';
+    ta.style.fontFamily = "var(--font-ar)";
+  } else {
+    ta.dir = 'ltr';
+    ta.style.fontFamily = '';
+  }
+}
+
+async function rxSaveTextField(tbId, value) {
+  // Single unified content field — always saves to 'content'.
+  // content_ar is no longer written from the CMS (old rows keep their content_ar
+  // value in DB; the app renderer falls back to it via item.content || item.content_ar).
   const tb = _rxTextBlocks.find(b => b.id === tbId);
-  const v = (field === 'content') ? (value ?? '') : (value === '' ? null : value);
-  if (tb) tb[field] = v;
-  await autoSave('rx_text_blocks', tbId, field, v);
+  const v = value ?? '';
+  if (tb) tb.content = v;
+  await autoSave('rx_text_blocks', tbId, 'content', v);
 }
 
 async function rxAddTextBlock() {
