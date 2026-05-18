@@ -8,7 +8,7 @@
 // ── Cache-bust: if no ?v= param (or wrong version), redirect to ?v=2.6
 // so the browser always fetches the latest file instead of a stale cache.
 (function() {
-  var CURRENT = '2.8';
+  var CURRENT = '2.10';
   var params = new URLSearchParams(window.location.search);
   if (params.get('v') !== CURRENT) {
     params.set('v', CURRENT);
@@ -2924,8 +2924,19 @@ function _checkGatePassword() {
           <div class="form-row-inline">
             <div class="form-row">
               <label class="form-label">Formula</label>
-              <input type="text" id="pf-formula" placeholder="e.g. Tablet, Syrup, Injection"
-                onblur="prodSave('formula',this.value)"/>
+              <select id="pf-formula" onchange="prodSave('formula',this.value||null)">
+                <option value="">— Select formula —</option>
+                <option>Tablet</option><option>Capsule</option><option>Syrup</option>
+                <option>Suspension</option><option>Drops</option><option>Oral Drops</option>
+                <option>Suppository</option><option>Injection (IM)</option>
+                <option>Injection (IV)</option><option>Infusion</option>
+                <option>Eye Drops</option><option>Ear Drops</option>
+                <option>Nasal Spray</option><option>Cream</option><option>Ointment</option>
+                <option>Gel</option><option>Spray</option><option>Inhaler</option>
+                <option>Nebulizer Solution</option><option>Sachet</option>
+                <option>Lozenge</option><option>Solution</option><option>Powder</option>
+                <option>Patch</option><option>Oral Gel</option>
+              </select>
             </div>
             <div class="form-row">
               <label class="form-label">Concentration</label>
@@ -2951,6 +2962,118 @@ function _checkGatePassword() {
               <input type="text" id="pf-dose_ar" dir="rtl" style="font-family:var(--font-ar)"
                 placeholder="الجرعة" onblur="prodSave('dose_ar',this.value)"/>
             </div>
+          </div>
+        </div>
+
+        <!-- PAEDIATRIC DOSING CARD -->
+        <div class="card" style="max-width:var(--admin-panel-max);margin-top:var(--space-4);border-color:var(--color-info)">
+          <div class="form-section-title" style="color:var(--color-info)">👶 Paediatric Dosing</div>
+
+          <!-- Ped Dose EN / AR -->
+          <div class="form-row-inline">
+            <div class="form-row">
+              <label class="form-label">Ped Dose (EN) <span style="font-weight:400;color:var(--color-text-tertiary)">— textbook mg/kg</span></label>
+              <textarea id="pf-ped_dose" rows="2" style="resize:vertical"
+                placeholder="e.g. 10-15 mg/kg/dose"
+                onblur="prodSave('ped_dose',this.value||null)"></textarea>
+            </div>
+            <div class="form-row">
+              <label class="form-label">Ped Dose (AR)</label>
+              <textarea id="pf-ped_dose_ar" rows="2" dir="rtl" style="resize:vertical;font-family:var(--font-ar)"
+                placeholder="١٠-١٥ مغ/كغ/جرعة"
+                onblur="prodSave('ped_dose_ar',this.value||null)"></textarea>
+            </div>
+          </div>
+
+          <!-- Loading Dose -->
+          <div class="form-row">
+            <label class="form-label">Loading Dose <span style="font-weight:400;color:var(--color-text-tertiary)">— LD+MD drugs only, leave blank otherwise</span></label>
+            <textarea id="pf-ped_loading_dose" rows="2" style="resize:vertical"
+              placeholder="e.g. Wt/2 ml now, then Wt/4 ml after 8h"
+              onblur="prodSave('ped_loading_dose',this.value||null)"></textarea>
+          </div>
+
+          <!-- Shortcut -->
+          <div class="form-row">
+            <label class="form-label">Shortcut <span style="font-weight:400;color:var(--color-text-tertiary)">— Arabic display string shown to doctor. If blank, app computes from Wt/X fields below.</span></label>
+            <textarea id="pf-ped_shortcut" rows="2"
+              placeholder="e.g. Wt/4 ml every 6-8h"
+              onblur="prodSave('ped_shortcut',this.value||null)"></textarea>
+          </div>
+
+          <!-- Wt/X Calculator Fields -->
+          <div class="form-row">
+            <label class="form-label">Wt/X Calculator</label>
+            <div style="display:grid;grid-template-columns:auto auto auto auto auto auto auto;align-items:center;gap:var(--space-2);flex-wrap:wrap;margin-bottom:var(--space-2)">
+              <span style="font-size:var(--text-xs-size);color:var(--color-text-secondary);font-weight:600">Multiplier</span>
+              <input type="number" id="pf-ped_wt_multiplier" min="1" max="9" value="1"
+                style="width:64px;text-align:center"
+                oninput="prodSave('ped_wt_multiplier',+this.value||null);_pedUpdatePreview()"
+                onchange="_pedUpdatePreview()"/>
+              <span style="color:var(--color-text-tertiary);padding:0 4px">× Wt ÷</span>
+              <span style="font-size:var(--text-xs-size);color:var(--color-text-secondary);font-weight:600">Divisor</span>
+              <input type="number" id="pf-ped_wt_divisor" min="1" max="99"
+                style="width:64px;text-align:center"
+                placeholder="e.g. 4"
+                oninput="prodSave('ped_wt_divisor',+this.value||null);_pedUpdatePreview()"
+                onchange="_pedUpdatePreview()"/>
+              <span style="color:var(--color-text-tertiary);padding:0 4px">= dose in</span>
+              <select id="pf-ped_wt_unit" onchange="prodSave('ped_wt_unit',this.value||null);_pedUpdatePreview()">
+                <option value="">— unit —</option>
+                <option value="ml">ml</option>
+                <option value="drop">drop</option>
+                <option value="tab">tab</option>
+                <option value="supp">supp</option>
+                <option value="amp">amp</option>
+                <option value="vial">vial</option>
+                <option value="unit">unit</option>
+                <option value="puff">puff</option>
+                <option value="sachet">sachet</option>
+                <option value="spoon">spoon</option>
+              </select>
+            </div>
+            <div id="ped-wt-preview" style="font-size:var(--text-xs-size);color:var(--color-info);padding:var(--space-2);background:var(--color-info-light);border-radius:var(--radius-sm);border:1px solid var(--color-info);display:none"></div>
+          </div>
+
+          <!-- Frequency + Age/Weight Limit -->
+          <div class="form-row-inline">
+            <div class="form-row">
+              <label class="form-label">Frequency</label>
+              <select id="pf-ped_freq" onchange="prodSave('ped_freq',this.value||null)">
+                <option value="">— Select —</option>
+                <option value="q4h">q4h — Every 4 hours</option>
+                <option value="q6h">q6h — Every 6 hours</option>
+                <option value="q6-8h">q6-8h — Every 6–8 hours</option>
+                <option value="q8h">q8h — Every 8 hours</option>
+                <option value="q8-12h">q8-12h — Every 8–12 hours</option>
+                <option value="q12h">q12h — Every 12 hours</option>
+                <option value="q24h">q24h — Once daily</option>
+                <option value="single">single — Single dose only</option>
+                <option value="single-morning">single-morning — Single dose before breakfast</option>
+                <option value="before-sleep">before-sleep — Once at bedtime</option>
+                <option value="as-needed">as-needed — When needed</option>
+                <option value="stat">stat — Immediate emergency dose</option>
+                <option value="q3-4weeks">q3-4weeks — Every 3–4 weeks</option>
+                <option value="3x-weekly">3x-weekly — Three times per week</option>
+                <option value="2x-weekly">2x-weekly — Two times per week</option>
+                <option value="digitalization">digitalization — Digitalization protocol</option>
+                <option value="infusion-rate">infusion-rate — Continuous IV infusion</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label class="form-label">Age / Weight Limit</label>
+              <input type="text" id="pf-ped_age_limit"
+                placeholder="e.g. >2 years, <27 kg ½ vial"
+                onblur="prodSave('ped_age_limit',this.value||null)"/>
+            </div>
+          </div>
+
+          <!-- Source -->
+          <div class="form-row">
+            <label class="form-label">Source</label>
+            <input type="text" id="pf-ped_source"
+              placeholder="Ref3awiat — Hegazy (2025)"
+              onblur="prodSave('ped_source',this.value||null)"/>
           </div>
         </div>
 
@@ -5782,6 +5905,51 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
             }
             return '';
           })()}
+          ${(function(){
+            // CMS Change 6: Wt/X ped dose hint
+            const rxRec   = _PRESCRIPTIONS.find(p => p.id === _rxEditId);
+            const condRec = _COND_MAP[rxRec?.condition_id];
+            if (condRec?.age_group !== 'paediatric') return '';
+            const prod      = _PRODUCT_MAP[row.product_id];
+            const divisor   = prod?.ped_wt_divisor;
+            const multi     = prod?.ped_wt_multiplier || 1;
+            const unit      = prod?.ped_wt_unit || 'ml';
+            const freq      = prod?.ped_freq || '';
+            const shortcut  = prod?.ped_shortcut || '';
+            const pedDoseEn = prod?.ped_dose || _DRUG_MAP[row.drug_id]?.ped_dose || '';
+            // If no ped data at all yet, show a plain paeds indicator
+            if (!divisor && !shortcut && !pedDoseEn) {
+              return `<div style="display:flex;align-items:center;gap:var(--space-2);
+                      font-size:var(--text-xs-size);color:var(--color-info);
+                      background:var(--color-info-light);border:1px solid var(--color-info);
+                      border-radius:var(--radius-sm);padding:var(--space-2);margin-top:var(--space-1)">
+                <i class="ph ph-baby" style="font-size:14px;flex-shrink:0"></i>
+                <span style="font-weight:700">Paediatric condition</span>
+                <span style="color:var(--color-text-tertiary)">— no ped dose data on this product yet. Add it in the Products panel.</span>
+              </div>`;
+            }
+            const formula = shortcut || (divisor
+              ? (multi > 1 ? `Wt × ${multi} ÷ ${divisor} ${unit}` : `Wt ÷ ${divisor} ${unit}`)
+              : pedDoseEn);
+            const example = divisor
+              ? ` (e.g. 16 kg → ${Math.round((16 * multi) / divisor * 10) / 10} ${unit})`
+              : '';
+            const freqLabel = freq ? `   ${freq}` : '';
+            return `<div style="display:flex;align-items:flex-start;gap:var(--space-2);flex-wrap:wrap;
+                    font-size:var(--text-xs-size);color:var(--color-info);
+                    background:var(--color-info-light);border:1px solid var(--color-info);
+                    border-radius:var(--radius-sm);padding:var(--space-2);margin-top:var(--space-1)">
+              <i class="ph ph-baby" style="font-size:14px;flex-shrink:0;margin-top:1px"></i>
+              <span style="font-weight:700">Ped dose:</span>
+              <span>${esc(formula)}${esc(freqLabel)}</span>
+              ${example ? `<span style="color:var(--color-text-tertiary)">${esc(example)}</span>` : ''}
+              ${divisor ? `<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:1px 6px;height:auto;margin-left:auto"
+                onclick="rxFillDoseFromRef('${row.id}','${esc(formula)}','')"
+                title="Fill Wt/X formula into dose field">
+                <i class="ph ph-arrow-down-left"></i> Fill Wt/X
+              </button>` : ''}
+            </div>`;
+          })()}
           <div>
             <div class="drug-row-field-label">Drug Note</div>
             <input type="text" value="${esc(row.drug_note ?? '')}" placeholder="Optional note"
@@ -6343,6 +6511,20 @@ async function prescriptionEdit(id) {
   document.getElementById('rx-edit-view').style.display = '';
 
   document.getElementById('rx-edit-title').textContent = rx.iteration_label || 'Untitled';
+
+  // CMS Change 5: Paeds badge
+  const _rxCond = _COND_MAP[rx.condition_id];
+  let pedsBadgeEl = document.getElementById('rx-paeds-badge');
+  if (!pedsBadgeEl) {
+    pedsBadgeEl = document.createElement('span');
+    pedsBadgeEl.id = 'rx-paeds-badge';
+    document.getElementById('rx-edit-title').after(pedsBadgeEl);
+  }
+  if (_rxCond?.age_group === 'paediatric') {
+    pedsBadgeEl.innerHTML = `<span style="background:var(--color-info-light);color:var(--color-info);border:1px solid var(--color-info);border-radius:var(--radius-full);padding:2px 10px;font-size:11px;font-weight:800;margin-left:8px">👶 PAEDIATRIC</span>`;
+  } else {
+    pedsBadgeEl.innerHTML = '';
+  }
 
   document.getElementById('rx-pub-toggle-wrap').innerHTML =
     `<div class="toggle-wrap">
@@ -7418,13 +7600,26 @@ async function pickerConfirm() {
       const maxOrder = unified.length ? Math.max(...unified.map(r => r.sort_order ?? 0)) + 1 : 0;
       const productDefaults = _PRODUCT_MAP[product_id];
       const drugDefaults    = _DRUG_MAP[drug_id];
+
+      // Age-aware dose cascade
+      const parentCond = _COND_MAP[_PRESCRIPTIONS.find(p => p.id === _rxEditId)?.condition_id];
+      const isPaeds    = parentCond?.age_group === 'paediatric';
+      let dose, dose_ar;
+      if (isPaeds) {
+        dose    = productDefaults?.ped_dose    || drugDefaults?.ped_dose    || null;
+        dose_ar = productDefaults?.ped_dose_ar || drugDefaults?.ped_dose_ar || null;
+      } else {
+        dose    = productDefaults?.dose    || drugDefaults?.dose    || null;
+        dose_ar = productDefaults?.dose_ar || drugDefaults?.dose_ar || null;
+      }
+
       const stub = {
         id,
         prescription_id:   _rxEditId,
         drug_id,
         product_id,
-        dose:              productDefaults?.dose    || drugDefaults?.dose    || null,
-        dose_ar:           productDefaults?.dose_ar || drugDefaults?.dose_ar || null,
+        dose,
+        dose_ar,
         drug_note:         null,
         sort_order:        maxOrder,
         is_alternative:    false,
@@ -7515,11 +7710,34 @@ function nbRenderRows() {
             value="${esc(row.conc)}"
             autocomplete="off"
             oninput="nbSyncRow(${rid},'conc',this.value)"/>
-          <input type="text"
-            placeholder="Formula (e.g. tablet, syrup)"
-            value="${esc(row.formula)}"
-            autocomplete="off"
-            oninput="nbSyncRow(${rid},'formula',this.value)"/>
+          <select oninput="nbSyncRow(${rid},'formula',this.value)" onchange="nbSyncRow(${rid},'formula',this.value)">
+            <option value="">— Formula —</option>
+            <option ${row.formula==='Tablet'?'selected':''}>Tablet</option>
+            <option ${row.formula==='Capsule'?'selected':''}>Capsule</option>
+            <option ${row.formula==='Syrup'?'selected':''}>Syrup</option>
+            <option ${row.formula==='Suspension'?'selected':''}>Suspension</option>
+            <option ${row.formula==='Drops'?'selected':''}>Drops</option>
+            <option ${row.formula==='Oral Drops'?'selected':''}>Oral Drops</option>
+            <option ${row.formula==='Suppository'?'selected':''}>Suppository</option>
+            <option ${row.formula==='Injection (IM)'?'selected':''}>Injection (IM)</option>
+            <option ${row.formula==='Injection (IV)'?'selected':''}>Injection (IV)</option>
+            <option ${row.formula==='Infusion'?'selected':''}>Infusion</option>
+            <option ${row.formula==='Eye Drops'?'selected':''}>Eye Drops</option>
+            <option ${row.formula==='Ear Drops'?'selected':''}>Ear Drops</option>
+            <option ${row.formula==='Nasal Spray'?'selected':''}>Nasal Spray</option>
+            <option ${row.formula==='Cream'?'selected':''}>Cream</option>
+            <option ${row.formula==='Ointment'?'selected':''}>Ointment</option>
+            <option ${row.formula==='Gel'?'selected':''}>Gel</option>
+            <option ${row.formula==='Spray'?'selected':''}>Spray</option>
+            <option ${row.formula==='Inhaler'?'selected':''}>Inhaler</option>
+            <option ${row.formula==='Nebulizer Solution'?'selected':''}>Nebulizer Solution</option>
+            <option ${row.formula==='Sachet'?'selected':''}>Sachet</option>
+            <option ${row.formula==='Lozenge'?'selected':''}>Lozenge</option>
+            <option ${row.formula==='Solution'?'selected':''}>Solution</option>
+            <option ${row.formula==='Powder'?'selected':''}>Powder</option>
+            <option ${row.formula==='Patch'?'selected':''}>Patch</option>
+            <option ${row.formula==='Oral Gel'?'selected':''}>Oral Gel</option>
+          </select>
           <button class="btn-icon" title="Remove row"
             style="${canDelete ? '' : 'visibility:hidden'}"
             onclick="nbRemoveRow(${rid})">
@@ -8987,6 +9205,19 @@ async function prodEdit(id) {
   document.getElementById('pf-dose_ar').value      = p.dose_ar      ?? '';
   document.getElementById('pf-last_updated').value = p.last_updated ?? '';
 
+  // Paediatric dosing fields
+  document.getElementById('pf-ped_dose').value          = p.ped_dose          ?? '';
+  document.getElementById('pf-ped_dose_ar').value       = p.ped_dose_ar       ?? '';
+  document.getElementById('pf-ped_loading_dose').value  = p.ped_loading_dose  ?? '';
+  document.getElementById('pf-ped_shortcut').value      = p.ped_shortcut      ?? '';
+  document.getElementById('pf-ped_wt_multiplier').value = p.ped_wt_multiplier ?? 1;
+  document.getElementById('pf-ped_wt_divisor').value    = p.ped_wt_divisor    ?? '';
+  document.getElementById('pf-ped_wt_unit').value       = p.ped_wt_unit       ?? '';
+  document.getElementById('pf-ped_freq').value          = p.ped_freq          ?? '';
+  document.getElementById('pf-ped_age_limit').value     = p.ped_age_limit     ?? '';
+  document.getElementById('pf-ped_source').value        = p.ped_source        ?? 'Ref3awiat — Hegazy (2025)';
+  _pedUpdatePreview();
+
   document.getElementById('app-main').scrollTop = 0;
 }
 
@@ -9074,6 +9305,23 @@ function prodBuildDrugSelect(currentDrugId) {
 
 /* ── Save helpers ────────────────────────────────────────────── */
 const _PROD_NOT_NULL = new Set(['brand', 'drug_id']);
+
+/** Live Wt/X preview in the product ped card */
+function _pedUpdatePreview() {
+  const el = document.getElementById('ped-wt-preview');
+  if (!el) return;
+  const multiplier = parseInt(document.getElementById('pf-ped_wt_multiplier')?.value) || 1;
+  const divisor    = parseInt(document.getElementById('pf-ped_wt_divisor')?.value);
+  const unit       = document.getElementById('pf-ped_wt_unit')?.value || 'ml';
+  if (!divisor) { el.style.display = 'none'; return; }
+  const exampleWeight = 16;
+  const exampleDose   = Math.round((exampleWeight * multiplier) / divisor * 10) / 10;
+  const formula = multiplier > 1
+    ? `Wt × ${multiplier} ÷ ${divisor} = dose ${unit}`
+    : `Wt ÷ ${divisor} = dose ${unit}`;
+  el.textContent = `Preview: "${formula}" — for ${exampleWeight} kg child → ${exampleDose} ${unit}`;
+  el.style.display = 'block';
+}
 
 async function prodSave(field, value) {
   if (!_prodEditId) return;
