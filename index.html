@@ -7807,6 +7807,9 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   flex-direction: column;
   gap: 4px;
 }
+/* Headings and body lines: direction is set per-element via dir= attribute.
+   text-align follows direction so LTR lines left-align and RTL lines right-align,
+   matching the visual indent of Arabic bullet lists. */
 .cv-rx-text-heading {
   font-size: var(--text-base-size);
   font-weight: 700;
@@ -7814,6 +7817,8 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   line-height: 1.4;
   margin-top: 4px;
 }
+.cv-rx-text-heading[dir="ltr"] { text-align: left; }
+.cv-rx-text-heading[dir="rtl"] { text-align: right; }
 .cv-rx-text-heading:first-child { margin-top: 0; }
 .cv-rx-text-body {
   font-size: var(--text-sm-size);
@@ -7821,14 +7826,20 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   color: var(--color-text-secondary);
   line-height: 1.65;
 }
+.cv-rx-text-body[dir="ltr"] { text-align: left; }
+.cv-rx-text-body[dir="rtl"] { text-align: right; }
+/* Bullet lists: padding always on the leading side of the list's direction */
 .cv-rx-text-bullets {
   margin: 2px 0 2px 0;
   padding-left: var(--space-5);
+  padding-right: 0;
   list-style: disc;
+  text-align: left;
 }
 .cv-rx-text-bullets[dir="rtl"] {
   padding-left: 0;
   padding-right: var(--space-5);
+  text-align: right;
 }
 .cv-rx-text-bullets li {
   font-size: var(--text-sm-size);
@@ -7836,6 +7847,9 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   line-height: 1.65;
   margin-bottom: 1px;
 }
+/* Per-li direction — set in JS for mixed-script bullet lists */
+.cv-rx-text-bullets li[dir="ltr"] { text-align: left; }
+.cv-rx-text-bullets li[dir="rtl"] { text-align: right; }
 
 /* Duration bar — Phase 10: compact inline badge inside card */
 .cv-rx-duration-bar {
