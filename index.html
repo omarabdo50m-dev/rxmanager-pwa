@@ -11056,45 +11056,52 @@ function closeScreen(id) {
   }, 160);
 }
 window.addEventListener('popstate', (e) => {
-  // ── Phase 1A fix: explicit priority order so each back press
-  //    closes exactly ONE screen in the correct sequence.
+  // ── Navigation priority — each back press closes exactly ONE thing.
+  //
+  // KEY INSIGHT: e.state is the state of the entry we LANDED ON after
+  // popping, not the one we left. Tab sentinel entries {tab:view} can
+  // sit between screen entries, so we must check what's visually open
+  // BEFORE deciding to bail on a tab entry.
 
-  // 0. Phase 2B: tab sentinel — setView('lib'/'fav') pushes {tab:view}.
-  //    When back is pressed on a root peer tab, this entry is what gets
-  //    popped. We simply return: the browser already moved back, the DOM
-  //    is correct (peer tab is still showing), nothing needs closing.
-  //    On Android this lets the OS eventually exit the app naturally.
-  if (e.state && e.state.tab) return;
-
-  // 1. Lightbox closes first — always, regardless of what else is open
+  // 1. Lightbox — always highest priority
   const lightboxOverlay = document.getElementById('lightboxOverlay');
   if (lightboxOverlay && lightboxOverlay.classList.contains('open')) {
     _closeLightboxSilent();
     return;
   }
 
-  // 2. Drug Viewer — close it explicitly by ID so it never gets skipped
-  //    when Condition Viewer is also open underneath it.
-  //    Without this, querySelector('.screen.open') could grab condViewerScr
-  //    first (DOM order) and close the wrong screen.
+  // 2. Drug Viewer — explicit ID check so it's never skipped when
+  //    Condition Viewer is also open underneath it.
   const dvScr = document.getElementById('drugViewerScr');
   if (dvScr && dvScr.classList.contains('open')) {
     _dvFormulaFilter && _dvFormulaFilter.clear();
     _dvFormulaPanelOpen = false;
-    closeScreen('drugViewerScr');
+    _closeDrugViewer();
     return;
   }
 
-  // 3. Lib list → grid (internal state, no separate screen element)
+  // 3. Any other overlay screen (condViewerScr, settingsScr, etc.)
+  //    Must run BEFORE the tab-sentinel check — a viewer opened from
+  //    Favs/Drugs leaves a {tab} entry underneath its {screen} entry.
+  //    If we returned early on {tab} we'd absorb the back press without
+  //    closing the visible screen.
+  const open = document.querySelector('.screen.open');
+  if (open && open.id !== 'libScr' && open.id !== 'favsScr') {
+    closeScreen(open.id);
+    return;
+  }
+
+  // 4. Lib list → grid (internal state, no separate screen element)
   if (S.view === 'lib' && S.libView === 'list') {
     exitToGrid();
     return;
   }
 
-  // 4. Any other overlay screen (condViewerScr, settingsScr, etc.)
-  //    lib/fav are peer tabs — never close them via back
-  const open = document.querySelector('.screen.open');
-  if (open && open.id !== 'libScr' && open.id !== 'favsScr') closeScreen(open.id);
+  // 5. Tab sentinel — we've landed on a {tab} entry with nothing open.
+  //    This is the genuine "back from a tab root" case. Do nothing:
+  //    the peer tab stays visible, and on Android the OS will eventually
+  //    exit the app if the user keeps pressing back past the initial entry.
+  if (e.state && e.state.tab) return;
 });
 
 // ═══════════════════════════════════════════════════════
@@ -11163,7 +11170,6 @@ function setView(view) {
     }
     renderMain();
   } else if (view === 'fav') {
-    document.querySelector('#favsScr .favs-scroll-body')?.scrollTo({ top: 0 });
     renderFavourites();
   } else {
     const hasLibSearch = (document.getElementById('libSearch')?.value || '').trim().length > 0;
@@ -11182,29 +11188,33 @@ function setView(view) {
 
 // ═══════════════════════════════════════════════════════
 // ── Phase 1B: Favourites → viewer helper
-//    Saves scroll position, opens viewer, then hides favsScr
-//    with a small delay so the viewer animation always starts
-//    first — prevents the flash of empty screen.
+//    Saves scroll position, opens viewer, then hides favsScr.
+//    For conditions (no await before openScreen): hide after 40ms —
+//    viewer animation is already running by then.
+//    For drugs (await ensureSearchIndex before openScreen): set a flag
+//    that openDrugViewer checks after openScreen, so favsScr only hides
+//    once the viewer is actually visible — eliminates the flash.
 // ═══════════════════════════════════════════════════════
 let _favsScrollSave = 0;
+let _hideFavsAfterDrugOpen = false;
 
 function _openViewerFromFavs(type, id) {
   // Save current Favourites scroll position before anything moves
   const favsBody = document.querySelector('#favsScr .favs-scroll-body');
   _favsScrollSave = favsBody ? favsBody.scrollTop : 0;
 
-  // Start the viewer open animation first
   if (type === 'condition') {
+    // openConditionViewer calls openScreen synchronously — safe to hide after 40ms
     openConditionViewer(id);
+    setTimeout(() => {
+      document.getElementById('favsScr').classList.remove('peer-open');
+    }, 40);
   } else {
+    // openDrugViewer awaits ensureSearchIndex before openScreen.
+    // Set flag; openDrugViewer will hide favsScr itself after openScreen.
+    _hideFavsAfterDrugOpen = true;
     openDrugViewer(id);
   }
-
-  // Hide Favourites after a short delay so viewer is already animating in
-  // — guarantees something is always visible, eliminating the flash
-  setTimeout(() => {
-    document.getElementById('favsScr').classList.remove('peer-open');
-  }, 40);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -16646,6 +16656,11 @@ async function openDrugViewer(id) {
   setDvLang(_dvLang);
   openScreen('drugViewerScr');
   history.replaceState({ screen: 'drugViewerScr', id: id }, '', '#drug=' + id);
+  // Phase 1B: if opened from Favs, hide favsScr now that the viewer is visible
+  if (_hideFavsAfterDrugOpen) {
+    _hideFavsAfterDrugOpen = false;
+    document.getElementById('favsScr').classList.remove('peer-open');
+  }
 }
 
 // ── Phase 12: pregnancy cell builder using token classes ──
