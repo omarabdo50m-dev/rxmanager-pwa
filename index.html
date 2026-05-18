@@ -1565,8 +1565,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   -webkit-tap-highlight-color: transparent;
 }
 .cc-card--interactive:active {
-  transform: scale(.985);
-  box-shadow: none;
+  transform: scale(.983);
 }
 
 .cc-card--brand {
@@ -1786,17 +1785,25 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 }
 
 .cc-collapsible__body {
-  overflow: hidden;
-  max-height: 0;
+  /* grid-template-rows hack: 0fr → 1fr avoids animating max-height
+     (which forces layout reflow on every frame). The inner div's
+     min-height:0 is the key constraint that makes it work.
+     Supported in all modern Android WebViews (Chrome 104+).       */
+  display: grid;
+  grid-template-rows: 0fr;
   opacity: 0;
-  transition: max-height .28s ease, opacity .18s ease;
+  transition:
+    grid-template-rows 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms ease;
 }
 .cc-collapsible__body.open {
-  max-height: none; /* JS sets explicit px value during animation */
+  grid-template-rows: 1fr;
   opacity: 1;
 }
-
+/* Inner wrapper MUST have min-height:0 for the grid trick to work */
 .cc-collapsible__inner {
+  min-height: 0;
+  overflow: hidden;
   padding: var(--space-3) var(--space-4) var(--space-4);
 }
 
@@ -2922,8 +2929,9 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   min-height:68px;                  /* ~14% taller than previous 56px target */
 }
 .rx-card:active{
-  transform:scale(.985);
-  box-shadow: none;
+  transform:scale(.983);
+  /* No box-shadow transition — shadow animates on GPU but still triggers
+     compositing cost on older Android. transform only is sufficient. */
 }
 /* Left icon circle */
 .rx-stripe{ display:none; }
@@ -3067,14 +3075,188 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .fab:active{transform:scale(.86)}
 @keyframes fab-pop-in{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
 
-/* ── SCREENS ────────────────────────── */
-.screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;flex-direction:column;max-width:480px;margin:0 auto;opacity:0;transform:translateX(100%);transition:opacity .22s ease,transform .28s cubic-bezier(.32,.72,0,1)}
-.screen.open{display:flex}
-.screen.scr-visible{opacity:1;transform:translateX(0)}
-.screen.scr-out{opacity:0;transform:translateX(-22%);pointer-events:none;transition:opacity .2s ease,transform .25s cubic-bezier(.32,.72,0,1)}
-/* Peer nav screens — sit alongside home, no z-index stack, no slide-in */
-#libScr,#favsScr{position:fixed;inset:0;z-index:10;background:var(--color-bg);display:none;flex-direction:column;max-width:480px;margin:0 auto;animation:none;overflow:hidden}
-#libScr.peer-open,#favsScr.peer-open{display:flex}
+/* ═══════════════════════════════════════════════════════════════
+   MOTION SYSTEM v2 — Layered Screen Stack
+   ═══════════════════════════════════════════════════════════════
+
+   DESIGN PRINCIPLES
+   ─────────────────
+   • Only transform + opacity animate — GPU-only, zero layout thrash.
+   • Four navigation types each have their own motion signature:
+       1. Drill-down push   (Home → CV → DV)        horizontal push
+       2. Modal / Settings                            vertical rise
+       3. Peer tabs (Home / Library / Favs)           crossfade only
+       4. Back navigation                             reverse push, faster
+   • Background screens get a subtle depth treatment when a new
+     screen pushes on top: scale(0.985) + opacity(0.94), evoking
+     the native iOS layered-card metaphor without heavy blur.
+   • Easing: cubic-bezier(0.22, 1, 0.36, 1) — decelerate-out.
+     Feels authoritative; no bounce, no rubber-band.
+   • Durations calibrated for Android 60 Hz:
+       Enter push:   280ms
+       Exit (back):  220ms  (faster = lighter, more responsive)
+       Modal rise:   260ms
+       Tab fade:     140ms  (near-instant — tabs aren't navigation)
+
+   STATE CLASSES
+   ─────────────
+   .is-entering  — screen sliding/fading in (added by openScreen)
+   .is-active    — screen is fully visible and interactive
+   .is-exiting   — screen leaving viewport (back or replaced)
+   .is-under     — background screen pushed back in the stack
+   .open         — display:flex gate (keeps backward compat)
+   .scr-visible  — legacy alias → .is-active  (kept for any stale refs)
+   .scr-out      — legacy alias → .is-exiting (kept for any stale refs)
+
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── SHARED BASE ──────────────────────────────────────────────── */
+.screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--color-bg);
+  z-index: 200;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex-direction: column;
+  max-width: 480px;
+  margin: 0 auto;
+  /* Default (drill-down) entering state */
+  opacity: 0;
+  transform: translateX(24px) scale(0.994);
+  /* will-change declared once here; browser promotes the layer for the whole lifecycle */
+  will-change: transform, opacity;
+}
+
+/* ── DISPLAY GATE ─────────────────────────────────────────────── */
+.screen.open { display: flex; }
+
+/* ── ENTERING — slide in from right ─────────────────────────── */
+/* Applied during the double-rAF window so the browser has a
+   committed "from" state before the transition begins.         */
+.screen.is-entering {
+  opacity: 0;
+  transform: translateX(24px) scale(0.994);
+  transition: none; /* no transition during staging */
+}
+
+/* ── ACTIVE — fully on-screen ────────────────────────────────── */
+.screen.is-active,
+.screen.scr-visible {  /* .scr-visible kept as legacy alias */
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  transition:
+    opacity  280ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: auto; /* release GPU layer once settled */
+}
+
+/* ── EXITING — slide out to left on back navigation ─────────── */
+.screen.is-exiting,
+.screen.scr-out {  /* .scr-out kept as legacy alias */
+  opacity: 0;
+  transform: translateX(-18px) scale(0.994);
+  pointer-events: none;
+  transition:
+    opacity   220ms cubic-bezier(0.32, 0, 0.67, 0),
+    transform 220ms cubic-bezier(0.32, 0, 0.67, 0);
+  will-change: transform, opacity;
+}
+
+/* ── UNDER — background screen pushed back in the stack ─────── */
+/* Scale + dim applied while an overlay is in front.
+   Transition here covers the ENTER path (going forward) —
+   the background recedes smoothly as the new screen slides in.
+   On BACK, the under-screen is restored after the exit animation
+   finishes (see closeScreen JS), so the transition: none override
+   via .is-restoring ensures it snaps back instantly with no
+   visible scale-up animation.                                   */
+.screen.is-under {
+  opacity: 0.93;
+  transform: scale(0.984);
+  pointer-events: none;
+  transition:
+    opacity   280ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Applied just before removing .is-under on back — prevents the
+   scale(0.984) → scale(1) from animating visibly after exit.    */
+.screen.is-restoring {
+  transition: none !important;
+}
+
+/* ── MODAL VARIANT — rises from bottom ───────────────────────── */
+/* Settings screen and any other vertical-entry overlays.
+   Class added by JS: screen.classList.add('screen--modal')     */
+.screen.screen--modal.is-entering {
+  opacity: 0;
+  transform: translateY(32px) scale(0.98);
+  transition: none;
+}
+.screen.screen--modal.is-active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition:
+    opacity   260ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.screen.screen--modal.is-exiting {
+  opacity: 0;
+  transform: translateY(28px) scale(0.98);
+  transition:
+    opacity   200ms cubic-bezier(0.32, 0, 0.67, 0),
+    transform 200ms cubic-bezier(0.32, 0, 0.67, 0);
+}
+
+/* ── PEER TAB VARIANT — fade only, no spatial movement ──────── */
+/* Library and Favourites screens sit alongside Home.
+   No slide — they're peers, not children in a stack.
+   Transition handled by setView(); these are just the
+   CSS end-states.                                               */
+#libScr,
+#favsScr {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: var(--color-bg);
+  display: none;
+  flex-direction: column;
+  max-width: 480px;
+  margin: 0 auto;
+  overflow: hidden;
+  opacity: 0;
+  transform: none; /* tabs never slide */
+  transition: opacity 140ms ease;
+  will-change: opacity;
+}
+#libScr.peer-open,
+#favsScr.peer-open {
+  display: flex;
+  opacity: 1;
+  transition: opacity 140ms ease;
+  will-change: auto;
+}
+
+/* ── REDUCED MOTION OVERRIDES ────────────────────────────────── */
+/* Collapsed in the global prefers-reduced-motion block above,
+   but also guard the will-change declarations explicitly.       */
+@media (prefers-reduced-motion: reduce) {
+  .screen,
+  .screen.is-entering,
+  .screen.is-active,
+  .screen.is-exiting,
+  .screen.is-under,
+  .screen.scr-visible,
+  .screen.scr-out,
+  #libScr,
+  #favsScr {
+    transition: none !important;
+    will-change: auto !important;
+  }
+}
+/* Peer nav scrollable bodies */
 #libScr .lib-scroll-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 #favsScr .favs-scroll-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 /* Peer nav screen title — matches home "What are you looking for?" style exactly */
@@ -3328,13 +3510,17 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 
 /* Collapsible body */
 .fav-body {
-  overflow: hidden;
-  transition: max-height .28s ease, opacity .18s ease;
-  max-height: 0;
+  display: grid;
+  grid-template-rows: 0fr;
   opacity: 0;
+  overflow: hidden;
+  transition:
+    grid-template-rows 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms ease;
 }
+.fav-body > * { min-height: 0; }
 .fav-body.open {
-  max-height: 1200px;
+  grid-template-rows: 1fr;
   opacity: 1;
 }
 
@@ -5060,8 +5246,9 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 .clinical-hdr-title{font-size:12px;font-weight:800;color:var(--text);text-transform:uppercase;letter-spacing:.5px}
 .clinical-hdr-arrow{font-size:14px;color:var(--muted);transition:transform .2s}
 .clinical-hdr-arrow.open{transform:rotate(90deg)}
-.clinical-body{overflow:hidden;transition:max-height .3s ease,opacity .2s ease;max-height:0;opacity:0}
-.clinical-body.open{max-height:1200px;opacity:1}
+.clinical-body{display:grid;grid-template-rows:0fr;opacity:0;overflow:hidden;transition:grid-template-rows 260ms cubic-bezier(0.22,1,0.36,1),opacity 200ms ease}
+.clinical-body>*{min-height:0}
+.clinical-body.open{grid-template-rows:1fr;opacity:1}
 .clinical-body-inner{padding:0 14px 14px}
 .clinical-sub{margin-bottom:12px}
 .clinical-sub:last-child{margin-bottom:0}
@@ -6377,9 +6564,23 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 /* ── v36: DRUG VIEWER COLLAPSIBLE — live selectors used by JS ─── */
 /* .dv-collapsible wraps each Phase 12 section card */
 .dv-collapsible{background:var(--color-surface);border-radius:var(--radius-md);margin:8px 14px 0;border:1px solid var(--color-border);box-shadow:var(--shadow-sm);overflow:hidden}
-/* .dv-coll-body and .dv-coll-body.open used by dvCollToggle() JS */
-.dv-coll-body{overflow:hidden;max-height:0;opacity:0;transition:max-height .3s ease,opacity .2s ease}
-.dv-coll-body.open{max-height:2000px;opacity:1}
+/* .dv-coll-body and .dv-coll-body.open used by dvCollToggle() JS
+   Grid-template-rows trick: no scrollHeight measurement needed,
+   no layout reflow on every animation frame.                    */
+.dv-coll-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  overflow: hidden;
+  transition:
+    grid-template-rows 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms ease;
+}
+.dv-coll-body > * { min-height: 0; } /* inner wrapper constraint */
+.dv-coll-body.open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
 
 /* ── PREGNANCY SECTION ─────────────────────────────── */
 /* Three-column trimester grid — equal-width columns */
@@ -8172,8 +8373,9 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 .cv-coll-hdr-title { font-size: var(--text-sm-size); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--color-text-primary); flex: 1; }
 .cv-coll-hdr-arrow { font-size: var(--text-xs-size); color: var(--color-text-tertiary); transition: transform .22s; flex-shrink: 0; }
 .cv-coll-hdr-arrow.open { transform: rotate(90deg); }
-.cv-coll-body { overflow: hidden; max-height: 0; opacity: 0; transition: max-height .3s ease, opacity .2s; }
-.cv-coll-body.open { max-height: 2000px; opacity: 1; }
+.cv-coll-body { display: grid; grid-template-rows: 0fr; opacity: 0; overflow: hidden; transition: grid-template-rows 260ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease; }
+.cv-coll-body > * { min-height: 0; }
+.cv-coll-body.open { grid-template-rows: 1fr; opacity: 1; }
 .cv-coll-inner { padding: var(--space-3) var(--space-4) var(--space-4); }
 .cv-coll-sub { margin-bottom: var(--space-3); }
 .cv-coll-sub:last-child { margin-bottom: 0; }
@@ -8948,7 +9150,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 </div>
 
 <!-- ═══ MAIN LAYOUT ═══ -->
-<div id="app" style="display:none;flex:1;flex-direction:column;display:flex;min-height:0">
+<div id="app" style="display:none;flex:1;flex-direction:column;min-height:0">
 
   <!-- ══ GRADIENT SHELL: one background covers header + search + specialty chips ══ -->
   <div class="gradient-shell">
@@ -11040,31 +11242,123 @@ function toast(msg) {
 // ═══════════════════════════════════════════════════════
 // SCREEN ROUTING
 // ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// MOTION SYSTEM v3 — openScreen / closeScreen
+// ═══════════════════════════════════════════════════════
+//
+// THE REFERENCE TRANSITION (fav tab → condition viewer → back)
+// ─────────────────────────────────────────────────────────────
+// Why it's smooth:
+//   • favsScr (z-index:10) is never hidden — it stays alive in DOM
+//   • When CV closes, favsScr is already there, fully rendered
+//   • The exiting screen (z-index:200) slides off the top
+//   • There is NOTHING to "restore" — the background was never removed
+//   • No simultaneous state changes, no class swaps, no flashes
+//
+// This is the model for ALL back transitions.
+//
+// FORWARD (openScreen)
+// ─────────────────────
+// Background gets .is-under: scale(0.984), opacity 0.93
+// This creates the depth cue that a new screen is on top.
+// The under-screen stays alive, just visually pushed back.
+//
+// BACK (closeScreen)
+// ───────────────────
+// The exiting screen slides off. That's it.
+// The under-screen was NEVER hidden — only visually pushed back.
+// We remove .is-under so it recovers to full scale/opacity,
+// but we do it BEFORE the exit starts (not after), so the
+// background smoothly scales back up WHILE the overlay exits.
+// Since the exiting screen (z-index:200) is on top, you never
+// see the background recovering — it happens underneath.
+// Once the exit finishes, display:none the exiting screen.
+// Result: identical feel to the fav back transition.
+//
+// ═══════════════════════════════════════════════════════
+
+let _screenUnder = null;
+
 function openScreen(id, onVisible) {
-  const scr = document.getElementById(id);
-  // Clear any stale close-animation classes so a mid-close re-open works.
-  scr.classList.remove('scr-out', 'scr-visible');
-  scr.classList.add('open');
-  history.pushState({screen: id}, '');
-  // Double-rAF: first frame commits display:flex + opacity:0 + translateX(100%).
-  // Second frame adds scr-visible → starts the slide-in transition.
-  // onVisible fires at the same moment scr-visible is applied — safe to hide
-  // any background screen here because the incoming screen is already painted.
+  const incoming = document.getElementById(id);
+
+  // Clear any stale state from a mid-close re-open
+  incoming.classList.remove('is-entering', 'is-active', 'is-exiting', 'is-under', 'is-restoring', 'scr-out', 'scr-visible');
+
+  // Make renderable
+  incoming.classList.add('open');
+
+  // Push history
+  history.pushState({ screen: id }, '');
+
+  // Push the current active screen back (depth cue on forward nav)
+  // Peer tabs (favsScr, libScr) use peer-open instead of is-active,
+  // so check for them explicitly first to avoid picking up stale is-active
+  // elements from the home screen and causing a flash.
+  const favsScr = document.getElementById('favsScr');
+  const libScr  = document.getElementById('libScr');
+  const peerActive =
+    (favsScr && favsScr.classList.contains('peer-open')) ? favsScr :
+    (libScr  && libScr.classList.contains('peer-open'))  ? libScr  :
+    null;
+  const currentActive = peerActive || document.querySelector(
+    '.screen.is-active:not(.is-exiting), .screen.scr-visible:not(.scr-out)'
+  );
+  if (currentActive && currentActive !== incoming) {
+    currentActive.classList.remove('is-active', 'scr-visible');
+    currentActive.classList.add('is-under');
+    _screenUnder = currentActive;
+  }
+
+  // Stage the entering state (no transition yet)
+  incoming.classList.add('is-entering');
+
+  // Double-rAF: commit paint, then start transition
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      scr.classList.add('scr-visible');
+      incoming.classList.remove('is-entering');
+      incoming.classList.add('is-active');
       if (onVisible) onVisible();
     });
   });
 }
+
 function closeScreen(id) {
-  const scr = document.getElementById(id);
-  scr.classList.add('scr-out');
-  // 320ms > 280ms CSS transition — safe margin so display:none never fires
-  // before the slide-out animation completes on slow Android GPU.
+  const outgoing = document.getElementById(id);
+  const screenUnderRef = _screenUnder;
+  _screenUnder = null;
+
+  // ── Restore the background screen BEFORE starting the exit ───
+  // It recovers from .is-under (scale 0.984, opacity 0.93) back to
+  // full size UNDERNEATH the exiting screen (z-index 200 on top).
+  // The user never sees it recovering — the overlay hides it.
+  // Once the exit finishes, the background is already fully normal.
+  // This is exactly how the fav back works: background is just there,
+  // exiting screen slides off the top, nothing to restore afterward.
+  if (screenUnderRef && screenUnderRef !== outgoing) {
+    screenUnderRef.classList.add('is-restoring');   // suppress transition for snap
+    screenUnderRef.classList.remove('is-under');
+    // Peer tabs (favsScr, libScr) use peer-open for visibility, not is-active.
+    // Restoring is-active on them would have no visual effect and leave stale state.
+    const isPeerTab = screenUnderRef.id === 'favsScr' || screenUnderRef.id === 'libScr';
+    if (!isPeerTab) {
+      screenUnderRef.classList.add('is-active');
+    }
+    // Keep is-restoring until exit animation finishes (220ms) so there's
+    // zero chance of the transition re-activating and causing a flash.
+    setTimeout(() => {
+      screenUnderRef.classList.remove('is-restoring');
+    }, 240);
+  }
+
+  // Start the exit animation
+  outgoing.classList.remove('is-active', 'scr-visible');
+  outgoing.classList.add('is-exiting', 'scr-out');
+
+  // Remove from DOM after animation completes
   setTimeout(() => {
-    scr.classList.remove('open', 'scr-visible', 'scr-out');
-  }, 320);
+    outgoing.classList.remove('open', 'is-active', 'is-entering', 'is-exiting', 'is-under', 'is-restoring', 'scr-visible', 'scr-out');
+  }, 260);
 }
 window.addEventListener('popstate', (e) => {
   // ── Back button priority — closes exactly ONE thing per press.
@@ -11174,8 +11468,11 @@ function runConfirm() {
 }
 
 // ═══════════════════════════════════════════════════════
-// VIEW SWITCHING (Rx ↔ Library)
+// VIEW SWITCHING — peer tab crossfade (Home ↔ Library ↔ Favs)
 // ═══════════════════════════════════════════════════════
+// Tabs are PEERS — not a navigation stack. No slide, no depth.
+// Motion: opacity crossfade only, 140ms — near-instant.
+// Scroll positions are preserved (peer screens stay in DOM).
 function setView(view) {
   S.view = view;
   document.getElementById('navRx').classList.toggle('active', view==='rx');
@@ -11227,21 +11524,19 @@ let _favsScrollSave = 0;
 let _hideFavsAfterDrugOpen = false;
 
 function _openViewerFromFavs(type, id) {
-  // Save current Favourites scroll position before anything moves
+  // Save scroll position before opening
   const favsBody = document.querySelector('#favsScr .favs-scroll-body');
   _favsScrollSave = favsBody ? favsBody.scrollTop : 0;
 
+  // Do NOT touch favsScr here. The viewer screen opens at z-index:200 on top
+  // of favsScr (z-index:10) — no gap, no flash. favsScr stays in the DOM,
+  // visible underneath, and gets removed after the viewer is fully on screen.
   if (type === 'condition') {
-    // openConditionViewer calls openScreen synchronously (before any await).
-    // We pass a hideFavs callback that fires inside openScreen's double-rAF,
-    // exactly when scr-visible is applied — the viewer is painted at that point
-    // so hiding favsScr causes no blank flash.
     openConditionViewer(id, () => {
+      // onVisible fires when viewer is fully opaque — safe to hide favsScr now
       document.getElementById('favsScr').classList.remove('peer-open');
     });
   } else {
-    // openDrugViewer awaits ensureSearchIndex before calling openScreen.
-    // Set the flag; openDrugViewer passes it as the onVisible callback.
     _hideFavsAfterDrugOpen = true;
     openDrugViewer(id);
   }
@@ -12884,12 +13179,14 @@ function closeConditionViewer() {
   cvCloseLangDropdown();
   closeScreen('condViewerScr');
   history.replaceState({}, '', window.location.pathname);
-  // Phase 1B: if user came from Favourites, restore the tab immediately
-  // (not after animation delay) so there's never a blank-screen flash.
+  // Restore favsScr AFTER the exit animation (220ms) so the fading-in peer tab
+  // never overlaps the fading-out screen — that overlap is what causes the flash.
   if (S.view === 'fav') {
-    document.getElementById('favsScr').classList.add('peer-open');
     const favsBody = document.querySelector('#favsScr .favs-scroll-body');
     if (favsBody) favsBody.scrollTop = _favsScrollSave;
+    setTimeout(() => {
+      document.getElementById('favsScr').classList.add('peer-open');
+    }, 220);
   }
 }
 
@@ -14014,29 +14311,13 @@ function _cvRenderPrescription(rx, agePrefix) {
   return html;
 }
 
-// ── Phase 11: collapsible toggle by ID (more robust for dynamic content) ──
+// ── Phase 11: collapsible toggle — CSS-class-only ──────────────
 function cvToggleCollP11(bodyId, arrowId) {
   const body  = document.getElementById(bodyId);
   const arrow = document.getElementById(arrowId);
   if (!body) return;
   const isOpen = body.classList.contains('open');
-  if (isOpen) {
-    body.style.maxHeight = body.scrollHeight + 'px';
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        body.style.maxHeight = '0';
-        body.style.opacity = '0';
-        body.classList.remove('open');
-      });
-    });
-  } else {
-    body.classList.add('open');
-    body.style.maxHeight = body.scrollHeight + 'px';
-    body.style.opacity = '1';
-    body.addEventListener('transitionend', () => {
-      if (body.classList.contains('open')) body.style.maxHeight = 'none';
-    }, { once: true });
-  }
+  body.classList.toggle('open', !isOpen);
   if (arrow) arrow.classList.toggle('open', !isOpen);
 }
 
@@ -15661,10 +15942,19 @@ function _scheduleLibFailedLog(q) {
   }, 500);
 }
 
-// ── Debounced successful-search loggers ──────────────────────────────────
-// Only fire when results exist (not zero-result paths above).
-// 600ms debounce: long enough to skip mid-word keystrokes, short enough to
-// capture the query the user actually meant to search for.
+// ── Tag modal-variant screens on first open ──────────────────────
+// Settings rises from bottom; drill-downs push from the right.
+// The .screen--modal class is the only thing that changes the
+// CSS motion signature — openScreen/closeScreen stay identical.
+function _ensureModalClass(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add('screen--modal');
+}
+
+function openSettingsScreen() {
+  _ensureModalClass('settingsScr');
+  openScreen('settingsScr');
+}
 let _condSearchLogTimer;
 function _scheduleCondSearchLog(q) {
   clearTimeout(_condSearchLogTimer);
@@ -16239,29 +16529,16 @@ function dvEditPersonalNote(drugId) { dvEditMyNotes(drugId); }
 function dvCancelPersonalNote(drugId) { dvCancelMyNotes(drugId); }
 async function dvSavePersonalNote(drugId) { await dvSaveMyNotes(drugId); }
 
-// ── Phase 12: dvCollToggle — robust collapsible for drug viewer ──
+// ── Phase 12: dvCollToggle — CSS-class-only collapsible ─────────
+// No more scrollHeight measurement — the CSS grid-template-rows
+// transition handles everything without a layout reflow.
+// The .dv-coll-body uses the same grid trick as .cc-collapsible__body.
 function dvCollToggle(bodyId, arrowId) {
   const body  = document.getElementById(bodyId);
   const arrow = document.getElementById(arrowId);
   if (!body) return;
   const isOpen = body.classList.contains('open');
-  if (isOpen) {
-    body.style.maxHeight = body.scrollHeight + 'px';
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        body.style.maxHeight = '0';
-        body.style.opacity = '0';
-        body.classList.remove('open');
-      });
-    });
-  } else {
-    body.classList.add('open');
-    body.style.maxHeight = body.scrollHeight + 'px';
-    body.style.opacity = '1';
-    body.addEventListener('transitionend', () => {
-      if (body.classList.contains('open')) body.style.maxHeight = 'none';
-    }, { once: true });
-  }
+  body.classList.toggle('open', !isOpen);
   if (arrow) arrow.classList.toggle('open', !isOpen);
 }
 
@@ -16287,7 +16564,7 @@ function _dvCollapsible(opts) {
         <i class="ph ph-caret-right"></i>
       </div>
     </div>
-    <div class="dv-coll-body${defaultOpen ? ' open' : ''}" id="${bodyId}" style="${defaultOpen ? 'max-height:none;opacity:1' : ''}">
+    <div class="dv-coll-body${defaultOpen ? ' open' : ''}" id="${bodyId}">
       ${content}
     </div>
   </div>`;
@@ -16695,6 +16972,7 @@ async function openDrugViewer(id) {
   const _shouldHideFavs = _hideFavsAfterDrugOpen;
   _hideFavsAfterDrugOpen = false;
   openScreen('drugViewerScr', _shouldHideFavs ? () => {
+    // Viewer is now fully on screen — hide favsScr the same way conditionViewer does
     document.getElementById('favsScr').classList.remove('peer-open');
   } : null);
   history.replaceState({ screen: 'drugViewerScr', id: id }, '', '#drug=' + id);
@@ -16761,19 +17039,47 @@ function dvCloseLangDropdown() {
 }
 
 function _closeDrugViewer() {
+  // Capture and clear _screenUnder before closeScreen runs.
+  // When drug was opened from condViewerScr, closeScreen would restore it
+  // immediately (is-restoring + is-active) causing an overlap flash with the
+  // exiting drug viewer. We intercept and do it ourselves after exit.
+  const screenUnderSnap = _screenUnder;
+  if (screenUnderSnap && screenUnderSnap.id === 'condViewerScr') {
+    _screenUnder = null; // prevent closeScreen from restoring it
+  }
+
   closeScreen('drugViewerScr');
   history.replaceState({}, '', window.location.pathname);
-  // Clear sticky header content so it doesn't flash stale data on next open
   const b = document.getElementById('dvHeaderBreadcrumb');
   const n = document.getElementById('dvHeaderDrugName');
   if (b) { b.innerHTML=''; b.style.display='none'; }
   if (n) { n.textContent=''; n.style.display='none'; }
-  // Phase 1B: if user came from Favourites, restore the tab immediately
-  // (not after animation delay) so there's never a blank-screen flash.
+
   if (S.view === 'fav') {
-    document.getElementById('favsScr').classList.add('peer-open');
+    // Restore favsScr after exit — identical to closeConditionViewer
     const favsBody = document.querySelector('#favsScr .favs-scroll-body');
     if (favsBody) favsBody.scrollTop = _favsScrollSave;
+    setTimeout(() => {
+      document.getElementById('favsScr').classList.add('peer-open');
+    }, 220);
+  } else if (S.view === 'lib') {
+    const lib = document.getElementById('libScr');
+    if (lib) {
+      lib.style.transition = 'none';
+      lib.style.opacity = '1';
+      setTimeout(() => { lib.style.transition = ''; lib.style.opacity = ''; }, 260);
+    }
+  } else if (screenUnderSnap && screenUnderSnap.id === 'condViewerScr') {
+    // Restore condViewerScr cleanly AFTER the exit animation completes (220ms)
+    // so there is zero overlap between the exiting drug viewer and condViewerScr
+    setTimeout(() => {
+      screenUnderSnap.classList.add('is-restoring');
+      screenUnderSnap.classList.remove('is-under');
+      screenUnderSnap.classList.add('is-active');
+      requestAnimationFrame(() => {
+        screenUnderSnap.classList.remove('is-restoring');
+      });
+    }, 220);
   }
 }
 function toggleFavDrugViewer() {
@@ -19984,8 +20290,8 @@ function initScrollbarAutoHide() {
 // existing call sites continue to work unchanged.
 (function patchOpenFunctions() {
   const _origOpenScreen = window.openScreen;
-  window.openScreen = function(id) {
-    _origOpenScreen(id);
+  window.openScreen = function(id, onVisible) {
+    _origOpenScreen(id, onVisible);
     const el = document.getElementById(id);
     if (el) {
       watchScrollable(el);
