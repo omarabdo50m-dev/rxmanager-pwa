@@ -7799,55 +7799,42 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 #condViewerScr.lang-ar .cv-rx-note-text-ar { display:block; }
 #condViewerScr.lang-en .cv-rx-note-text-en { display:block; }
 
-/* ── TEXT BLOCK (free text: heading / body / bullets) ─────── */
+/* ── TEXT BLOCK (mixed heading / body / bullets in one block) ── */
 .cv-rx-text-block {
-  margin: 0;
   padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
-/* Heading variant */
-.cv-rx-text-block.is-heading .cv-rx-text-content {
+.cv-rx-text-heading {
   font-size: var(--text-base-size);
   font-weight: 700;
   color: var(--color-text-primary);
   line-height: 1.4;
+  margin-top: 4px;
 }
-/* Body variant */
-.cv-rx-text-block.is-body .cv-rx-text-content {
+.cv-rx-text-heading:first-child { margin-top: 0; }
+.cv-rx-text-body {
   font-size: var(--text-sm-size);
   font-weight: 400;
   color: var(--color-text-secondary);
   line-height: 1.65;
-  white-space: pre-wrap;
 }
-/* Bullets variant */
-.cv-rx-text-block.is-bullets {
-  padding-left: var(--space-3);
-  padding-right: var(--space-3);
-}
-.cv-rx-text-block.is-bullets .cv-rx-text-bullets {
-  margin: 0;
+.cv-rx-text-bullets {
+  margin: 2px 0 2px 0;
   padding-left: var(--space-5);
   list-style: disc;
 }
-.cv-rx-text-block.is-bullets .cv-rx-text-bullets li {
-  font-size: var(--text-sm-size);
-  color: var(--color-text-secondary);
-  line-height: 1.65;
-  margin-bottom: 2px;
-}
-/* RTL support */
-.cv-rx-text-block.is-rtl {
-  direction: rtl;
-  text-align: right;
-}
-.cv-rx-text-block.is-rtl.is-bullets .cv-rx-text-bullets {
+.cv-rx-text-bullets[dir="rtl"] {
   padding-left: 0;
   padding-right: var(--space-5);
 }
-.cv-rx-text-content {
-  display: block;
-  min-width: 0;
+.cv-rx-text-bullets li {
+  font-size: var(--text-sm-size);
+  color: var(--color-text-secondary);
+  line-height: 1.65;
+  margin-bottom: 1px;
 }
 
 /* Duration bar — Phase 10: compact inline badge inside card */
@@ -14016,26 +14003,46 @@ function _cvRenderPrescription(rx, agePrefix) {
 
       // Handle rx_text_block
       if (item._type === 'text_block') {
-        const blockType = item.block_type || 'body';
         const rawContent = item.content || item.content_ar || '';
-        const firstChar = rawContent.trimStart()[0] || '';
-        const isRtl = /[\u0600-\u06FF]/.test(firstChar);
+        if (!rawContent.trim()) return;
+
+        const firstMeaningfulChar = rawContent.trimStart()[0] || '';
+        const isRtl = /[\u0600-\u06FF]/.test(firstMeaningfulChar);
         const fontFamily = isRtl
           ? 'font-family:\'IBM Plex Sans Arabic\',\'IBM Plex Sans\',system-ui,sans-serif;'
           : '';
-        const rtlClass = isRtl ? ' is-rtl' : '';
+        const dir = isRtl ? 'rtl' : 'ltr';
 
-        if (blockType === 'bullets') {
-          const lines = rawContent.split('\n').map(l => l.trim()).filter(Boolean);
-          const lis = lines.map(l => `<li style="${fontFamily}">${esc(l)}</li>`).join('');
-          html += `<div class="cv-rx-text-block is-bullets${rtlClass}">
-            <ul class="cv-rx-text-bullets">${lis}</ul>
-          </div>`;
-        } else {
-          const typeClass = blockType === 'heading' ? 'is-heading' : 'is-body';
-          html += `<div class="cv-rx-text-block ${typeClass}${rtlClass}">
-            <span class="cv-rx-text-content" style="${fontFamily}">${esc(rawContent)}</span>
-          </div>`;
+        // Parse each line: # = heading, - = bullet, else body
+        const lines = rawContent.split('\n');
+        let blockHtml = '';
+        let bulletBuffer = [];
+
+        const flushBullets = () => {
+          if (!bulletBuffer.length) return;
+          const lis = bulletBuffer.map(t => `<li style="${fontFamily}">${esc(t)}</li>`).join('');
+          blockHtml += `<ul class="cv-rx-text-bullets" dir="${dir}">${lis}</ul>`;
+          bulletBuffer = [];
+        };
+
+        lines.forEach(rawLine => {
+          const line = rawLine; // preserve leading spaces intentionally stripped only for prefix detection
+          if (/^# /.test(line)) {
+            flushBullets();
+            const text = line.slice(2).trim();
+            if (text) blockHtml += `<div class="cv-rx-text-heading" style="${fontFamily}" dir="${dir}">${esc(text)}</div>`;
+          } else if (/^- /.test(line)) {
+            bulletBuffer.push(line.slice(2));
+          } else {
+            flushBullets();
+            const text = line.trim();
+            if (text) blockHtml += `<div class="cv-rx-text-body" style="${fontFamily}" dir="${dir}">${esc(text)}</div>`;
+          }
+        });
+        flushBullets();
+
+        if (blockHtml) {
+          html += `<div class="cv-rx-text-block">${blockHtml}</div>`;
         }
         return;
       }

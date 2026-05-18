@@ -1423,48 +1423,53 @@ input[dir=rtl], textarea[dir=rtl] {
   align-items: flex-start;
 }
 .text-block-body { flex: 1; min-width: 0; }
-.text-block-fields {
+.text-block-cols {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-3);
-  margin-bottom: var(--space-2);
 }
-.text-block-format-bar {
+/* Each language editor pane */
+.text-block-pane {}
+.text-block-toolbar {
   display: flex;
-  gap: var(--space-2);
-  margin-bottom: var(--space-2);
-  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-bottom: 5px;
+  align-items: center;
 }
-.text-block-format-btn {
+.tb-fmt-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: var(--text-xs-size);
-  padding: 3px 8px;
+  justify-content: center;
+  width: 28px;
+  height: 24px;
+  font-size: 11px;
+  font-weight: 700;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: var(--color-surface-2);
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: background .1s, color .1s;
+  transition: background .1s, color .1s, border-color .1s;
+  flex-shrink: 0;
+  line-height: 1;
+  user-select: none;
 }
-.text-block-format-btn:hover { background: var(--color-brand-light); color: var(--color-brand); border-color: var(--color-brand); }
-.text-block-type-select {
-  font-size: var(--text-xs-size);
-  padding: 3px 8px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-2);
-  color: var(--color-text-secondary);
-  cursor: pointer;
+.tb-fmt-btn:hover { background: var(--color-brand-light); color: var(--color-brand); border-color: var(--color-brand); }
+.tb-fmt-btn title { display: none; }
+.tb-fmt-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--color-border);
+  margin: 0 2px;
+  flex-shrink: 0;
 }
 .text-block-textarea {
   width: 100%;
-  min-height: 80px;
+  min-height: 90px;
   resize: vertical;
   font-family: inherit;
   font-size: var(--text-sm-size);
-  line-height: 1.6;
+  line-height: 1.7;
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
@@ -1472,10 +1477,11 @@ input[dir=rtl], textarea[dir=rtl] {
   color: var(--color-text-primary);
   box-sizing: border-box;
 }
-.text-block-hint {
-  font-size: var(--text-xs-size);
+.text-block-syntax-hint {
+  font-size: 10px;
   color: var(--color-text-tertiary);
-  margin-top: var(--space-1);
+  margin-top: 4px;
+  line-height: 1.5;
 }
 
 /* ── Specialties panel ────────────────────────── */
@@ -5769,44 +5775,41 @@ function rxRenderNoteBlockCard(nb, orderBtns) {
 
 /* ── TEXT BLOCK CARD RENDERER ────────────────────────────────── */
 function rxRenderTextBlockCard(tb, orderBtns) {
-  const blockType = esc(tb.block_type ?? 'body');
-  const blockTypeLabel = { heading: 'Heading', body: 'Body', bullets: 'Bullet List' }[tb.block_type ?? 'body'] ?? 'Body';
+  const id = tb.id;
+  const toolbar = (taId) => `
+    <div class="text-block-toolbar">
+      <button class="tb-fmt-btn" title="Heading" onclick="tbFmt('${taId}','heading')" type="button">H</button>
+      <button class="tb-fmt-btn" title="Body" onclick="tbFmt('${taId}','body')" type="button">B</button>
+      <div class="tb-fmt-sep"></div>
+      <button class="tb-fmt-btn" title="Bullet" onclick="tbFmt('${taId}','bullet')" type="button">•</button>
+    </div>`;
+
   return `
-    <div class="text-block" id="tb-${tb.id}">
+    <div class="text-block" id="tb-${id}">
       ${orderBtns}
       <div class="text-block-body">
         <div class="row-type-badge row-type-text"><i class="ph ph-text-t"></i> Text</div>
-        <div class="text-block-format-bar">
-          <label style="font-size:var(--text-xs-size);color:var(--color-text-secondary);display:flex;align-items:center;gap:var(--space-2);">
-            Block type:
-            <select class="text-block-type-select"
-              onchange="rxSaveTextField('${tb.id}','block_type',this.value)">
-              <option value="heading"  ${tb.block_type === 'heading'  ? 'selected' : ''}>Heading</option>
-              <option value="body"     ${(tb.block_type ?? 'body') === 'body'     ? 'selected' : ''}>Body</option>
-              <option value="bullets"  ${tb.block_type === 'bullets'  ? 'selected' : ''}>Bullet List</option>
-            </select>
-          </label>
-          ${tb.block_type === 'bullets'
-            ? `<span class="text-block-hint"><i class="ph ph-info"></i> One bullet per line — each line becomes a list item in the app</span>`
-            : ''}
-        </div>
-        <div class="text-block-fields">
-          <div>
+        <div class="text-block-cols">
+          <div class="text-block-pane">
             <div class="drug-row-field-label">Content (EN)</div>
-            <textarea class="text-block-textarea" rows="3"
-              placeholder="${tb.block_type === 'bullets' ? 'Line 1\nLine 2\nLine 3' : tb.block_type === 'heading' ? 'Heading text' : 'Body text'}"
-              onblur="rxSaveTextField('${tb.id}','content',this.value)">${esc(tb.content ?? '')}</textarea>
+            ${toolbar('tbta-en-' + id)}
+            <textarea id="tbta-en-${id}" class="text-block-textarea" rows="4"
+              placeholder="# Heading&#10;Body paragraph&#10;- Bullet item"
+              onblur="rxSaveTextField('${id}','content',this.value)">${esc(tb.content ?? '')}</textarea>
+            <div class="text-block-syntax-hint"># Heading &nbsp;·&nbsp; plain Body &nbsp;·&nbsp; - Bullet</div>
           </div>
-          <div>
+          <div class="text-block-pane">
             <div class="drug-row-field-label">Content (AR)</div>
-            <textarea class="text-block-textarea" rows="3" dir="rtl" style="font-family:var(--font-ar)"
-              placeholder="${tb.block_type === 'bullets' ? 'سطر 1\nسطر 2' : tb.block_type === 'heading' ? 'عنوان' : 'نص'}"
-              onblur="rxSaveTextField('${tb.id}','content_ar',this.value)">${esc(tb.content_ar ?? '')}</textarea>
+            ${toolbar('tbta-ar-' + id)}
+            <textarea id="tbta-ar-${id}" class="text-block-textarea" rows="4" dir="rtl" style="font-family:var(--font-ar)"
+              placeholder="# عنوان&#10;نص عادي&#10;- عنصر"
+              onblur="rxSaveTextField('${id}','content_ar',this.value)">${esc(tb.content_ar ?? '')}</textarea>
+            <div class="text-block-syntax-hint" dir="rtl" style="font-family:var(--font-ar)">عنوان # &nbsp;·&nbsp; نص عادي &nbsp;·&nbsp; - نقطة</div>
           </div>
         </div>
       </div>
       <div>
-        <button class="btn btn-danger btn-sm" onclick="rxDeleteTextBlock('${tb.id}')">
+        <button class="btn btn-danger btn-sm" onclick="rxDeleteTextBlock('${id}')">
           <i class="ph ph-trash"></i>
         </button>
       </div>
@@ -6485,7 +6488,7 @@ async function rxLoadAllRows(rxId) {
         'id,prescription_id,content,content_ar,sort_order',
         `&prescription_id=eq.${rxId}&order=sort_order.asc`),
       SB.fetchAll('rx_text_blocks',
-        'id,prescription_id,content,content_ar,block_type,sort_order',
+        'id,prescription_id,content,content_ar,sort_order',
         `&prescription_id=eq.${rxId}&order=sort_order.asc`),
     ]);
     _rxDrugRows   = drugRows;
@@ -6725,14 +6728,42 @@ async function rxDeleteNoteBlock(nbId) {
    TEXT BLOCK OPERATIONS
    ════════════════════════════════════════════════════════════ */
 
+/* ── Text block toolbar formatter ────────────────────────────── */
+function tbFmt(taId, type) {
+  const ta = document.getElementById(taId);
+  if (!ta) return;
+  const start = ta.selectionStart;
+  const end   = ta.selectionEnd;
+  const val   = ta.value;
+
+  // Find the start of the current line
+  const lineStart = val.lastIndexOf('\n', start - 1) + 1;
+  // Find the end of the current line
+  const lineEnd = val.indexOf('\n', start);
+  const lineEndActual = lineEnd === -1 ? val.length : lineEnd;
+  const line = val.slice(lineStart, lineEndActual);
+
+  // Strip any existing prefix (# or -)
+  const stripped = line.replace(/^(# |- )/, '');
+
+  let newLine;
+  if (type === 'heading') newLine = '# ' + stripped;
+  else if (type === 'bullet') newLine = '- ' + stripped;
+  else newLine = stripped; // body — no prefix
+
+  ta.value = val.slice(0, lineStart) + newLine + val.slice(lineEndActual);
+  // Restore cursor
+  const offset = newLine.length - line.length;
+  ta.selectionStart = ta.selectionEnd = Math.max(lineStart, start + offset);
+  ta.focus();
+  // Trigger save
+  ta.dispatchEvent(new Event('input'));
+}
+
 async function rxSaveTextField(tbId, field, value) {
   const tb = _rxTextBlocks.find(b => b.id === tbId);
   const v = (field === 'content') ? (value ?? '') : (value === '' ? null : value);
   if (tb) tb[field] = v;
-  if (field === 'block_type') {
-    // Re-render to update placeholder/hint immediately
-    rxRenderUnified();
-  }
   await autoSave('rx_text_blocks', tbId, field, v);
 }
 
@@ -6741,7 +6772,7 @@ async function rxAddTextBlock() {
   const id = genId();
   const unified = rxBuildUnifiedRows();
   const maxOrder = unified.length ? Math.max(...unified.map(r => r.sort_order ?? 0)) + 1 : 0;
-  const stub = { id, prescription_id: _rxEditId, content: '', content_ar: null, block_type: 'body', sort_order: maxOrder };
+  const stub = { id, prescription_id: _rxEditId, content: '', content_ar: null, sort_order: maxOrder };
   try {
     await SB.insert('rx_text_blocks', stub);
     _rxTextBlocks.push(stub);
