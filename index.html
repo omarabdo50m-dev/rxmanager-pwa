@@ -19132,7 +19132,16 @@ When the user replies "go", "proceed", "phase 1", "phase N", or similar:
       "formula": "from formula word in 'en' field — exactly one value from the formula list below",
       "conc": "concentration from 'en' field (e.g. '500mg', '250mg/5ml', '1g/vial', '0.5%')",
       "dose": "Specific dose for THIS formula/concentration. For IV: reconstitution + dilution + infusion rate + frequency.",
-      "doseAr": "Arabic translation of this brand's dose."
+      "doseAr": "Arabic translation of this brand's dose.",
+      "pedDose": "Paediatric dose for this brand in mg/kg terms (e.g. '10-15 mg/kg/dose'). Omit if not applicable.",
+      "pedDoseAr": "Arabic translation of pedDose.",
+      "pedShortcut": "Pre-rendered Arabic display string shown to doctor (e.g. 'وزن ÷ 4 مل — كل 8 ساعات'). Omit if not applicable.",
+      "pedWtDivisor": "Integer divisor for Wt/X formula (e.g. 4 for Wt/4). Omit if not a Wt/X drug.",
+      "pedWtMultiplier": "Integer multiplier before division, default 1 (e.g. 2 for 'double Wt/3'). Omit if 1.",
+      "pedWtUnit": "Unit of Wt/X result — one of: ml, drop, tab, supp, amp, vial, unit, puff, sachet, spoon. Omit if not Wt/X.",
+      "pedFreq": "Frequency code — one of: q4h, q6h, q6-8h, q8h, q8-12h, q12h, q24h, single, single-morning, before-sleep, as-needed, stat, q3-4weeks, 3x-weekly, 2x-weekly, digitalization, infusion-rate. Omit if not applicable.",
+      "pedAgeLimit": "Age or weight restriction (e.g. '>2 years', '<27 kg'). Omit if none.",
+      "pedLoadingDose": "Loading dose instruction for LD+MD drugs. Omit if not applicable."
     }
   ]
 }
@@ -19646,13 +19655,22 @@ async function confirmJsonImport() {
       const doseAr    = p.doseAr || d.adultDoseAr || translateDoseToArabic(doseEn);
       await DB.put('products', {
         id: uid(), genericId,
-        brand:          p.brand.trim(),
-        brandAr:        brandArUW.value.trim(),
+        brand:            p.brand.trim(),
+        brandAr:          brandArUW.value.trim(),
         formula,
-        conc:           concUW.value,
-        dose:           doseEn,
-        doseAr:         doseAr,
-        _lowConfidence: concUW.lowConfidence || doseUW.lowConfidence,
+        conc:             concUW.value,
+        dose:             doseEn,
+        doseAr:           doseAr,
+        ped_dose:         p.pedDose        || null,
+        ped_dose_ar:      p.pedDoseAr      || null,
+        ped_shortcut:     p.pedShortcut    || null,
+        ped_wt_divisor:   p.pedWtDivisor   ?? null,
+        ped_wt_multiplier:p.pedWtMultiplier ?? 1,
+        ped_wt_unit:      p.pedWtUnit      || null,
+        ped_freq:         p.pedFreq        || null,
+        ped_age_limit:    p.pedAgeLimit    || null,
+        ped_loading_dose: p.pedLoadingDose || null,
+        _lowConfidence:   concUW.lowConfidence || doseUW.lowConfidence,
       });
       newP++;
     }
