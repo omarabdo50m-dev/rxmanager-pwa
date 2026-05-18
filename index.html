@@ -3068,10 +3068,10 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 @keyframes fab-pop-in{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
 
 /* ── SCREENS ────────────────────────── */
-.screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;flex-direction:column;max-width:480px;margin:0 auto;opacity:0;transform:translateX(14px);transition:opacity .16s ease,transform .16s cubic-bezier(.22,.68,0,1)}
+.screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;flex-direction:column;max-width:480px;margin:0 auto;opacity:0;transform:translateX(100%);transition:opacity .22s ease,transform .28s cubic-bezier(.32,.72,0,1)}
 .screen.open{display:flex}
-.screen.scr-visible{opacity:1;transform:none}
-.screen.scr-out{opacity:0;transform:translateX(-14px);pointer-events:none}
+.screen.scr-visible{opacity:1;transform:translateX(0)}
+.screen.scr-out{opacity:0;transform:translateX(-22%);pointer-events:none;transition:opacity .2s ease,transform .25s cubic-bezier(.32,.72,0,1)}
 /* Peer nav screens — sit alongside home, no z-index stack, no slide-in */
 #libScr,#favsScr{position:fixed;inset:0;z-index:10;background:var(--color-bg);display:none;flex-direction:column;max-width:480px;margin:0 auto;animation:none;overflow:hidden}
 #libScr.peer-open,#favsScr.peer-open{display:flex}
@@ -11040,30 +11040,31 @@ function toast(msg) {
 // ═══════════════════════════════════════════════════════
 // SCREEN ROUTING
 // ═══════════════════════════════════════════════════════
-function openScreen(id) {
+function openScreen(id, onVisible) {
   const scr = document.getElementById(id);
   // Clear any stale close-animation classes so a mid-close re-open works.
   scr.classList.remove('scr-out', 'scr-visible');
   scr.classList.add('open');
-  // Double-rAF: first rAF lets the browser commit display:flex + opacity:0.
-  // Second rAF fires after that paint, then we add scr-visible to trigger
-  // the opacity/transform transition cleanly — no flash, no snap.
-  // This is more reliable than getBoundingClientRect() on Android WebView.
+  history.pushState({screen: id}, '');
+  // Double-rAF: first frame commits display:flex + opacity:0 + translateX(100%).
+  // Second frame adds scr-visible → starts the slide-in transition.
+  // onVisible fires at the same moment scr-visible is applied — safe to hide
+  // any background screen here because the incoming screen is already painted.
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       scr.classList.add('scr-visible');
+      if (onVisible) onVisible();
     });
   });
-  history.pushState({screen: id}, '');
 }
 function closeScreen(id) {
   const scr = document.getElementById(id);
   scr.classList.add('scr-out');
-  // 200ms > 160ms CSS transition — gives a safe margin on slow Android GPU
-  // so display:none never fires before the opacity animation completes.
+  // 320ms > 280ms CSS transition — safe margin so display:none never fires
+  // before the slide-out animation completes on slow Android GPU.
   setTimeout(() => {
     scr.classList.remove('open', 'scr-visible', 'scr-out');
-  }, 200);
+  }, 320);
 }
 window.addEventListener('popstate', (e) => {
   // ── Back button priority — closes exactly ONE thing per press.
@@ -11113,8 +11114,24 @@ window.addEventListener('popstate', (e) => {
     return;
   }
 
-  // 6. Nothing to close — stay on current tab. Android OS will exit the
-  //    app on the next back press once the stack is fully empty.
+  // 6. Landed on a tab sentinel {tab:view} with nothing open.
+  //    This means the user pressed back from a non-Home tab root.
+  //    Switch to Home (rx) without pushing a new entry — the OS will
+  //    exit the app on the next back press (stack is now at base).
+  if (e.state && e.state.tab) {
+    // Switch to Home silently (no pushState — we're responding to a pop)
+    S.view = 'rx';
+    document.getElementById('navRx').classList.add('active');
+    document.getElementById('navLib').classList.remove('active');
+    document.getElementById('navFav').classList.remove('active');
+    document.getElementById('libScr').classList.remove('peer-open');
+    document.getElementById('favsScr').classList.remove('peer-open');
+    renderMain();
+    return;
+  }
+
+  // 7. Nothing left — stay on Home. Android OS will exit the app on the
+  //    next back press once the stack is fully empty.
 });
 
 // ═══════════════════════════════════════════════════════
@@ -11164,10 +11181,14 @@ function setView(view) {
   document.getElementById('navRx').classList.toggle('active', view==='rx');
   document.getElementById('navLib').classList.toggle('active', view==='lib');
   document.getElementById('navFav').classList.toggle('active', view==='fav');
-  // Peer screens: show/hide via CSS class, no z-index stack, no history entry.
-  // Tab switches are NOT history — back button never navigates between tabs.
   document.getElementById('libScr').classList.toggle('peer-open', view==='lib');
   document.getElementById('favsScr').classList.toggle('peer-open', view==='fav');
+  // Push ONE history entry when entering a non-Home tab so that pressing
+  // back from Drugs or Favs navigates to Home (not out of the app).
+  // Home itself does NOT push — it is the base of the stack.
+  if (view !== 'rx') {
+    history.pushState({ tab: view }, '');
+  }
   // Scroll / state reset: only when no active search query
   if (view === 'rx') {
     const hasHomeSearch = (document.getElementById('mainSearch')?.value || '').trim().length > 0;
@@ -11211,14 +11232,16 @@ function _openViewerFromFavs(type, id) {
   _favsScrollSave = favsBody ? favsBody.scrollTop : 0;
 
   if (type === 'condition') {
-    // openConditionViewer calls openScreen synchronously — safe to hide after 40ms
-    openConditionViewer(id);
-    setTimeout(() => {
+    // openConditionViewer calls openScreen synchronously (before any await).
+    // We pass a hideFavs callback that fires inside openScreen's double-rAF,
+    // exactly when scr-visible is applied — the viewer is painted at that point
+    // so hiding favsScr causes no blank flash.
+    openConditionViewer(id, () => {
       document.getElementById('favsScr').classList.remove('peer-open');
-    }, 40);
+    });
   } else {
-    // openDrugViewer awaits ensureSearchIndex before openScreen.
-    // Set flag; openDrugViewer will hide favsScr itself after openScreen.
+    // openDrugViewer awaits ensureSearchIndex before calling openScreen.
+    // Set the flag; openDrugViewer passes it as the onVisible callback.
     _hideFavsAfterDrugOpen = true;
     openDrugViewer(id);
   }
@@ -12671,7 +12694,7 @@ function _updateCvTabStripTop() {
   });
 }
 
-async function openConditionViewer(conditionId) {
+async function openConditionViewer(conditionId, onVisible) {
   _cvCurrentConditionId = conditionId;
   // ── Phase 21: track condition open ───────────────────────────────────
   const _trackCond = _CONDITIONS.find(c => c.id === conditionId);
@@ -12734,7 +12757,7 @@ async function openConditionViewer(conditionId) {
   document.getElementById('cvTitle').textContent = '';
   document.getElementById('cvBody').innerHTML = '';
 
-  openScreen('condViewerScr');
+  openScreen('condViewerScr', onVisible);
   history.replaceState({ screen: 'condViewerScr', id: conditionId }, '', '#condition=' + conditionId);
 
   // ── Phase 8-E: Read IDB cache BEFORE the initial render ──────────────────
@@ -16667,13 +16690,14 @@ async function openDrugViewer(id) {
   document.getElementById('dvBody').scrollTop = 0;
   // Apply current lang state to screen
   setDvLang(_dvLang);
-  openScreen('drugViewerScr');
-  history.replaceState({ screen: 'drugViewerScr', id: id }, '', '#drug=' + id);
-  // Phase 1B: if opened from Favs, hide favsScr now that the viewer is visible
-  if (_hideFavsAfterDrugOpen) {
-    _hideFavsAfterDrugOpen = false;
+  // Pass favsScr hide as onVisible callback so it fires only after the
+  // drugViewerScr is painted at opacity:0 — never a blank frame.
+  const _shouldHideFavs = _hideFavsAfterDrugOpen;
+  _hideFavsAfterDrugOpen = false;
+  openScreen('drugViewerScr', _shouldHideFavs ? () => {
     document.getElementById('favsScr').classList.remove('peer-open');
-  }
+  } : null);
+  history.replaceState({ screen: 'drugViewerScr', id: id }, '', '#drug=' + id);
 }
 
 // ── Phase 12: pregnancy cell builder using token classes ──
