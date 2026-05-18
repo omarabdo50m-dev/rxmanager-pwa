@@ -9353,11 +9353,6 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
         Clinical
       </button>
     </div>
-    <!-- Age toggle sits at the right end of the tab strip -->
-    <div class="cv-age-toggle" id="cvAgeToggle" style="display:none;margin:auto 12px auto 0">
-      <button class="cv-age-btn active" id="cvPillAdult" onclick="setCondAge('adult')">Adult</button>
-      <button class="cv-age-btn" id="cvPillPaeds" onclick="setCondAge('paeds')">Paeds</button>
-    </div>
   </div>
 
   <!-- Scrollable body — all dynamic content injected here -->
@@ -13069,17 +13064,12 @@ async function openConditionViewer(conditionId, onVisible) {
   const langLbl = document.getElementById('cvLangTriggerLbl');
   if (langLbl) langLbl.textContent = 'ع';
   cvCloseLangDropdown();
-  document.getElementById('cvPillAdult').classList.add('active');
-  document.getElementById('cvPillPaeds').classList.remove('active');
   // Reset fav button — remove class only, never touch innerHTML (dual-icon structure must stay intact)
   const _favBtn = document.getElementById('cvFavBtn');
   if (_favBtn) { _favBtn.classList.remove('is-fav'); _favBtn.setAttribute('aria-pressed','false'); }
   // Reset tabs to Rx (Phase 9: tabs now in cv-tab-strip, not header row3)
   document.getElementById('cvTabRx').classList.add('active');
   document.getElementById('cvTabClinical').classList.remove('active');
-  // Hide age toggle until sibling data arrives
-  const ageToggle = document.getElementById('cvAgeToggle');
-  if (ageToggle) ageToggle.style.display = 'none';
   // Reset specialty pill to hidden on open
   const _specTag = document.getElementById('cvSpecialtyTag');
   const _specRow2 = document.getElementById('cvHdrRow2');
@@ -14449,8 +14439,6 @@ function setCondAge(age) {
   const scr = document.getElementById('condViewerScr');
   scr.classList.remove('age-adult', 'age-paeds');
   scr.classList.add('age-' + age);
-  document.getElementById('cvPillAdult').classList.toggle('active', age === 'adult');
-  document.getElementById('cvPillPaeds').classList.toggle('active', age === 'paeds');
 
   // Render the appropriate age data
   const data = age === 'adult' ? _cvAdultData : _cvPaedsData;
@@ -14529,15 +14517,7 @@ function cvCloseLangDropdown() {
 }
 
 function _updateCvAgeBar() {
-  const hasAdult = !!_cvAdultData;
-  const hasPaeds = !!_cvPaedsData;
-  const toggle = document.getElementById('cvAgeToggle');
-  // Phase 9: age toggle lives in .cv-tab-strip — show only when both age groups available
-  if (toggle) toggle.style.display = (hasAdult && hasPaeds) ? 'inline-flex' : 'none';
-  const pillAdult = document.getElementById('cvPillAdult');
-  const pillPaeds = document.getElementById('cvPillPaeds');
-  if (pillAdult) pillAdult.classList.toggle('active', _cvCurrentAge === 'adult');
-  if (pillPaeds) pillPaeds.classList.toggle('active', _cvCurrentAge === 'paeds');
+  // Age toggle removed — no UI element to update
 }
 
 // Update the two-row header: title (row 1) + specialty tag (row 2).
