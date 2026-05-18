@@ -9306,10 +9306,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
       <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:var(--color-brand-light);color:var(--color-brand);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0"><i class="ph ph-check-square"></i></div>
       <div><div style="font-weight:700;font-size:var(--text-base-size)">Select Drugs</div><div style="font-size:var(--text-sm-size);color:var(--color-text-secondary);font-weight:400;margin-top:1px">Choose multiple to delete in bulk</div></div>
     </button>
-    <button class="modal-btn" onclick="closeModal('libMenuModal');openDrugCatMgr()">
-      <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:rgba(15,43,74,.08);color:var(--color-header-bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0"><i class="ph ph-folders"></i></div>
-      <div><div style="font-weight:700;font-size:var(--text-base-size)">Drug Categories</div><div style="font-size:var(--text-sm-size);color:var(--color-text-secondary);font-weight:400;margin-top:1px">Manage drug groups and subgroups</div></div>
-    </button>
+
     <button class="modal-btn" onclick="closeModal('libMenuModal');openJsonImport()" style="border-color:rgba(0,133,254,.25);background:var(--color-brand-light)">
       <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:rgba(0,133,254,.12);color:var(--color-brand);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0"><i class="ph ph-download-simple"></i></div>
       <div><div style="font-weight:700;font-size:var(--text-base-size);color:var(--color-brand)">Import via JSON</div><div style="font-size:var(--text-sm-size);color:var(--color-text-secondary);font-weight:400;margin-top:1px">Paste Gemini-generated drug data</div></div>
@@ -9514,237 +9511,6 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   </div>
 </div>
 
-<!-- DRUG EDITOR v18 -->
-<div class="screen" id="drugEditorScr">
-  <div class="scr-hdr">
-    <button class="back-btn" onclick="closeScreen('drugEditorScr')"><i class="ph ph-arrow-left" style="font-size:20px"></i></button>
-    <span class="scr-title" id="drugEditorTitle">New Drug</span>
-    <button class="fav-star-btn" id="dFavBtn" style="display:none" onclick="toggleFavDrug()" title="Favourite"><i class="ph ph-star" style="font-size:20px"></i></button>
-    <button class="scr-action-btn danger" id="drugDelBtn" style="display:none" onclick="confirmDeleteDrug()">Delete</button>
-    <button class="scr-action-btn primary" onclick="saveLibDrug()">Save</button>
-  </div>
-  <div class="drug-editor-body">
-    <input type="hidden" id="dEditId"/>
-
-    <!-- ① IDENTITY & DOSING -->
-    <div class="section-card">
-      <div class="section-title"><span>🧬</span> Identity & Dosing</div>
-      <div class="field">
-        <label>Generic (INN) Name <span class="req">*</span></label>
-        <input type="text" id="dName" placeholder="e.g. amoxicillin" dir="auto"/>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Drug Group</label>
-          <select id="dGroup" onchange="onGroupChange()">
-            <option value="">— Select Group —</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Subgroup</label>
-          <select id="dSubgroup">
-            <option value="">— Select Subgroup —</option>
-          </select>
-        </div>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Adult Dose</label>
-          <input type="text" id="dDose" placeholder="e.g. 500mg 3× daily" dir="auto"/>
-        </div>
-        <div class="field">
-          <label>Maximum Dose</label>
-          <input type="text" id="dMax" placeholder="e.g. 4g/day"/>
-        </div>
-      </div>
-      <div class="field">
-        <label>Common Uses</label>
-        <textarea id="dCommonUses" placeholder="What it's prescribed for…" style="min-height:60px" dir="auto"></textarea>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Therapeutic Class <span style="font-size:9px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted)">(badge 1)</span></label>
-          <input type="text" id="dTherapeuticClass" placeholder="e.g. Broad-spectrum antibiotic" dir="auto"/>
-        </div>
-        <div class="field">
-          <label>Pharmacological Class <span style="font-size:9px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted)">(badge 2)</span></label>
-          <input type="text" id="dPharmacologicalClass" placeholder="e.g. Aminopenicillin" dir="auto"/>
-        </div>
-      </div>
-      <div class="field">
-        <label>Mechanism of Action <span style="font-size:9px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted)">— plain text only, no class labels here</span></label>
-        <textarea id="dMech" placeholder="How it works — student-friendly, max ~60 words…" style="min-height:65px" dir="auto"></textarea>
-      </div>
-    </div>
-
-    <!-- ② PAEDIATRICS -->
-    <div class="section-card" style="padding:0;overflow:hidden">
-      <div style="padding:12px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:var(--color-surface-2)" onclick="toggleEditorSection('dPedBody','dPedArrow')">
-        <div class="section-title" style="margin:0;padding:0;border:none">👶 Paediatrics</div>
-        <span style="font-size:13px;color:var(--muted);transition:transform .2s" id="dPedArrow"><i class="ph ph-caret-right"></i></span>
-      </div>
-      <div id="dPedBody" style="overflow:hidden;max-height:0;transition:max-height .3s ease,opacity .2s;opacity:0;padding:0 16px">
-        <div style="padding-bottom:14px">
-          <div class="field">
-            <label>Paediatric Dose (free text)</label>
-            <textarea id="dPedDose" placeholder="e.g. 5–10 mg/kg/dose q8h, max 500mg" style="min-height:60px" dir="auto"></textarea>
-          </div>
-          <div class="field" style="margin-bottom:0">
-            <label>Age Limit</label>
-            <input type="text" id="dPedAgeLimit" placeholder="e.g. >2 years, Not for <12 years"/>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ③ PREGNANCY & SAFETY -->
-    <div class="section-card" style="padding:0;overflow:hidden">
-      <div style="padding:12px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:var(--color-surface-2)" onclick="toggleEditorSection('dPregBody','dPregArrow')">
-        <div class="section-title" style="margin:0;padding:0;border:none">🤰 Pregnancy & Safety</div>
-        <span style="font-size:13px;color:var(--muted);transition:transform .2s" id="dPregArrow"><i class="ph ph-caret-right"></i></span>
-      </div>
-      <div id="dPregBody" style="overflow:hidden;max-height:0;transition:max-height .3s ease,opacity .2s;opacity:0;padding:0 16px">
-        <div style="padding-bottom:14px">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5">FDA Pregnancy Categories (A/B/C/D/X/N=not rated)</div>
-          <div class="field-row">
-            <div class="field">
-              <label>Trimester 1</label>
-              <select id="dPregT1"><option value="N">N</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="X">X</option></select>
-            </div>
-            <div class="field">
-              <label>Trimester 2</label>
-              <select id="dPregT2"><option value="N">N</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="X">X</option></select>
-            </div>
-            <div class="field">
-              <label>Trimester 3</label>
-              <select id="dPregT3"><option value="N">N</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="X">X</option></select>
-            </div>
-          </div>
-          <div class="field-row">
-            <div class="field">
-              <label>Lactation</label>
-              <select id="dLactation"><option value="">—</option><option value="Safe">Safe</option><option value="Caution">Caution</option><option value="Unsafe">Unsafe</option></select>
-            </div>
-            <div class="field">
-              <label>Lactation Note</label>
-              <input type="text" id="dLactationNote" placeholder="brief qualifier" dir="auto"/>
-            </div>
-          </div>
-          <div class="field-row">
-            <div class="field">
-              <label>Crosses BBB?</label>
-              <select id="dCrossesBBB"><option value="">Unknown</option><option value="yes">Yes</option><option value="no">No</option></select>
-            </div>
-            <div class="field">
-              <label>Crosses Placenta?</label>
-              <select id="dCrossesPlacenta"><option value="">Unknown</option><option value="yes">Yes</option><option value="no">No</option></select>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ④ PHARMACOKINETICS -->
-    <div class="section-card" style="padding:0;overflow:hidden">
-      <div style="padding:12px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:var(--color-surface-2)" onclick="toggleEditorSection('dPkBody','dPkArrow')">
-        <div class="section-title" style="margin:0;padding:0;border:none">⚗️ Pharmacokinetics</div>
-        <span style="font-size:13px;color:var(--muted);transition:transform .2s" id="dPkArrow"><i class="ph ph-caret-right"></i></span>
-      </div>
-      <div id="dPkBody" style="overflow:hidden;max-height:0;transition:max-height .3s ease,opacity .2s;opacity:0;padding:0 16px">
-        <div style="padding-bottom:14px">
-          <div class="field">
-            <label>Metabolism</label>
-            <input type="text" id="dMetabolism" placeholder="e.g. Hepatic — CYP3A4" dir="auto"/>
-          </div>
-          <div class="field">
-            <label>Elimination</label>
-            <input type="text" id="dElimination" placeholder="e.g. Renal 90% unchanged" dir="auto"/>
-          </div>
-          <div class="field">
-            <label>Major Drug Interactions</label>
-            <textarea id="dInteractions" placeholder="e.g. Warfarin — bleeding risk; MAOIs — serotonin syndrome" style="min-height:70px" dir="auto"></textarea>
-          </div>
-          <div class="field" style="margin-bottom:0">
-            <label>Dose Adjustments (Renal / Hepatic / Elderly)</label>
-            <textarea id="dDoseAdjustments" placeholder="Renal: reduce by 50% if eGFR <30…" style="min-height:70px" dir="auto"></textarea>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ⑤ SIDE EFFECTS & CONTRAINDICATIONS -->
-    <div class="section-card">
-      <div class="section-title"><span><i class="ph ph-warning" style="font-size:14px;vertical-align:-2px;color:var(--color-caution)"></i></span> Side Effects &amp; Contraindications</div>
-      <div class="field">
-        <label>Side Effects</label>
-        <textarea id="dSideEffects" placeholder="e.g. Nausea, headache, hepatotoxicity in overdose" style="min-height:65px" dir="auto"></textarea>
-      </div>
-      <div class="field" style="margin-bottom:0">
-        <label>Contraindications / Cautions</label>
-        <textarea id="dContra" placeholder="e.g. Avoid in hepatic impairment, hypersensitivity" style="min-height:65px" dir="auto"></textarea>
-      </div>
-    </div>
-
-    <!-- ⑥ COMBINATIONS -->
-    <div class="section-card">
-      <div class="section-title"><span>🔗</span> Combination With Other Generics
-        <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:4px">— leave empty if single-ingredient</span>
-      </div>
-      <div class="combo-search-wrap">
-        <input class="combo-search-inp" id="comboSearchInp" placeholder="Search library to add a generic…" autocomplete="off" oninput="onComboSearch()" onfocus="onComboSearch()"/>
-        <div class="combo-suggestions" id="comboSuggestions"></div>
-      </div>
-      <div class="combo-chips" id="comboChips"></div>
-      <input type="hidden" id="dCombinations"/>
-    </div>
-
-    <!-- ⑦ BRANDS & FORMULAS -->
-    <div class="section-card">
-      <div class="section-title"><span>🏷️</span> Brands, Formulas & Concentrations
-        <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:4px">— one row per variant</span>
-      </div>
-      <div style="overflow-x:auto;border-radius:var(--radius-sm);border:1px solid var(--border)">
-        <table class="product-table">
-          <thead>
-            <tr>
-              <th style="min-width:90px">Brand Name</th>
-              <th style="min-width:75px">Formula</th>
-              <th style="min-width:65px">Conc.</th>
-              <th style="min-width:90px">Dose (EN)</th>
-              <th style="min-width:100px">جرعة (عربي)</th>
-              <th style="min-width:80px">AR Name</th>
-              <th style="width:30px"></th>
-            </tr>
-          </thead>
-          <tbody id="productTableBody"></tbody>
-        </table>
-      </div>
-      <button class="add-product-btn" onclick="addProductRow()"><i class="ph ph-plus" style="font-size:13px;vertical-align:-1px"></i> Add Brand / Formula</button>
-      <button class="add-product-btn" style="border-color:#d97706;color:#d97706;background:#fffbeb;margin-top:6px" onclick="translateAllProductDoses()"><i class="ph ph-translate" style="font-size:14px;vertical-align:-1px"></i> Auto-translate All Doses to Arabic</button>
-    </div>
-
-    <!-- ⑧ SOURCE -->
-    <div class="section-card" style="padding:14px 16px">
-      <div class="section-title" style="margin-bottom:10px;padding-bottom:8px"><span>📖</span> Data Source</div>
-      <div class="field" style="margin-bottom:0">
-        <label>Reference Source <span style="font-size:9px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted)">(e.g. BNF 2024, Medscape, UpToDate — Metformin)</span></label>
-        <input type="text" id="dSource" placeholder="e.g. BNF 2024 · Medscape Drug Reference" dir="auto"/>
-      </div>
-    </div>
-
-    <!-- ⑨ ADDITIONAL INFO (synced with drug) -->
-    <div class="section-card" style="border:1.5px dashed var(--border2)">
-      <div class="section-title"><span>📝</span> My Notes
-        <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);margin-left:4px">— your annotations, synced with drug</span>
-      </div>
-      <div class="field" style="margin-bottom:0">
-        <textarea id="dAdditionalInfo" placeholder="Your personal annotations, clinical pearls, reminders…" style="min-height:70px" dir="auto"></textarea>
-      </div>
-    </div>
-
-    <button class="save-btn" onclick="saveLibDrug()"><i class="ph ph-floppy-disk" style="font-size:16px;vertical-align:-2px"></i> Save to Library</button>
-  </div>
-</div>
 
 <!-- FAVOURITES SCREEN — segmented tabs redesign -->
 <div id="favsScr">
@@ -9808,45 +9574,6 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 
   </div><!-- /.favs-scroll-body -->
 </div><!-- /#favsScr -->
-<!-- DRUG CATEGORY MANAGER -->
-<div class="screen" id="drugCatMgrScr">
-  <div class="scr-hdr">
-    <button class="back-btn" onclick="closeScreen('drugCatMgrScr')"><i class="ph ph-arrow-left" style="font-size:20px"></i></button>
-    <span class="scr-title">Drug Categories</span>
-  </div>
-  <div class="spec-mgr-body" style="padding-bottom:40px">
-    <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:14px;padding:10px 12px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border)">
-      Tap the <strong>arrow</strong> to expand a group and see its subgroups. Tap <strong>Edit</strong> on a group to change its emoji and colour.
-    </div>
-    <div id="dcatList"></div>
-  </div>
-</div>
-
-<!-- DCAT INLINE EDIT MODAL (bottom sheet) -->
-<div class="modal-overlay" id="dcatEditModal">
-  <div class="modal-sheet" style="padding-bottom:28px">
-    <div class="modal-handle"></div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-      <div id="dcatEditPreviewIco" style="width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;background:var(--color-surface-2);border:1px solid var(--color-border)">💊</div>
-      <div>
-        <div class="modal-title" style="margin:0" id="dcatEditModalTitle">Edit Group</div>
-        <div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px">Emoji &amp; accent colour only</div>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
-      <input type="text" id="dcatEditEmoji" placeholder="💊" maxlength="4"
-        style="width:54px;flex:none;padding:10px;border:1.5px solid var(--color-border);border-radius:var(--radius-sm);font-size:22px;text-align:center;font-family:var(--font);outline:none;background:var(--color-surface-2);transition:.18s"
-        oninput="updateDcatEditPreview()"/>
-      <input type="color" id="dcatEditColor" value="#0d9488"
-        style="width:54px;flex:none;padding:4px 6px;height:46px;cursor:pointer;border:1.5px solid var(--color-border);border-radius:var(--radius-sm)"
-        oninput="updateDcatEditPreview()"/>
-      <div style="flex:1;font-size:12px;color:var(--color-text-secondary);line-height:1.5">Choose an emoji and accent colour for this group</div>
-    </div>
-    <input type="hidden" id="dcatEditKey"/>
-    <button onclick="saveDcatEdit()" style="width:100%;padding:13px;background:var(--color-brand);color:var(--color-text-inverse);border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:8px">✓ Save Changes</button>
-    <button onclick="closeModal('dcatEditModal')" style="width:100%;padding:11px;background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);color:var(--color-text-secondary)">Cancel</button>
-  </div>
-</div>
 
 <!-- SETTINGS — Phase 4.12 redesign -->
 <div class="screen" id="settingsScr">
@@ -11328,19 +11055,44 @@ function closeScreen(id) {
     scr.classList.remove('open', 'scr-visible', 'scr-out');
   }, 160);
 }
-window.addEventListener('popstate', () => {
-  // If lightbox is open, close it — don't navigate away from the condition viewer
+window.addEventListener('popstate', (e) => {
+  // ── Phase 1A fix: explicit priority order so each back press
+  //    closes exactly ONE screen in the correct sequence.
+
+  // 0. Phase 2B: tab sentinel — setView('lib'/'fav') pushes {tab:view}.
+  //    When back is pressed on a root peer tab, this entry is what gets
+  //    popped. We simply return: the browser already moved back, the DOM
+  //    is correct (peer tab is still showing), nothing needs closing.
+  //    On Android this lets the OS eventually exit the app naturally.
+  if (e.state && e.state.tab) return;
+
+  // 1. Lightbox closes first — always, regardless of what else is open
   const lightboxOverlay = document.getElementById('lightboxOverlay');
   if (lightboxOverlay && lightboxOverlay.classList.contains('open')) {
     _closeLightboxSilent();
     return;
   }
-  // Phase 3: if Drug Library is open in list view, back = return to grid
+
+  // 2. Drug Viewer — close it explicitly by ID so it never gets skipped
+  //    when Condition Viewer is also open underneath it.
+  //    Without this, querySelector('.screen.open') could grab condViewerScr
+  //    first (DOM order) and close the wrong screen.
+  const dvScr = document.getElementById('drugViewerScr');
+  if (dvScr && dvScr.classList.contains('open')) {
+    _dvFormulaFilter && _dvFormulaFilter.clear();
+    _dvFormulaPanelOpen = false;
+    closeScreen('drugViewerScr');
+    return;
+  }
+
+  // 3. Lib list → grid (internal state, no separate screen element)
   if (S.view === 'lib' && S.libView === 'list') {
     exitToGrid();
     return;
   }
-  // Only close true overlay screens — lib/fav are peer nav tabs, not history entries
+
+  // 4. Any other overlay screen (condViewerScr, settingsScr, etc.)
+  //    lib/fav are peer tabs — never close them via back
   const open = document.querySelector('.screen.open');
   if (open && open.id !== 'libScr' && open.id !== 'favsScr') closeScreen(open.id);
 });
@@ -11392,25 +11144,67 @@ function setView(view) {
   document.getElementById('navRx').classList.toggle('active', view==='rx');
   document.getElementById('navLib').classList.toggle('active', view==='lib');
   document.getElementById('navFav').classList.toggle('active', view==='fav');
-  // Peer screens: show/hide via CSS class, no z-index stack, no history push
+  // Peer screens: show/hide via CSS class, no z-index stack
   document.getElementById('libScr').classList.toggle('peer-open', view==='lib');
   document.getElementById('favsScr').classList.toggle('peer-open', view==='fav');
-  // Scroll to top on every tab switch
+  // Phase 2B: push a sentinel entry for non-Home tabs so pressing back
+  // while on Drugs or Favourites stays on that tab (or exits the app on
+  // Android) rather than falling through to a stale history entry and
+  // silently jumping the user back to Home.
+  if (view !== 'rx') {
+    history.pushState({ tab: view }, '');
+  }
+  // Phase 2C: only scroll to top and reset state when there is no active
+  // search query — if the user had a search running, preserve it on return.
   if (view === 'rx') {
-    document.getElementById('mainList')?.scrollTo({ top: 0 });
+    const hasHomeSearch = (document.getElementById('mainSearch')?.value || '').trim().length > 0;
+    if (!hasHomeSearch) {
+      document.getElementById('mainList')?.scrollTo({ top: 0 });
+    }
     renderMain();
   } else if (view === 'fav') {
     document.querySelector('#favsScr .favs-scroll-body')?.scrollTo({ top: 0 });
     renderFavourites();
   } else {
-    document.querySelector('#libScr .lib-scroll-body')?.scrollTo({ top: 0 });
-    // Always land on the category grid when opening the Drugs tab
-    S.libView = 'grid';
-    S.activeLibCat = 'All';
-    _updateLibBackBtn();
-    _updateLibSearchPlaceholder();
+    const hasLibSearch = (document.getElementById('libSearch')?.value || '').trim().length > 0;
+    if (!hasLibSearch) {
+      // No active search — reset to category grid (clean browse state)
+      document.querySelector('#libScr .lib-scroll-body')?.scrollTo({ top: 0 });
+      S.libView = 'grid';
+      S.activeLibCat = 'All';
+      _updateLibBackBtn();
+      _updateLibSearchPlaceholder();
+    }
+    // Always re-render so the tab reflects current data
     renderLib();
   }
+}
+
+// ═══════════════════════════════════════════════════════
+// ── Phase 1B: Favourites → viewer helper
+//    Saves scroll position, opens viewer, then hides favsScr
+//    with a small delay so the viewer animation always starts
+//    first — prevents the flash of empty screen.
+// ═══════════════════════════════════════════════════════
+let _favsScrollSave = 0;
+
+function _openViewerFromFavs(type, id) {
+  // Save current Favourites scroll position before anything moves
+  const favsBody = document.querySelector('#favsScr .favs-scroll-body');
+  _favsScrollSave = favsBody ? favsBody.scrollTop : 0;
+
+  // Start the viewer open animation first
+  if (type === 'condition') {
+    openConditionViewer(id);
+  } else {
+    openDrugViewer(id);
+  }
+
+  // Hide Favourites after a short delay so viewer is already animating in
+  // — guarantees something is always visible, eliminating the flash
+  setTimeout(() => {
+    document.getElementById('favsScr').classList.remove('peer-open');
+  }, 40);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -11483,7 +11277,7 @@ async function renderFavourites() {
       </div>`;
     } else {
       condList.innerHTML = condItems.map((item, _ci) => `
-        <div class="lib-drug-card card-anim" style="animation-delay:${Math.min(_ci*18,220)}ms" onclick="openConditionViewer('${esc(item.id)}');document.getElementById('favsScr').classList.remove('peer-open')">
+        <div class="lib-drug-card card-anim" style="animation-delay:${Math.min(_ci*18,220)}ms" onclick="_openViewerFromFavs('condition','${esc(item.id)}')">
           <div class="rx-icon-circle" style="background:${_hexToRgba12(item.specClr)};color:${item.specClr}">
             <i class="ph ${item.specIco}" style="font-size:20px"></i>
           </div>
@@ -11521,7 +11315,7 @@ async function renderFavourites() {
         const subLabel = item.subgroup
           ? `${esc(item.group)} · ${esc(item.subgroup)}`
           : esc(item.group);
-        return `<div class="lib-drug-card card-anim" style="animation-delay:${Math.min(_ci*18,220)}ms" onclick="openDrugViewer('${esc(item.id)}');document.getElementById('favsScr').classList.remove('peer-open')">
+        return `<div class="lib-drug-card card-anim" style="animation-delay:${Math.min(_ci*18,220)}ms" onclick="_openViewerFromFavs('drug','${esc(item.id)}')">
           <div class="rx-icon-circle" style="background:${clr.s}18;color:${clr.s}">
             <i class="ph ph-pill"></i>
           </div>
@@ -11857,130 +11651,6 @@ function populateSubgroupSelect(group, currentSub) {
     subs.map(s => `<option value="${s}" ${s===currentSub?'selected':''}>${s}</option>`).join('');
 }
 
-// ═══════════════════════════════════════════════════════
-// DRUG CATEGORY MANAGER
-// ═══════════════════════════════════════════════════════
-let _dcatEditKey = null;
-
-function openDrugCatMgr() {
-  renderDrugCatList();
-  openScreen('drugCatMgrScr');
-}
-
-function renderDrugCatList() {
-  const list = document.getElementById('dcatList');
-  if (!list) return;
-  list.innerHTML = Object.entries(DRUG_GROUPS).map(([group, gv]) => {
-    const clr = catClr(group);
-    const subCount = gv.subgroups.length;
-    const groupId = 'dcg_' + group.replace(/\W/g,'_');
-    const subsHtml = gv.subgroups.map(sub => `
-      <div class="dcat-subgroup-item">
-        <div class="dcat-subgroup-dot" style="background:${clr.s}"></div>
-        <span class="dcat-subgroup-name">${esc(sub)}</span>
-      </div>`).join('');
-    return `<div style="margin-bottom:4px">
-      <div class="dcat-group-hdr" onclick="toggleDcatGroup('${groupId}')">
-        <span class="dcat-group-arrow" id="${groupId}_arr">▶</span>
-        <div class="dcat-group-ico" style="background:${clr.bg}">${clr.ico}</div>
-        <div style="flex:1;min-width:0">
-          <div class="dcat-group-name">${esc(group)}</div>
-          <div class="dcat-group-meta">${subCount} subgroup${subCount!==1?'s':''}</div>
-        </div>
-        <button class="dcat-group-edit-btn" onclick="event.stopPropagation();openDcatEdit('${esc(group)}','${esc(clr.ico)}','${esc(clr.s)}')"><i class="ph ph-pencil" style="font-size:12px;vertical-align:-1px"></i> Edit</button>
-      </div>
-      <div class="dcat-subgroups" id="${groupId}_subs">
-        ${subsHtml}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function toggleDcatGroup(groupId) {
-  const subs = document.getElementById(groupId + '_subs');
-  const arr  = document.getElementById(groupId + '_arr');
-  if (!subs) return;
-  const isOpen = subs.classList.contains('open');
-  if (isOpen) {
-    subs.style.maxHeight = subs.scrollHeight + 'px';
-    requestAnimationFrame(() => {
-      subs.style.maxHeight = '0';
-      subs.classList.remove('open');
-    });
-  } else {
-    subs.classList.add('open');
-    subs.style.maxHeight = subs.scrollHeight + 'px';
-    subs.addEventListener('transitionend', () => {
-      if (subs.classList.contains('open')) subs.style.maxHeight = 'none';
-    }, {once: true});
-  }
-  if (arr) arr.classList.toggle('open', !isOpen);
-}
-
-function openDcatEdit(groupName, currentIco, currentColor) {
-  document.getElementById('dcatEditKey').value = groupName;
-  document.getElementById('dcatEditEmoji').value = currentIco;
-  document.getElementById('dcatEditColor').value = currentColor || '#0d9488';
-  document.getElementById('dcatEditModalTitle').textContent = groupName;
-  updateDcatEditPreview();
-  openModal('dcatEditModal');
-}
-
-function updateDcatEditPreview() {
-  const ico   = document.getElementById('dcatEditEmoji').value || '💊';
-  const color = document.getElementById('dcatEditColor').value || '#0d9488';
-  const preview = document.getElementById('dcatEditPreviewIco');
-  if (preview) {
-    preview.textContent = ico;
-    preview.style.background = color + '22';
-    preview.style.borderColor = color + '44';
-  }
-}
-
-function saveDcatEdit() {
-  const groupName = document.getElementById('dcatEditKey').value;
-  const ico   = document.getElementById('dcatEditEmoji').value.trim() || '💊';
-  const color = document.getElementById('dcatEditColor').value || '#0d9488';
-  if (!groupName || !DRUG_GROUPS[groupName]) {
-    toast('Group not found'); return;
-  }
-  // Update DRUG_GROUPS ico
-  DRUG_GROUPS[groupName].ico = ico;
-  // Update CAT_COLORS for the group and all its subgroups
-  const subgroups = DRUG_GROUPS[groupName].subgroups || [];
-  const newEntry = {ico, s:color, bg:color+'22', t:color};
-  CAT_COLORS[groupName] = newEntry;
-  subgroups.forEach(sub => { CAT_COLORS[sub] = newEntry; });
-  closeModal('dcatEditModal');
-  renderDrugCatList();
-  refreshCatSelects();
-  toast(`${groupName} updated`);
-}
-
-// Legacy stubs kept for backward compat
-function editDrugCategory(key) { openDcatEdit(key, CAT_COLORS[key]?.ico||'💊', CAT_COLORS[key]?.s||'#0d9488'); }
-async function deleteDrugCategory(key) {
-  const ok = await openConfirm('Delete Category?', `"${key}" will be removed.`);
-  if (!ok) return;
-  delete CAT_COLORS[key];
-  const lib = await DB.getAll('library');
-  for (const d of lib) {
-    if (d.type === key) await DB.put('library', {...d, type: 'Other'});
-  }
-  refreshCatSelects();
-  renderDrugCatList();
-  toast(`Category "${key}" deleted`);
-}
-function saveDrugCategory() { saveDcatEdit(); }
-
-function refreshCatSelects() {
-  // dType is now a free-text input — no rebuild needed
-  // Refresh lib and picker strips
-  renderLibCats();
-  renderPickerCats();
-}
-
-// ═══════════════════════════════════════════════════════
 // MAIN LIST
 // ═══════════════════════════════════════════════════════
 function onSearch() {
@@ -12925,8 +12595,8 @@ const CARD_COLOR_MAP = {
       tabindex="0"
       aria-label="${esc(ariaLabel)}"
       style="animation-delay:${_delay}ms"
-      onclick="openViewer('${esc(c.id)}')"
-      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openViewer('${esc(c.id)}')}">
+      onclick="openConditionViewer('${esc(c.id)}')"
+      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openConditionViewer('${esc(c.id)}')}">
       <div class="rx-icon-circle" style="background:${_hexToRgba12(specColor)};color:${specColor}">
         <i class="ph ${iconName}" style="font-size:20px" aria-hidden="true"></i>
       </div>
@@ -13048,6 +12718,7 @@ async function openConditionViewer(conditionId) {
   document.getElementById('cvBody').innerHTML = '';
 
   openScreen('condViewerScr');
+  history.replaceState({ screen: 'condViewerScr', id: conditionId }, '', '#condition=' + conditionId);
 
   // ── Phase 8-E: Read IDB cache BEFORE the initial render ──────────────────
   // By reading IDB here (async, typically <5ms), we know immediately whether
@@ -13172,9 +12843,30 @@ function _cvSpinner() {
 function closeConditionViewer() {
   cvCloseLangDropdown();
   closeScreen('condViewerScr');
+  history.replaceState({}, '', window.location.pathname);
+  // Phase 1B: if user came from Favourites, restore the tab and scroll position
+  if (S.view === 'fav') {
+    setTimeout(() => {
+      document.getElementById('favsScr').classList.add('peer-open');
+      const favsBody = document.querySelector('#favsScr .favs-scroll-body');
+      if (favsBody) favsBody.scrollTop = _favsScrollSave;
+    }, 160); // match closeScreen animation duration
+  }
 }
 
-// ── CV-2: fetchConditionData — fetch prescriptions + drugs in background ───────
+// ── Phase 4: Deep link handler — reads URL hash on app init and opens the right screen
+function _handleDeepLink() {
+  const hash = window.location.hash;
+  if (hash.startsWith('#condition=')) {
+    const id = hash.replace('#condition=', '');
+    if (id) openConditionViewer(id);
+  } else if (hash.startsWith('#drug=')) {
+    const id = hash.replace('#drug=', '');
+    if (id) openDrugViewer(id);
+  }
+}
+
+
 
 // ── Phase 2: RPC helper — single round trip via get_condition_full() ──────────
 // Calls the Postgres RPC, normalises the response into the same
@@ -15231,16 +14923,6 @@ let _lbZoomReset = function() {};
   document.addEventListener('touchcancel', (e) => { if (e.target.closest('#lightboxStage')) _onCancel(e); }, { passive: true  });
 }());
 
-// ── Compatibility shim: old openViewer → new openConditionViewer ─────────────
-// The main list rx-cards still call openViewer(id) for IndexedDB entries.
-// Once Supabase conditions are the primary data source this will be replaced.
-// For now, keep openViewer as a shim that tries Supabase conditions first,
-// falling back to a stub message.
-async function openViewer(id) {
-  // Try Supabase conditions table first
-  openConditionViewer(id);
-}
-
 
 // ═══════════════════════════════════════════════════════
 // CONSTANTS — FORMULAS
@@ -15796,6 +15478,11 @@ function setLibCat(c) {
 // Enter a category: switch from grid view to drug list view for that group.
 // 'All' is a valid groupName — shows the full drug list with no category filter.
 function enterCategory(groupName) {
+  // Phase 2A: push a history entry so each back press maps 1-to-1 with
+  // a visible navigation step. Without this, the popstate handler's
+  // exitToGrid() intercept consumed an entry that belonged to a previous
+  // screen, making back skip Home (or whatever was open before Drugs tab).
+  history.pushState({ screen: 'libList', cat: groupName }, '');
   _libSlideTransition(() => {
     S.activeLibCat = groupName;
     S.libView = 'list';
@@ -16577,7 +16264,7 @@ function _dvFlatCard({iconBg, iconColor, iconName, title, content}) {
 }
 
 async function openDrugViewer(id) {
-  if (!id) { openDrugEditor(null); return; }
+  if (!id) return;
   await ensureSearchIndex(); // Phase 05: ensure drug → condition links resolve correctly
   _dvCurrentId = id;
   // ── Phase 21: track drug open ─────────────────────────────────────────
@@ -16958,6 +16645,7 @@ async function openDrugViewer(id) {
   // Apply current lang state to screen
   setDvLang(_dvLang);
   openScreen('drugViewerScr');
+  history.replaceState({ screen: 'drugViewerScr', id: id }, '', '#drug=' + id);
 }
 
 // ── Phase 12: pregnancy cell builder using token classes ──
@@ -17020,21 +16708,23 @@ function dvCloseLangDropdown() {
   if (trigger) trigger.setAttribute('aria-expanded', 'false');
 }
 
-function _closeDrugViewer(cb) {
+function _closeDrugViewer() {
   closeScreen('drugViewerScr');
+  history.replaceState({}, '', window.location.pathname);
   // Clear sticky header content so it doesn't flash stale data on next open
   const b = document.getElementById('dvHeaderBreadcrumb');
   const n = document.getElementById('dvHeaderDrugName');
   if (b) { b.innerHTML=''; b.style.display='none'; }
   if (n) { n.textContent=''; n.style.display='none'; }
-  if (cb) setTimeout(cb, 160);
+  // Phase 1B: if user came from Favourites, restore the tab and scroll position
+  if (S.view === 'fav') {
+    setTimeout(() => {
+      document.getElementById('favsScr').classList.add('peer-open');
+      const favsBody = document.querySelector('#favsScr .favs-scroll-body');
+      if (favsBody) favsBody.scrollTop = _favsScrollSave;
+    }, 160); // match closeScreen animation duration
+  }
 }
-function drugViewerOpenEditor() {
-  _dvFormulaFilter.clear();
-  _dvFormulaPanelOpen = false;
-  _closeDrugViewer(() => openDrugEditor(_dvCurrentId));
-}
-
 function toggleFavDrugViewer() {
   const id = _dvCurrentId;
   if (!id) return;
@@ -17050,279 +16740,6 @@ function toggleFavDrugViewer() {
 // ═══════════════════════════════════════════════════════
 
 // ── Product table rows ──────────────────────────────
-function addProductRow(p = {}) {
-  const tbody = document.getElementById('productTableBody');
-  const tr = document.createElement('tr');
-  const formulaOptions = FORMULAS.map(f =>
-    `<option value="${esc(f)}" ${(p.formula||'Tablet')===f?'selected':''}>${esc(f)}</option>`
-  ).join('');
-  const autoAr = p.doseAr || (p.dose ? translateDoseToArabic(p.dose) : '');
-  tr.innerHTML = `
-    <td><input class="pt-input pr-brand" type="text" placeholder="Panadol" value="${esc(p.brand||'')}" dir="auto"/></td>
-    <td><select class="pt-select pr-formula">${formulaOptions}</select></td>
-    <td><input class="pt-input pr-conc" type="text" placeholder="500mg" value="${esc(p.conc||'')}"/></td>
-    <td><input class="pt-input pr-dose" type="text" placeholder="1 tablet 3 times a day" value="${esc(p.dose||'')}" dir="auto" oninput="autoFillAr(this)"/></td>
-    <td><input class="pt-input pr-dose-ar" type="text" placeholder="الجرعة بالعربي" value="${esc(autoAr)}" dir="rtl" style="font-family:var(--font-ar);text-align:right"/></td>
-    <td><input class="pt-input pr-brand-ar" type="text" placeholder="اسم عربي" value="${esc(p.brandAr||'')}" dir="rtl" style="font-family:var(--font-ar);text-align:right"/></td>
-    <td><button class="pt-del" onclick="this.closest('tr').remove()" title="Remove"><i class="ph ph-x" style="font-size:13px"></i></button></td>`;
-  tbody.appendChild(tr);
-}
-
-function collectProducts(genericId) {
-  return Array.from(document.querySelectorAll('#productTableBody tr')).map(tr => ({
-    id: tr.dataset.prodId || uid(),
-    genericId,
-    brand:   tr.querySelector('.pr-brand')?.value.trim() || '',
-    brandAr: tr.querySelector('.pr-brand-ar')?.value.trim() || '',
-    formula: tr.querySelector('.pr-formula')?.value || 'Tablet',
-    conc:    tr.querySelector('.pr-conc')?.value.trim() || '',
-    dose:    tr.querySelector('.pr-dose')?.value.trim() || '',
-    doseAr:  tr.querySelector('.pr-dose-ar')?.value.trim() || '',
-  })).filter(p => p.brand || p.conc);
-}
-
-// Auto-translate all product table dose rows to Arabic
-function translateAllProductDoses() {
-  let count = 0;
-  document.querySelectorAll('#productTableBody tr').forEach(tr => {
-    const en = tr.querySelector('.pr-dose')?.value.trim() || '';
-    const arField = tr.querySelector('.pr-dose-ar');
-    if (!en || !arField) return;
-    const ar = translateDoseToArabic(en);
-    if (ar && ar !== en) { arField.value = ar; arField.dataset.userEdited = ''; count++; }
-  });
-  toast(count ? `Translated ${count} dose${count!==1?'s':''} to Arabic` : 'No doses to translate');
-}
-
-// Auto-fill Arabic dose in product table row
-function autoFillAr(enInput) {
-  clearTimeout(_translateTimer);
-  _translateTimer = setTimeout(() => {
-    const tr = enInput.closest('tr');
-    const arField = tr?.querySelector('.pr-dose-ar');
-    if (!arField || arField.dataset.userEdited) return;
-    arField.value = translateDoseToArabic(enInput.value);
-  }, 600);
-}
-
-// Mark as user edited when they type Arabic manually
-document.addEventListener('input', e => {
-  if (e.target.classList.contains('pr-dose-ar')) {
-    e.target.dataset.userEdited = '1';
-  }
-});
-
-// ── Combination search ──────────────────────────────
-let _comboIds = []; // array of genericIds linked in combo
-
-async function onComboSearch() {
-  const q = document.getElementById('comboSearchInp').value.toLowerCase().trim();
-  const sugg = document.getElementById('comboSuggestions');
-  if (!q) { sugg.classList.remove('open'); return; }
-  const lib = await DB.getAll('library');
-  const curId = document.getElementById('dEditId').value;
-  const matches = lib.filter(d =>
-    d.id !== curId &&
-    !_comboIds.includes(d.id) &&
-    d.name.toLowerCase().includes(q)
-  ).slice(0, 8);
-  if (!matches.length) { sugg.classList.remove('open'); return; }
-  sugg.innerHTML = matches.map(d =>
-    `<div class="combo-sug-item" onclick="addComboGeneric('${d.id}','${esc(d.name)}')">${esc(d.name)}</div>`
-  ).join('');
-  sugg.classList.add('open');
-}
-
-function addComboGeneric(id, name) {
-  if (_comboIds.includes(id)) return;
-  _comboIds.push(id);
-  renderComboChips();
-  document.getElementById('comboSearchInp').value = '';
-  document.getElementById('comboSuggestions').classList.remove('open');
-}
-
-function removeComboGeneric(id) {
-  _comboIds = _comboIds.filter(x => x !== id);
-  renderComboChips();
-}
-
-async function renderComboChips() {
-  const chips = document.getElementById('comboChips');
-  if (!_comboIds.length) { chips.innerHTML = '<span style="font-size:12px;color:var(--color-text-tertiary)">None — single-ingredient drug</span>'; return; }
-  const lib = await DB.getAll('library');
-  chips.innerHTML = _comboIds.map(id => {
-    const d = lib.find(x => x.id === id);
-    const name = d ? d.name : id;
-    return `<span class="combo-chip">${esc(name)}<button class="combo-chip-del" onclick="removeComboGeneric('${id}')"><i class="ph ph-x" style="font-size:11px"></i></button></span>`;
-  }).join('');
-}
-
-// ── Open / Save / Delete ────────────────────────────
-async function openDrugEditor(id) {
-  S.currentDrugEditId = id;
-  _comboIds = [];
-  populateDrugGroupSelect();
-  document.getElementById('productTableBody').innerHTML = '';
-  document.getElementById('drugEditorTitle').textContent = id ? 'Edit Drug' : 'New Drug';
-  document.getElementById('drugDelBtn').style.display = id ? 'inline-flex' : 'none';
-  document.getElementById('dEditId').value = id || '';
-  document.getElementById('comboSearchInp').value = '';
-  document.getElementById('comboSuggestions').classList.remove('open');
-
-  const dFavBtn = document.getElementById('dFavBtn');
-  if (dFavBtn) {
-    dFavBtn.style.display = id ? 'inline' : 'none';
-    if (id) {
-      const favDrugs = JSON.parse(localStorage.getItem('rxmgr_fav_drugs') || '[]');
-      dFavBtn.innerHTML = favDrugs.includes(id) ? '<i class="ph-fill ph-star" style="font-size:20px;color:var(--color-caution)"></i>' : '<i class="ph ph-star" style="font-size:20px"></i>';
-    }
-  }
-
-  if (id) {
-    const [d, products] = await Promise.all([DB.get('library', id), getProductsForGeneric(id)]);
-    if (!d) return;
-    document.getElementById('dName').value = d.name || '';
-    // Group/subgroup
-    const gs = resolveGroupSub(d);
-    const grpSel = document.getElementById('dGroup');
-    grpSel.value = gs.group || '';
-    populateSubgroupSelect(gs.group, gs.subgroup);
-    document.getElementById('dDose').value = d.dose || '';
-    document.getElementById('dMax').value  = d.max  || '';
-    document.getElementById('dTherapeuticClass').value    = d.therapeuticClass    || '';
-    document.getElementById('dPharmacologicalClass').value= d.pharmacologicalClass|| '';
-    document.getElementById('dMech').value = d.mech || '';
-    document.getElementById('dContra').value = d.contra || '';
-    document.getElementById('dSideEffects').value = d.sideEffects || '';
-    document.getElementById('dCommonUses').value = d.commonUses || '';
-    document.getElementById('dPedDose').value = d.pedDose || '';
-    document.getElementById('dPedAgeLimit').value = d.pedAgeLimit || '';
-    document.getElementById('dPregT1').value = d.pregnancyT1 || 'N';
-    document.getElementById('dPregT2').value = d.pregnancyT2 || 'N';
-    document.getElementById('dPregT3').value = d.pregnancyT3 || 'N';
-    document.getElementById('dLactation').value = d.lactation || '';
-    document.getElementById('dLactationNote').value = d.lactationNote || '';
-    document.getElementById('dCrossesBBB').value = d.crossesBBB === true ? 'yes' : d.crossesBBB === false ? 'no' : '';
-    document.getElementById('dCrossesPlacenta').value = d.crossesPlacenta === true ? 'yes' : d.crossesPlacenta === false ? 'no' : '';
-    document.getElementById('dMetabolism').value = d.metabolism || '';
-    document.getElementById('dElimination').value = d.elimination || '';
-    document.getElementById('dInteractions').value = d.interactions || '';
-    document.getElementById('dDoseAdjustments').value = d.doseAdjustments || '';
-    // additionalInfo — now stored in DB; migrate from localStorage if needed
-    const localNote = localStorage.getItem('rxmgr_drug_notes_' + id) || '';
-    document.getElementById('dAdditionalInfo').value = d.additionalInfo || localNote;
-    const dSourceEl = document.getElementById('dSource');
-    if (dSourceEl) dSourceEl.value = d.source || '';
-    // Load combinations
-    _comboIds = [...(d.combinations || [])];
-    // Load products
-    if (products.length) {
-      products.forEach(p => {
-        addProductRow(p);
-        const rows = document.querySelectorAll('#productTableBody tr');
-        rows[rows.length-1].dataset.prodId = p.id;
-      });
-    } else {
-      const oldBrands = getBrands(d);
-      if (oldBrands.length) {
-        oldBrands.forEach(b => addProductRow({brand:b, formula:'Tablet', conc: d.conc||'', dose: d.dose||'', doseAr: translateDoseToArabic(d.dose||'')}));
-      } else {
-        addProductRow();
-      }
-    }
-  } else {
-    ['dName','dDose','dMax','dMech','dTherapeuticClass','dPharmacologicalClass','dContra','dSideEffects','dCommonUses','dPedDose','dPedAgeLimit','dLactationNote','dMetabolism','dElimination','dInteractions','dDoseAdjustments','dAdditionalInfo','dSource'].forEach(i => { const el = document.getElementById(i); if (el) el.value = ''; });
-    document.getElementById('dGroup').value = '';
-    document.getElementById('dSubgroup').innerHTML = '<option value="">— Select Subgroup —</option>';
-    document.getElementById('dPregT1').value = 'N';
-    document.getElementById('dPregT2').value = 'N';
-    document.getElementById('dPregT3').value = 'N';
-    document.getElementById('dLactation').value = '';
-    document.getElementById('dCrossesBBB').value = '';
-    document.getElementById('dCrossesPlacenta').value = '';
-    addProductRow();
-  }
-  renderComboChips();
-  openScreen('drugEditorScr');
-}
-
-async function saveLibDrug() {
-  const name = document.getElementById('dName').value.trim();
-  if (!name) { toast('Enter a generic name'); return; }
-  const id = document.getElementById('dEditId').value || uid();
-
-  const group    = document.getElementById('dGroup').value || 'Miscellaneous';
-  const subgroup = document.getElementById('dSubgroup').value || '';
-
-  // Save additionalInfo to DB (synced like all other fields)
-  const addInfo = document.getElementById('dAdditionalInfo').value.trim();
-  // Migrate: clear any old localStorage copy
-  localStorage.removeItem('rxmgr_drug_notes_' + id);
-
-  const crossesBBBRaw = document.getElementById('dCrossesBBB').value;
-  const crossesPlacRaw = document.getElementById('dCrossesPlacenta').value;
-
-  const generic = {
-    id, name,
-    group,
-    subgroup,
-    type: group, // backward compat
-    dose:            document.getElementById('dDose').value.trim(),
-    max:             document.getElementById('dMax').value.trim(),
-    therapeuticClass:    document.getElementById('dTherapeuticClass').value.trim(),
-    pharmacologicalClass:document.getElementById('dPharmacologicalClass').value.trim(),
-    mech:            document.getElementById('dMech').value.trim(),
-    contra:          document.getElementById('dContra').value.trim(),
-    sideEffects:     document.getElementById('dSideEffects').value.trim(),
-    commonUses:      document.getElementById('dCommonUses').value.trim(),
-    pedDose:         document.getElementById('dPedDose').value.trim(),
-    pedAgeLimit:     document.getElementById('dPedAgeLimit').value.trim(),
-    pedDoseAr:       translateDoseToArabic(document.getElementById('dPedDose').value.trim()),
-    pregnancyT1:     document.getElementById('dPregT1').value,
-    pregnancyT2:     document.getElementById('dPregT2').value,
-    pregnancyT3:     document.getElementById('dPregT3').value,
-    lactation:       document.getElementById('dLactation').value,
-    lactationNote:   document.getElementById('dLactationNote').value.trim(),
-    crossesBBB:      crossesBBBRaw === 'yes' ? true : crossesBBBRaw === 'no' ? false : null,
-    crossesPlacenta: crossesPlacRaw === 'yes' ? true : crossesPlacRaw === 'no' ? false : null,
-    metabolism:      document.getElementById('dMetabolism').value.trim(),
-    elimination:     document.getElementById('dElimination').value.trim(),
-    interactions:    document.getElementById('dInteractions').value.trim(),
-    doseAdjustments: document.getElementById('dDoseAdjustments').value.trim(),
-    additionalInfo:  addInfo,
-    source:          (document.getElementById('dSource')?.value || '').trim(),
-    combinations:    [..._comboIds],
-    brands: [],
-  };
-  await DB.put('library', generic);
-
-  // Save products — delete old ones first, then write new
-  const oldProds = await getProductsForGeneric(id);
-  for (const op of oldProds) await DB.delete('products', op.id);
-  const newProds = collectProducts(id);
-  for (const np of newProds) await DB.put('products', np);
-
-  // Propagate clinical data updates to linked entries
-  const entries = await DB.getAll('entries');
-  for (const e of entries) {
-    let changed = false;
-    const updDrugs = (e.drugs||[]).map(drug => {
-      if ((drug.genericId === id || (drug.name||'').toLowerCase() === name.toLowerCase()) && !drug.isLocal) {
-        changed = true;
-        return {...drug, type:generic.type, mech:generic.mech, max:generic.max, contra:generic.contra, sideEffects:generic.sideEffects};
-      }
-      return drug;
-    });
-    if (changed) await DB.put('entries', {...e, drugs: updDrugs});
-  }
-
-  closeScreen('drugEditorScr');
-  // Rebuild search index so new drug is immediately searchable
-  buildSearchIndex().catch(() => {});
-  renderLib();
-  toast('Drug saved to library');
-}
-
 async function confirmDeleteDrug() {
   const ok = await openConfirm('Delete Drug?', 'This removes the drug and all its products from the library. Existing prescriptions keep their data.');
   if (!ok) return;
@@ -17331,7 +16748,6 @@ async function confirmDeleteDrug() {
   const prods = await getProductsForGeneric(id);
   for (const p of prods) await DB.delete('products', p.id);
   await DB.delete('library', id);
-  closeScreen('drugEditorScr');
   // Rebuild search index so deleted drug is removed from search
   buildSearchIndex().catch(() => {});
   renderLib();
@@ -17389,8 +16805,6 @@ async function importData(input) {
     // Restore custom drug categories
     if (data.catColors && typeof data.catColors === 'object') {
       Object.assign(CAT_COLORS, data.catColors);
-      refreshCatSelects();
-      buildCatDatalist();
     }
     renderMain();
     renderSpecStrip();
@@ -18460,9 +17874,6 @@ async function init() {
   // The user always sees the cached home screen instantly on warm loads.
   // Content updates appear silently without any spinner or layout shift.
 
-  buildCatDatalist();
-  populateDrugGroupSelect();
-
   const _lmsg = document.querySelector('#load-scr p');
 
   // Phase 1a: populate _CONDITIONS from cache synchronously (instant, no await)
@@ -18518,6 +17929,9 @@ async function init() {
   document.getElementById('load-scr').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
   document.getElementById('bnav').style.display = 'flex';
+
+  // ── Phase 4: Handle deep links — must run after data is loaded and app is visible
+  _handleDeepLink();
 
   // ── Phase 16 — Medical Disclaimer ─────────────────────────────────────────
   // Shown once on first install before the user interacts with any content.
@@ -18877,8 +18291,6 @@ async function gistPull() {
     // Restore custom drug categories
     if (data.catColors && typeof data.catColors === 'object') {
       Object.assign(CAT_COLORS, data.catColors);
-      refreshCatSelects();
-      buildCatDatalist();
     }
     const ts = new Date().toLocaleString();
     localStorage.setItem('rxmgr_last_sync', ts);
@@ -18892,92 +18304,6 @@ async function gistPull() {
   }
 }
 
-// ═══════════════════════════════════════════════════════
-// CATEGORY TAG INPUT (drug editor) — v23
-// ═══════════════════════════════════════════════════════
-function populateDrugGroupSelect() {
-  const sel = document.getElementById("dGroup");
-  if (!sel) return;
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">— Select Group —</option>' + Object.keys(DRUG_GROUPS).map(g => `<option value="${g}">${g}</option>`).join("");
-  if (cur) sel.value = cur;
-}
-
-function buildCatDatalist() {
-  const dl = document.getElementById('catDatalist');
-  if (!dl) return;
-  dl.innerHTML = Object.keys(DRUG_GROUPS).map(k => `<option value="${k}">`).join('');
-}
-
-function getCatSuggestions(q) {
-  const lq = q.toLowerCase().trim();
-  if (!lq) return Object.entries(CAT_COLORS);
-  return Object.entries(CAT_COLORS).filter(([k]) => k.toLowerCase().includes(lq));
-}
-
-function renderCatDropdown(q) {
-  const dd = document.getElementById('catDropdown');
-  if (!dd) return;
-  const matches = getCatSuggestions(q);
-  const isNew = q.trim() && !CAT_COLORS[q.trim()];
-  let html = matches.slice(0, 12).map(([k, v]) =>
-    `<div class="cat-tag-option" onmousedown="event.preventDefault();selectCatOption('${esc(k)}')">
-      <span class="cat-ico">${v.ico}</span>
-      <span class="cat-name">${esc(k)}</span>
-    </div>`
-  ).join('');
-  if (isNew) {
-    html += `<div class="cat-tag-create" onmousedown="event.preventDefault();selectCatOption('${esc(q.trim())}')">
-      <i class="ph ph-plus" style="font-size:11px;vertical-align:-1px"></i> Use "<strong>${esc(q.trim())}</strong>" as new category
-    </div>`;
-  }
-  dd.innerHTML = html;
-  dd.classList.toggle('open', !!(html));
-}
-
-function onCatTagInput() {
-  const inp = document.getElementById('dType');
-  renderCatDropdown(inp.value);
-}
-
-function onCatTagFocus() {
-  const inp = document.getElementById('dType');
-  renderCatDropdown(inp.value);
-}
-
-function closeCatDropdown() {
-  const dd = document.getElementById('catDropdown');
-  if (dd) dd.classList.remove('open');
-}
-
-function selectCatOption(val) {
-  const inp = document.getElementById('dType');
-  if (inp) inp.value = val;
-  closeCatDropdown();
-  // Ensure in CAT_COLORS if brand new
-  if (!CAT_COLORS[val]) {
-    CAT_COLORS[val] = {ico:'📋', s:'#9e9e9e', bg:'#f5f5f5', t:'#424242'};
-    buildCatDatalist();
-    renderLibCats();
-    renderPickerCats();
-  }
-}
-
-function onCatTagKeydown(ev) {
-  const dd = document.getElementById('catDropdown');
-  if (!dd || !dd.classList.contains('open')) return;
-  if (ev.key === 'Escape') { closeCatDropdown(); return; }
-  if (ev.key === 'Enter') {
-    const first = dd.querySelector('.cat-tag-option,.cat-tag-create');
-    if (first) { first.dispatchEvent(new MouseEvent('mousedown')); ev.preventDefault(); }
-  }
-}
-
-// ═══════════════════════════════════════════════════════
-// PHASE 3 — GEMINI JSON PROMPT + JSON IMPORT PARSER
-// ═══════════════════════════════════════════════════════
-
-// ── STEP 1 PROMPT BUILDER ───────────────────────────────────────
 function buildStep1Prompt() {
   return `You are a data extraction assistant. Your only job is to extract drug brand entries from pharmacy website pages. No clinical data, no grouping, no enrichment.
 
