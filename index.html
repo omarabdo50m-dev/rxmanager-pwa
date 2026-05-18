@@ -11042,30 +11042,35 @@ function toast(msg) {
 // ═══════════════════════════════════════════════════════
 function openScreen(id) {
   const scr = document.getElementById(id);
-  // Clear any stale close-animation classes before opening.
-  // If a screen was mid-close (scr-out still present), removing it here
-  // prevents the opacity:0 override from causing a flash on re-open.
+  // Clear any stale close-animation classes so a mid-close re-open works.
   scr.classList.remove('scr-out', 'scr-visible');
   scr.classList.add('open');
-  // Force reflow so the CSS transition fires from the off-screen start
-  // position (opacity:0, translateX(14px)) rather than snapping to end.
-  scr.getBoundingClientRect();
-  scr.classList.add('scr-visible');
+  // Double-rAF: first rAF lets the browser commit display:flex + opacity:0.
+  // Second rAF fires after that paint, then we add scr-visible to trigger
+  // the opacity/transform transition cleanly — no flash, no snap.
+  // This is more reliable than getBoundingClientRect() on Android WebView.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      scr.classList.add('scr-visible');
+    });
+  });
   history.pushState({screen: id}, '');
 }
 function closeScreen(id) {
   const scr = document.getElementById(id);
   scr.classList.add('scr-out');
+  // 200ms > 160ms CSS transition — gives a safe margin on slow Android GPU
+  // so display:none never fires before the opacity animation completes.
   setTimeout(() => {
     scr.classList.remove('open', 'scr-visible', 'scr-out');
-  }, 160);
+  }, 200);
 }
 window.addEventListener('popstate', (e) => {
-  // ── Navigation priority — each back press closes exactly ONE thing.
+  // ── Back button priority — closes exactly ONE thing per press.
   //
-  // History model:
-  //   [initial(null)] [tab:lib] [screen:libList] [screen:condViewerScr] …
-  //   Popping an entry lands on the one below it (e.state = that entry).
+  // RULE: peer tabs (Home / Drugs / Favs) are NOT history.
+  // Only overlay screens and lib-list transitions push history entries.
+  // The back button closes overlays; it never switches tabs.
 
   // 1. Lightbox — always highest priority
   const lightboxOverlay = document.getElementById('lightboxOverlay');
@@ -11074,10 +11079,7 @@ window.addEventListener('popstate', (e) => {
     return;
   }
 
-  // 2. Drug Viewer — explicit ID check so it's never skipped when
-  //    Condition Viewer is also open underneath it.
-  //    MUST call _closeDrugViewer() (not bare closeScreen) so the
-  //    Favs restore logic inside _closeDrugViewer runs correctly.
+  // 2. Drug Viewer — must check before condViewer so stacked open works
   const dvScr = document.getElementById('drugViewerScr');
   if (dvScr && dvScr.classList.contains('open') && !dvScr.classList.contains('scr-out')) {
     _dvFormulaFilter && _dvFormulaFilter.clear();
@@ -11086,10 +11088,14 @@ window.addEventListener('popstate', (e) => {
     return;
   }
 
-  // 3. Condition Viewer — call closeConditionViewer() (not bare closeScreen)
-  //    so the Favs restore logic inside closeConditionViewer runs.
+  // 3. Condition Viewer — CV internal tab: if on 'clinical', go back to 'rx' first
   const cvScr = document.getElementById('condViewerScr');
   if (cvScr && cvScr.classList.contains('open') && !cvScr.classList.contains('scr-out')) {
+    if (_cvActiveTab === 'clinical') {
+      setCvTab('rx');
+      // Consume the history entry that was pushed when Clinical tab opened
+      return;
+    }
     closeConditionViewer();
     return;
   }
@@ -11101,34 +11107,14 @@ window.addEventListener('popstate', (e) => {
     return;
   }
 
-  // 5. Lib list → grid (internal state, no separate screen element)
+  // 5. Lib drug list → grid (internal state, one history entry owns this)
   if (S.view === 'lib' && S.libView === 'list') {
     exitToGrid();
     return;
   }
 
-  // 6. Tab sentinel consumed — we've landed on it with nothing open.
-  //    Restore the tab that this sentinel represents, in case the user
-  //    navigated away (e.g. Drugs → Favs → back should restore Drugs).
-  if (e.state && e.state.tab) {
-    const targetView = e.state.tab;
-    if (S.view !== targetView) {
-      // Switch to the tab this sentinel belongs to WITHOUT pushing a new
-      // history entry (we're responding to a pop, not a forward navigation).
-      _setViewSilent(targetView);
-    }
-    return;
-  }
-
-  // 7. Landed on the initial null entry — this means all tab sentinels
-  //    have been popped. Navigate to Home so the UI stays coherent.
-  //    (Covers: Home → Drugs → back → back → should land on Home)
-  if (!e.state || e.state.initial) {
-    if (S.view !== 'rx') {
-      setView('rx');
-    }
-    return;
-  }
+  // 6. Nothing to close — stay on current tab. Android OS will exit the
+  //    app on the next back press once the stack is fully empty.
 });
 
 // ═══════════════════════════════════════════════════════
@@ -11178,18 +11164,11 @@ function setView(view) {
   document.getElementById('navRx').classList.toggle('active', view==='rx');
   document.getElementById('navLib').classList.toggle('active', view==='lib');
   document.getElementById('navFav').classList.toggle('active', view==='fav');
-  // Peer screens: show/hide via CSS class, no z-index stack
+  // Peer screens: show/hide via CSS class, no z-index stack, no history entry.
+  // Tab switches are NOT history — back button never navigates between tabs.
   document.getElementById('libScr').classList.toggle('peer-open', view==='lib');
   document.getElementById('favsScr').classList.toggle('peer-open', view==='fav');
-  // Phase 2B: push a sentinel entry for non-Home tabs so pressing back
-  // while on Drugs or Favourites stays on that tab (or exits the app on
-  // Android) rather than falling through to a stale history entry and
-  // silently jumping the user back to Home.
-  if (view !== 'rx') {
-    history.pushState({ tab: view }, '');
-  }
-  // Phase 2C: only scroll to top and reset state when there is no active
-  // search query — if the user had a search running, preserve it on return.
+  // Scroll / state reset: only when no active search query
   if (view === 'rx') {
     const hasHomeSearch = (document.getElementById('mainSearch')?.value || '').trim().length > 0;
     if (!hasHomeSearch) {
@@ -11213,35 +11192,6 @@ function setView(view) {
   }
 }
 
-// ── Silent view switch (used by popstate handler — no history push) ──────────
-// Identical to setView() except it never calls history.pushState.
-// Use this when responding to a popstate event so we don't push a new
-// entry onto the stack we just popped from.
-function _setViewSilent(view) {
-  S.view = view;
-  document.getElementById('navRx').classList.toggle('active', view==='rx');
-  document.getElementById('navLib').classList.toggle('active', view==='lib');
-  document.getElementById('navFav').classList.toggle('active', view==='fav');
-  document.getElementById('libScr').classList.toggle('peer-open', view==='lib');
-  document.getElementById('favsScr').classList.toggle('peer-open', view==='fav');
-  if (view === 'rx') {
-    const hasHomeSearch = (document.getElementById('mainSearch')?.value || '').trim().length > 0;
-    if (!hasHomeSearch) document.getElementById('mainList')?.scrollTo({ top: 0 });
-    renderMain();
-  } else if (view === 'fav') {
-    renderFavourites();
-  } else {
-    const hasLibSearch = (document.getElementById('libSearch')?.value || '').trim().length > 0;
-    if (!hasLibSearch) {
-      document.querySelector('#libScr .lib-scroll-body')?.scrollTo({ top: 0 });
-      S.libView = 'grid';
-      S.activeLibCat = 'All';
-      _updateLibBackBtn();
-      _updateLibSearchPlaceholder();
-    }
-    renderLib();
-  }
-}
 
 // ═══════════════════════════════════════════════════════
 // ── Phase 1B: Favourites → viewer helper
@@ -14288,6 +14238,13 @@ function setCvTab(tab, animate) {
   _cvSaveScroll(_cvActiveTab);
 
   _cvActiveTab = tab;
+
+  // Push a history entry when entering the secondary (Clinical) tab so
+  // the system back button returns to Rx (primary) instead of closing
+  // the viewer. Popping this entry is handled in the popstate handler.
+  if (tab === 'clinical') {
+    history.pushState({ screen: 'condViewerScr', cvTab: 'clinical' }, '');
+  }
 
   // ── Update tab button active states ─────────────────────────────
   document.getElementById('cvTabRx').classList.toggle('active', tab === 'rx');
