@@ -21268,7 +21268,7 @@ function setThemeExplicit(theme) {
 // Order of precedence:
 //   1. localStorage stored preference  → apply it
 //   2. No stored preference            → read OS preference
-//   3. No OS preference available      → default dark
+//   3. No OS preference available      → default light
 (function initTheme() {
   const stored = localStorage.getItem(THEME_KEY);
   if (stored === 'light' || stored === 'dark') {
@@ -21278,10 +21278,9 @@ function setThemeExplicit(theme) {
     setTimeout(() => _syncThemeToggleUI(stored), 0);
     return;
   }
-  // No stored preference — follow OS.
+  // No stored preference — follow OS; fall back to light on first launch.
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-  const resolved = (prefersLight && !prefersDark) ? 'light' : 'dark';
+  const resolved = prefersDark ? 'dark' : 'light';
   _applyTheme(resolved, false); // false = no transition on initial paint
   setTimeout(() => _syncThemeToggleUI(resolved), 0);
 })();
