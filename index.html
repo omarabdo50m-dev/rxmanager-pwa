@@ -3094,7 +3094,7 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
      Feels authoritative; no bounce, no rubber-band.
    • Durations calibrated for Android 60 Hz:
        Enter push:   280ms
-       Exit (back):  220ms  (faster = lighter, more responsive)
+       Exit (back):  180ms  (faster = lighter; exits should feel instant)
        Modal rise:   260ms
        Tab fade:     140ms  (near-instant — tabs aren't navigation)
 
@@ -3152,15 +3152,21 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
   will-change: auto; /* release GPU layer once settled */
 }
 
-/* ── EXITING — slide out to left on back navigation ─────────── */
+/* ── EXITING — fade out in place on back navigation ─────────── */
+/* No lateral drift — the screen dissolves and recedes slightly.
+   Industry standard (iOS 18, Linear, Raycast): exit = opacity only
+   or opacity + subtle scale-down. translateX on exit feels mechanical
+   and directional; a pure fade reads as instant and calm.
+   Easing: cubic-bezier(0.4, 0, 1, 1) — accelerates out fast so it
+   doesn't linger. Duration 180ms: exits should feel instantaneous. */
 .screen.is-exiting,
 .screen.scr-out {  /* .scr-out kept as legacy alias */
   opacity: 0;
-  transform: translateX(-18px) scale(0.994);
+  transform: scale(0.97);
   pointer-events: none;
   transition:
-    opacity   220ms cubic-bezier(0.32, 0, 0.67, 0),
-    transform 220ms cubic-bezier(0.32, 0, 0.67, 0);
+    opacity   180ms cubic-bezier(0.4, 0, 1, 1),
+    transform 180ms cubic-bezier(0.4, 0, 1, 1);
   will-change: transform, opacity;
 }
 
@@ -3204,10 +3210,10 @@ body{font-family:var(--font);background:var(--color-bg);color:var(--color-text-p
 }
 .screen.screen--modal.is-exiting {
   opacity: 0;
-  transform: translateY(28px) scale(0.98);
+  transform: translateY(16px) scale(0.98);
   transition:
-    opacity   200ms cubic-bezier(0.32, 0, 0.67, 0),
-    transform 200ms cubic-bezier(0.32, 0, 0.67, 0);
+    opacity   180ms cubic-bezier(0.4, 0, 1, 1),
+    transform 180ms cubic-bezier(0.4, 0, 1, 1);
 }
 
 /* ── PEER TAB VARIANT — fade only, no spatial movement ──────── */
@@ -11333,11 +11339,11 @@ function closeScreen(id) {
     screenUnderRef.classList.add('is-restoring');   // suppress transition for snap
     screenUnderRef.classList.remove('is-under');
     screenUnderRef.classList.add('is-active');
-    // Keep is-restoring until exit animation finishes (220ms) so there's
+    // Keep is-restoring until exit animation finishes (180ms) so there's
     // zero chance of the transition re-activating and causing a flash.
     setTimeout(() => {
       screenUnderRef.classList.remove('is-restoring');
-    }, 240);
+    }, 200);
   }
 
   // Start the exit animation
@@ -11347,7 +11353,7 @@ function closeScreen(id) {
   // Remove from DOM after animation completes
   setTimeout(() => {
     outgoing.classList.remove('open', 'is-active', 'is-entering', 'is-exiting', 'is-under', 'is-restoring', 'scr-visible', 'scr-out');
-  }, 260);
+  }, 200);
 }
 window.addEventListener('popstate', (e) => {
   // ── Back button priority — closes exactly ONE thing per press.
