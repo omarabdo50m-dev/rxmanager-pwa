@@ -11467,7 +11467,10 @@ function runConfirm() {
 // ═══════════════════════════════════════════════════════
 // Tabs are PEERS — not a navigation stack. No slide, no depth.
 // Motion: opacity crossfade only, 140ms — near-instant.
-// Scroll positions are preserved (peer screens stay in DOM).
+// Scroll positions AND lib view state are preserved across switches.
+// Reset only happens on first visit or when explicitly cleared.
+let _tabVisited = { rx: false, lib: false, fav: false };
+
 function setView(view) {
   S.view = view;
   document.getElementById('navRx').classList.toggle('active', view==='rx');
@@ -11481,24 +11484,26 @@ function setView(view) {
   if (view !== 'rx') {
     history.pushState({ tab: view }, '');
   }
-  // Scroll / state reset: only when no active search query
   if (view === 'rx') {
-    const hasHomeSearch = (document.getElementById('mainSearch')?.value || '').trim().length > 0;
-    if (!hasHomeSearch) {
+    // Home: only reset scroll on first visit (not on return-from-viewer)
+    if (!_tabVisited.rx) {
       document.getElementById('mainList')?.scrollTo({ top: 0 });
     }
+    _tabVisited.rx = true;
     renderMain();
   } else if (view === 'fav') {
+    _tabVisited.fav = true;
     renderFavourites();
   } else {
-    const hasLibSearch = (document.getElementById('libSearch')?.value || '').trim().length > 0;
-    if (!hasLibSearch) {
-      // No active search — reset to category grid (clean browse state)
+    // Lib: preserve view state (grid vs list, active category, scroll)
+    // on return — only reset on very first visit to the tab.
+    if (!_tabVisited.lib) {
       document.querySelector('#libScr .lib-scroll-body')?.scrollTo({ top: 0 });
       S.libView = 'grid';
       S.activeLibCat = 'All';
       _updateLibBackBtn();
       _updateLibSearchPlaceholder();
+      _tabVisited.lib = true;
     }
     // Always re-render so the tab reflects current data
     renderLib();
@@ -17045,11 +17050,10 @@ function _closeDrugViewer() {
     if (lib) {
       lib.style.transition = 'none';
       lib.style.opacity = '1';
-      setTimeout(() => { lib.style.transition = ''; lib.style.opacity = ''; }, 260);
+      setTimeout(() => { lib.style.transition = ''; lib.style.opacity = ''; }, 200);
     }
   } else if (screenUnderSnap && screenUnderSnap.id === 'condViewerScr') {
-    // Restore condViewerScr cleanly AFTER the exit animation completes (220ms)
-    // so there is zero overlap between the exiting drug viewer and condViewerScr
+    // Restore condViewerScr cleanly AFTER the exit animation completes (180ms)
     setTimeout(() => {
       screenUnderSnap.classList.add('is-restoring');
       screenUnderSnap.classList.remove('is-under');
@@ -17057,7 +17061,7 @@ function _closeDrugViewer() {
       requestAnimationFrame(() => {
         screenUnderSnap.classList.remove('is-restoring');
       });
-    }, 220);
+    }, 190);
   }
 }
 function toggleFavDrugViewer() {
