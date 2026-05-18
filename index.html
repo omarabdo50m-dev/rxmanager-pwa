@@ -11291,17 +11291,11 @@ function openScreen(id, onVisible) {
   // Push history
   history.pushState({ screen: id }, '');
 
-  // Push the current active screen back (depth cue on forward nav)
-  // Peer tabs (favsScr, libScr) use peer-open instead of is-active,
-  // so check for them explicitly first to avoid picking up stale is-active
-  // elements from the home screen and causing a flash.
-  const favsScr = document.getElementById('favsScr');
-  const libScr  = document.getElementById('libScr');
-  const peerActive =
-    (favsScr && favsScr.classList.contains('peer-open')) ? favsScr :
-    (libScr  && libScr.classList.contains('peer-open'))  ? libScr  :
-    null;
-  const currentActive = peerActive || document.querySelector(
+  // Push the current active screen back (depth cue on forward nav).
+  // Peer tabs (favsScr, libScr) use peer-open for visibility and are always
+  // covered by the incoming overlay (z-index:200 vs z-index:10) — they never
+  // need to be pushed back or restored, so skip them here.
+  const currentActive = document.querySelector(
     '.screen.is-active:not(.is-exiting), .screen.scr-visible:not(.scr-out)'
   );
   if (currentActive && currentActive !== incoming) {
@@ -11338,12 +11332,7 @@ function closeScreen(id) {
   if (screenUnderRef && screenUnderRef !== outgoing) {
     screenUnderRef.classList.add('is-restoring');   // suppress transition for snap
     screenUnderRef.classList.remove('is-under');
-    // Peer tabs (favsScr, libScr) use peer-open for visibility, not is-active.
-    // Restoring is-active on them would have no visual effect and leave stale state.
-    const isPeerTab = screenUnderRef.id === 'favsScr' || screenUnderRef.id === 'libScr';
-    if (!isPeerTab) {
-      screenUnderRef.classList.add('is-active');
-    }
+    screenUnderRef.classList.add('is-active');
     // Keep is-restoring until exit animation finishes (220ms) so there's
     // zero chance of the transition re-activating and causing a flash.
     setTimeout(() => {
@@ -11512,32 +11501,27 @@ function setView(view) {
 
 
 // ═══════════════════════════════════════════════════════
-// ── Phase 1B: Favourites → viewer helper
-//    Saves scroll position, opens viewer, then hides favsScr.
-//    For conditions (no await before openScreen): hide after 40ms —
-//    viewer animation is already running by then.
-//    For drugs (await ensureSearchIndex before openScreen): set a flag
-//    that openDrugViewer checks after openScreen, so favsScr only hides
-//    once the viewer is actually visible — eliminates the flash.
+// ── Favourites → viewer helper
+//    Saves scroll position and opens the viewer.
+//    favsScr is NEVER hidden — overlay screens sit at z-index:200
+//    above favsScr (z-index:10) so it is always covered.
+//    Toggling peer-open created a display:none gap during the
+//    viewer's exit animation, exposing the home screen underneath.
 // ═══════════════════════════════════════════════════════
 let _favsScrollSave = 0;
-let _hideFavsAfterDrugOpen = false;
 
 function _openViewerFromFavs(type, id) {
   // Save scroll position before opening
   const favsBody = document.querySelector('#favsScr .favs-scroll-body');
   _favsScrollSave = favsBody ? favsBody.scrollTop : 0;
 
-  // Do NOT touch favsScr here. The viewer screen opens at z-index:200 on top
-  // of favsScr (z-index:10) — no gap, no flash. favsScr stays in the DOM,
-  // visible underneath, and gets removed after the viewer is fully on screen.
+  // favsScr stays visible the entire time — it is always covered by the
+  // incoming overlay screen (z-index:200 vs favsScr z-index:10).
+  // We NEVER remove peer-open here; doing so would expose the home screen
+  // during the viewer's exit animation.
   if (type === 'condition') {
-    openConditionViewer(id, () => {
-      // onVisible fires when viewer is fully opaque — safe to hide favsScr now
-      document.getElementById('favsScr').classList.remove('peer-open');
-    });
+    openConditionViewer(id);
   } else {
-    _hideFavsAfterDrugOpen = true;
     openDrugViewer(id);
   }
 }
@@ -13179,14 +13163,10 @@ function closeConditionViewer() {
   cvCloseLangDropdown();
   closeScreen('condViewerScr');
   history.replaceState({}, '', window.location.pathname);
-  // Restore favsScr AFTER the exit animation (220ms) so the fading-in peer tab
-  // never overlaps the fading-out screen — that overlap is what causes the flash.
+  // Restore scroll position — favsScr was never hidden so no peer-open toggle needed
   if (S.view === 'fav') {
     const favsBody = document.querySelector('#favsScr .favs-scroll-body');
     if (favsBody) favsBody.scrollTop = _favsScrollSave;
-    setTimeout(() => {
-      document.getElementById('favsScr').classList.add('peer-open');
-    }, 220);
   }
 }
 
@@ -16967,14 +16947,9 @@ async function openDrugViewer(id) {
   document.getElementById('dvBody').scrollTop = 0;
   // Apply current lang state to screen
   setDvLang(_dvLang);
-  // Pass favsScr hide as onVisible callback so it fires only after the
-  // drugViewerScr is painted at opacity:0 — never a blank frame.
-  const _shouldHideFavs = _hideFavsAfterDrugOpen;
-  _hideFavsAfterDrugOpen = false;
-  openScreen('drugViewerScr', _shouldHideFavs ? () => {
-    // Viewer is now fully on screen — hide favsScr the same way conditionViewer does
-    document.getElementById('favsScr').classList.remove('peer-open');
-  } : null);
+  // favsScr is never hidden — it stays behind the overlay screen (z-index:200
+  // vs favsScr z-index:10) and is always covered. No need to touch peer-open.
+  openScreen('drugViewerScr', null);
   history.replaceState({ screen: 'drugViewerScr', id: id }, '', '#drug=' + id);
 }
 
@@ -17056,12 +17031,9 @@ function _closeDrugViewer() {
   if (n) { n.textContent=''; n.style.display='none'; }
 
   if (S.view === 'fav') {
-    // Restore favsScr after exit — identical to closeConditionViewer
+    // Restore scroll position — favsScr was never hidden so no peer-open toggle needed
     const favsBody = document.querySelector('#favsScr .favs-scroll-body');
     if (favsBody) favsBody.scrollTop = _favsScrollSave;
-    setTimeout(() => {
-      document.getElementById('favsScr').classList.add('peer-open');
-    }, 220);
   } else if (S.view === 'lib') {
     const lib = document.getElementById('libScr');
     if (lib) {
