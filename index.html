@@ -7820,6 +7820,56 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 }
 .debug-doses .cv-dose-missing { display: block; }
 
+/* ── Phase 5: Paediatric dose block ── */
+.cv-ped-dose-block {
+  margin-top: 5px;
+  padding: 5px 8px;
+  background: var(--color-info-light);
+  border-left: 3px solid var(--color-info);
+  border-radius: var(--radius-sm);
+}
+.cv-ped-wtx-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cv-ped-wtx-formula {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-info);
+  font-family: 'IBM Plex Sans Arabic', 'IBM Plex Sans', system-ui, sans-serif;
+}
+.cv-ped-freq {
+  font-size: var(--text-xs-size);
+  color: var(--color-text-secondary);
+  font-family: 'IBM Plex Sans Arabic', 'IBM Plex Sans', system-ui, sans-serif;
+}
+.cv-ped-example {
+  font-size: var(--text-xs-size);
+  color: var(--color-text-tertiary);
+  font-family: 'IBM Plex Sans Arabic', 'IBM Plex Sans', system-ui, sans-serif;
+}
+.cv-ped-loading-dose {
+  font-size: var(--text-xs-size);
+  color: var(--color-text-secondary);
+  font-family: 'IBM Plex Sans Arabic', 'IBM Plex Sans', system-ui, sans-serif;
+  margin-bottom: 3px;
+}
+.cv-ped-label {
+  font-weight: 700;
+  color: var(--color-caution);
+}
+.cv-dose-missing-ped {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--text-xs-size);
+  color: var(--color-caution);
+  font-weight: 700;
+  padding: 3px 0;
+  margin-top: 3px;
+}
+
 /* ── Drug viewer language visibility ── */
 /* EN dose: hide by default, show in EN mode */
 .dv-brand-dose-p12 { display: none; }
@@ -10786,7 +10836,7 @@ const SB = {
   async fetchLibrary() {
     const [rawDrugs, rawProducts] = await Promise.all([
       this.fetchAll('drugs',    'id,name,group_name,subgroup,therapeutic_class,pharmacological_class,moa,common_uses,dose,dose_ar,max_dose,ped_dose,ped_age_limit,ped_dose_ar,pregnancy,lactation,lactation_note,crosses_bbb,crosses_placenta,metabolism,elimination,interactions,dose_adjustments,side_effects,contra,additional_info,source', '&is_published=eq.true'),
-      this.fetchAll('products', 'id,drug_id,brand,brand_ar,formula,conc,dose,dose_ar', '&is_published=eq.true'),
+      this.fetchAll('products', 'id,drug_id,brand,brand_ar,formula,conc,dose,dose_ar,ped_dose,ped_dose_ar,ped_shortcut,ped_wt_divisor,ped_wt_multiplier,ped_wt_unit,ped_freq,ped_loading_dose,ped_age_limit,ped_source', '&is_published=eq.true'),
     ]);
     const drugs    = rawDrugs.map(r => this._mapDrug(r));
     const products = rawProducts.map(r => this._mapProduct(r));
@@ -11094,6 +11144,27 @@ const S = {
 
 // Global viewer language: 'ar' (default) or 'en'
 let _viewerLang = localStorage.getItem('rxmgr_dose_lang') || 'ar';
+
+// ── Phase 5: PED_FREQ_AR — Arabic display strings for ped_freq enum codes ──
+const PED_FREQ_AR = {
+  'q4h':           'كل 4 ساعات',
+  'q6h':           'كل 6 ساعات',
+  'q6-8h':         'كل 6-8 ساعات',
+  'q8h':           'كل 8 ساعات',
+  'q8-12h':        'كل 8-12 ساعة',
+  'q12h':          'كل 12 ساعة',
+  'q24h':          'مرة يوميًا',
+  'single':        'جرعة واحدة فقط',
+  'single-morning':'جرعة واحدة قبل الإفطار',
+  'before-sleep':  'مرة واحدة قبل النوم',
+  'as-needed':     'عند الحاجة',
+  'stat':          'جرعة طارئة فورية',
+  'q3-4weeks':     'كل 3-4 أسابيع',
+  '3x-weekly':     '3 مرات أسبوعيًا',
+  '2x-weekly':     'مرتين أسبوعيًا',
+  'digitalization':'بروتوكول الديجتلة',
+  'infusion-rate': 'تسريب وريدي مستمر',
+};
 
 // Picker data maps — avoid inline JSON in onclick attrs (breaks with 60+ brands)
 const _pickerDrugs = new Map();
@@ -12484,6 +12555,16 @@ function _resolveRpcItem(item) {
     _productDoseAr:   prodDoseAr,
     _genericDoseEn:   genDoseEn,
     _genericDoseAr:   genDoseAr,
+    // ── Phase 5: Ped fields — product tier preferred, drug tier fallback ──
+    ped_dose:          (product.ped_dose          || '').trim() || (generic.ped_dose     || '').trim() || null,
+    ped_dose_ar:       (product.ped_dose_ar        || '').trim() || (generic.ped_dose_ar  || '').trim() || null,
+    ped_shortcut:      (product.ped_shortcut       || '').trim() || null,
+    ped_wt_divisor:    product.ped_wt_divisor    ?? null,
+    ped_wt_multiplier: product.ped_wt_multiplier ?? 1,
+    ped_wt_unit:       product.ped_wt_unit       || 'ml',
+    ped_freq:          product.ped_freq          || null,
+    ped_loading_dose:  (product.ped_loading_dose  || '').trim() || null,
+    ped_age_limit:     (product.ped_age_limit     || '').trim() || (generic.ped_age_limit || '').trim() || null,
     alternatives:     resolvedAlts,
   };
 }
@@ -12894,7 +12975,7 @@ const CARD_COLOR_MAP = {
         <i class="ph ${iconName}" style="font-size:20px" aria-hidden="true"></i>
       </div>
       <div class="rx-body">
-        <div class="rx-name" dir="auto">${esc(c.name)}</div>
+        <div class="rx-name" dir="auto">${esc(c.name)}${c.age_group === 'paediatric' ? `<span style="font-size:9px;font-weight:800;background:var(--color-info-light);color:var(--color-info);border:1px solid var(--color-info);border-radius:var(--radius-full);padding:1px 6px;margin-left:5px;vertical-align:middle">👶 Paeds</span>` : ''}</div>
         ${c.specialty ? `<div class="rx-sub">
           <span class="rx-spec-label">${esc(c.specialty)}</span>
         </div>` : ''}
@@ -13210,16 +13291,37 @@ async function _fetchSiblingConditionRpc(conditionId) {
 // Used by the legacy waterfall path in fetchConditionData and _fetchSiblingCondition.
 function _resolveDrugRow(d, prodMap, drugMap) {
   let brand = '', formula = '', conc = '', brandAr = '';
+  let pedDose = null, pedDoseAr = null, pedShortcut = null;
+  let pedWtDivisor = null, pedWtMultiplier = 1, pedWtUnit = 'ml';
+  let pedFreq = null, pedLoadingDose = null, pedAgeLimit = null;
+
   if (d.product_id && prodMap[d.product_id]) {
     const p = prodMap[d.product_id];
     brand = p.brand || ''; formula = p.formula || ''; conc = p.conc || ''; brandAr = p.brand_ar || '';
+    pedDose        = p.ped_dose          || null;
+    pedDoseAr      = p.ped_dose_ar       || null;
+    pedShortcut    = p.ped_shortcut      || null;
+    pedWtDivisor   = p.ped_wt_divisor    ?? null;
+    pedWtMultiplier= p.ped_wt_multiplier ?? 1;
+    pedWtUnit      = p.ped_wt_unit       || 'ml';
+    pedFreq        = p.ped_freq          || null;
+    pedLoadingDose = p.ped_loading_dose  || null;
+    pedAgeLimit    = p.ped_age_limit     || null;
   }
   const drugRec = drugMap[d.drug_id] || {};
   const genericName = drugRec.name || d.drug_id || '';
   const subgroup    = drugRec.subgroup || drugRec.group_name || '';
   if (!brand) brand = genericName;
+  // Fallback ped fields to drug tier if product didn't have them
+  if (!pedDose)     pedDose     = drugRec.ped_dose      || null;
+  if (!pedDoseAr)   pedDoseAr   = drugRec.ped_dose_ar   || null;
+  if (!pedAgeLimit) pedAgeLimit = drugRec.ped_age_limit || null;
+
   return { ...d, resolvedBrand: brand, resolvedFormula: formula, resolvedConc: conc,
-           resolvedBrandAr: brandAr, resolvedGeneric: genericName, resolvedSubgroup: subgroup };
+           resolvedBrandAr: brandAr, resolvedGeneric: genericName, resolvedSubgroup: subgroup,
+           ped_dose: pedDose, ped_dose_ar: pedDoseAr, ped_shortcut: pedShortcut,
+           ped_wt_divisor: pedWtDivisor, ped_wt_multiplier: pedWtMultiplier, ped_wt_unit: pedWtUnit,
+           ped_freq: pedFreq, ped_loading_dose: pedLoadingDose, ped_age_limit: pedAgeLimit };
 }
 
 async function fetchConditionData(conditionId) {
@@ -13387,7 +13489,7 @@ async function fetchConditionData(conditionId) {
       const toIn = arr => arr.map(id => '"' + id + '"').join(',');
 
       const [prodRes, drugLookupRes] = await Promise.all([
-        productIds.length ? fetch(base + 'products?id=in.(' + toIn(productIds) + ')&select=id,brand,brand_ar,formula,conc', { headers }) : Promise.resolve(null),
+        productIds.length ? fetch(base + 'products?id=in.(' + toIn(productIds) + ')&select=id,brand,brand_ar,formula,conc,ped_dose,ped_dose_ar,ped_shortcut,ped_wt_divisor,ped_wt_multiplier,ped_wt_unit,ped_freq,ped_loading_dose,ped_age_limit', { headers }) : Promise.resolve(null),
         drugIds.length    ? fetch(base + 'drugs?id=in.(' + toIn(drugIds) + ')&select=id,name,group_name,subgroup', { headers })           : Promise.resolve(null),
       ]);
 
@@ -13559,7 +13661,7 @@ async function _fetchSiblingCondition(conditionId) {
   const productIds = [...new Set(allDrugsAndAlts.map(d => d.product_id).filter(Boolean))];
   const drugIds    = [...new Set(allDrugsAndAlts.map(d => d.drug_id).filter(Boolean))];
   const [prodRes, drugLookupRes] = await Promise.all([
-    productIds.length ? fetch(base + 'products?id=in.(' + toIn(productIds) + ')&select=id,brand,brand_ar,formula,conc', { headers }) : Promise.resolve(null),
+    productIds.length ? fetch(base + 'products?id=in.(' + toIn(productIds) + ')&select=id,brand,brand_ar,formula,conc,ped_dose,ped_dose_ar,ped_shortcut,ped_wt_divisor,ped_wt_multiplier,ped_wt_unit,ped_freq,ped_loading_dose,ped_age_limit', { headers }) : Promise.resolve(null),
     drugIds.length    ? fetch(base + 'drugs?id=in.(' + toIn(drugIds) + ')&select=id,name,group_name,subgroup', { headers })           : Promise.resolve(null),
   ]);
   const fetchedProducts = prodRes?.ok ? await prodRes.json() : [];
@@ -13974,6 +14076,45 @@ function _renderBrandLine({ brand, brandAr, conc, formula, libDrugId, isPrimary,
     </div>`;
 }
 
+// ── Phase 5: _renderPedDoseBlock — Wt/X display component ───────────────────
+// Renders the paediatric dose block for a single drug row.
+// Priority: ped_shortcut (pre-rendered Arabic string) → computed Wt/X fallback.
+function _renderPedDoseBlock(d) {
+  const shortcut    = d.ped_shortcut;
+  const divisor     = d.ped_wt_divisor;
+  const multiplier  = d.ped_wt_multiplier || 1;
+  const unit        = d.ped_wt_unit || 'ml';
+  const freq        = d.ped_freq;
+  const freqAr      = freq ? (PED_FREQ_AR[freq] || freq) : '';
+  const loadingDose = d.ped_loading_dose;
+
+  let html = '';
+
+  // Loading dose block (for LD+MD drugs like Digoxin, Phenobarb)
+  if (loadingDose) {
+    html += `<div class="cv-ped-loading-dose" dir="auto"><span class="cv-ped-label">جرعة التحميل: </span>${esc(loadingDose)}</div>`;
+  }
+
+  if (shortcut) {
+    // Use pre-rendered shortcut string directly (preferred path)
+    html += `<div class="cv-ped-wtx-block"><span class="cv-ped-wtx-formula" dir="rtl">${esc(shortcut)}</span></div>`;
+  } else if (divisor) {
+    // Compute fallback if no shortcut stored
+    const formula = multiplier > 1
+      ? `وزن × ${multiplier} ÷ ${divisor}`
+      : `وزن ÷ ${divisor}`;
+    const exampleWeight = 16;
+    const exampleDose   = Math.round((exampleWeight * multiplier) / divisor);
+    html += `<div class="cv-ped-wtx-block">
+      <span class="cv-ped-wtx-formula" dir="rtl">${formula} = الجرعة ${esc(unit)}</span>
+      ${freq ? `<span class="cv-ped-freq" dir="rtl">${esc(freqAr)}</span>` : ''}
+      <span class="cv-ped-example" dir="rtl">(مثال: طفل ${exampleWeight} كغ ← ${exampleDose} ${esc(unit)})</span>
+    </div>`;
+  }
+
+  return html;
+}
+
 function _cvRenderPrescription(rx, agePrefix) {
   let html = '';
 
@@ -14089,8 +14230,20 @@ function _cvRenderPrescription(rx, agePrefix) {
       // ── Phase 1 (masterplan): use three-tier cascade from _resolveRpcItem ──
       // effectiveDoseEn/Ar are already resolved: pd → product → generic.
       // Fall back to raw d.dose for the legacy waterfall path (non-RPC cache).
-      const primaryDoseEn = (d.effectiveDoseEn ?? (d.dose    || '')).trim();
-      const primaryDoseAr = (d.effectiveDoseAr ?? (d.dose_ar || '')).trim();
+      // ── Phase 5: age-aware cascade — ped doses take priority for paeds conditions ──
+      const _isPaeds = (agePrefix === 'paeds');
+
+      const primaryDoseEn = _isPaeds
+        ? ((d.ped_dose    || '').trim() || (d.effectiveDoseEn ?? (d.dose    || '')).trim())
+        : (d.effectiveDoseEn ?? (d.dose    || '')).trim();
+
+      const primaryDoseAr = _isPaeds
+        ? ((d.ped_dose_ar || '').trim() || (d.effectiveDoseAr ?? (d.dose_ar || '')).trim())
+        : (d.effectiveDoseAr ?? (d.dose_ar || '')).trim();
+
+      // Ped dose missing warning: paeds condition, no ped dose AND no Wt/X divisor AND no shortcut
+      const _pedDoseMissing = _isPaeds && !primaryDoseEn && !primaryDoseAr
+        && !d.ped_shortcut && !d.ped_wt_divisor && !d.ped_loading_dose;
 
       // ── Phase 4 (masterplan): normDose — collapse whitespace + lowercase for grouping keys.
       // Prevents silent grouping failures from trailing spaces or mixed capitalisation.
@@ -14208,12 +14361,25 @@ function _cvRenderPrescription(rx, agePrefix) {
         }
       }
 
+      // ── Phase 5: Ped dose block — Wt/X display + missing warning ────────────
+      // Rendered once per drug row (primary only), below the brand-lines group.
+      let pedBlockHtml = '';
+      if (_isPaeds) {
+        const _pedWtxHtml = _renderPedDoseBlock(d);
+        if (_pedWtxHtml) {
+          pedBlockHtml = `<div class="cv-ped-dose-block">${_pedWtxHtml}</div>`;
+        } else if (_pedDoseMissing) {
+          pedBlockHtml = `<div class="cv-dose-missing-ped"><i class="ph ph-warning" style="font-size:12px"></i> Ped dose not available</div>`;
+        }
+      }
+
       html += `<div class="cv-rx-drug-row">
         <!-- Line 1: № · Brand name + conc + formula · search icon -->
         <!-- Doses are injected inline after each dose-group boundary  -->
         <div class="cv-rx-brand-lines">
           ${brandLinesHtml}
         </div>
+        ${pedBlockHtml}
         <!-- Line 2b: Drug note — right-aligned, rtl/ltr follows text language -->
         ${d.drug_note ? (() => {
           const isAr = isArabicQuery(d.drug_note);
