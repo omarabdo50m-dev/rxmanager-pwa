@@ -11986,11 +11986,13 @@ function populateSubgroupSelect(group, currentSub) {
 function onSearch() {
   const q = document.getElementById('mainSearch').value;
   document.getElementById('searchClearBtn').style.display = q ? 'flex' : 'none';
+  _mainRendered = false; // new search result set — animate cards in
   renderMain();
 }
 function clearSearch() {
   document.getElementById('mainSearch').value = '';
   document.getElementById('searchClearBtn').style.display = 'none';
+  _mainRendered = false; // cleared — animate back to full list
   renderMain();
 }
 
@@ -12812,6 +12814,8 @@ function _resolveConditionIcon(specialty) {
   return 'ph-stethoscope';
 }
 
+let _mainRendered = false; // true after first successful render — suppresses re-entry animation
+
 function renderMain() {
   const q = document.getElementById('mainSearch').value.toLowerCase().trim();
 
@@ -12920,11 +12924,13 @@ const CARD_COLOR_MAP = {
     const iconName   = (_liveSpec?.icon)  || _resolveConditionIcon(c.specialty);
     const ariaLabel = c.specialty ? `${c.name}, ${c.specialty}` : c.name;
     const _delay = Math.min(_ci * 18, 220);
-    return `<div class="rx-card card-anim"
+    const _animClass = _mainRendered ? '' : 'card-anim';
+    const _animStyle = _mainRendered ? '' : `animation-delay:${_delay}ms`;
+    return `<div class="rx-card ${_animClass}"
       role="button"
       tabindex="0"
       aria-label="${esc(ariaLabel)}"
-      style="animation-delay:${_delay}ms"
+      style="${_animStyle}"
       onclick="openConditionViewer('${esc(c.id)}')"
       onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openConditionViewer('${esc(c.id)}')}">
       <div class="rx-icon-circle" style="background:${_hexToRgba12(specColor)};color:${specColor}">
@@ -12939,6 +12945,7 @@ const CARD_COLOR_MAP = {
       <div class="rx-arr" aria-hidden="true"><i class="ph ph-caret-right" style="font-size:14px"></i></div>
     </div>`;
   }).join('');
+  _mainRendered = true;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -17025,15 +17032,10 @@ function dvCloseLangDropdown() {
 }
 
 function _closeDrugViewer() {
-  // Capture and clear _screenUnder before closeScreen runs.
-  // When drug was opened from condViewerScr, closeScreen would restore it
-  // immediately (is-restoring + is-active) causing an overlap flash with the
-  // exiting drug viewer. We intercept and do it ourselves after exit.
-  const screenUnderSnap = _screenUnder;
-  if (screenUnderSnap && screenUnderSnap.id === 'condViewerScr') {
-    _screenUnder = null; // prevent closeScreen from restoring it
-  }
-
+  // Let closeScreen handle _screenUnder restoration normally.
+  // It snaps the under-screen back instantly (is-restoring) before the
+  // exit starts, so it's already at full size when drugViewerScr fades out —
+  // identical to how closeConditionViewer works.
   closeScreen('drugViewerScr');
   history.replaceState({}, '', window.location.pathname);
   const b = document.getElementById('dvHeaderBreadcrumb');
@@ -17052,16 +17054,6 @@ function _closeDrugViewer() {
       lib.style.opacity = '1';
       setTimeout(() => { lib.style.transition = ''; lib.style.opacity = ''; }, 200);
     }
-  } else if (screenUnderSnap && screenUnderSnap.id === 'condViewerScr') {
-    // Restore condViewerScr cleanly AFTER the exit animation completes (180ms)
-    setTimeout(() => {
-      screenUnderSnap.classList.add('is-restoring');
-      screenUnderSnap.classList.remove('is-under');
-      screenUnderSnap.classList.add('is-active');
-      requestAnimationFrame(() => {
-        screenUnderSnap.classList.remove('is-restoring');
-      });
-    }, 190);
   }
 }
 function toggleFavDrugViewer() {
