@@ -11072,6 +11072,8 @@ window.addEventListener('popstate', (e) => {
 
   // 2. Drug Viewer — explicit ID check so it's never skipped when
   //    Condition Viewer is also open underneath it.
+  //    MUST call _closeDrugViewer() (not bare closeScreen) so the
+  //    Favs restore logic inside _closeDrugViewer runs correctly.
   const dvScr = document.getElementById('drugViewerScr');
   if (dvScr && dvScr.classList.contains('open')) {
     _dvFormulaFilter && _dvFormulaFilter.clear();
@@ -11080,28 +11082,37 @@ window.addEventListener('popstate', (e) => {
     return;
   }
 
-  // 3. Any other overlay screen (condViewerScr, settingsScr, etc.)
+  // 3. Condition Viewer — call closeConditionViewer() (not bare closeScreen)
+  //    so the Favs restore logic inside closeConditionViewer runs.
+  const cvScr = document.getElementById('condViewerScr');
+  if (cvScr && cvScr.classList.contains('open')) {
+    closeConditionViewer();
+    return;
+  }
+
+  // 4. Any other overlay screen (settingsScr, etc.)
   //    Must run BEFORE the tab-sentinel check — a viewer opened from
   //    Favs/Drugs leaves a {tab} entry underneath its {screen} entry.
-  //    If we returned early on {tab} we'd absorb the back press without
-  //    closing the visible screen.
   const open = document.querySelector('.screen.open');
   if (open && open.id !== 'libScr' && open.id !== 'favsScr') {
     closeScreen(open.id);
     return;
   }
 
-  // 4. Lib list → grid (internal state, no separate screen element)
+  // 5. Lib list → grid (internal state, no separate screen element)
   if (S.view === 'lib' && S.libView === 'list') {
     exitToGrid();
     return;
   }
 
-  // 5. Tab sentinel — we've landed on a {tab} entry with nothing open.
-  //    This is the genuine "back from a tab root" case. Do nothing:
-  //    the peer tab stays visible, and on Android the OS will eventually
-  //    exit the app if the user keeps pressing back past the initial entry.
-  if (e.state && e.state.tab) return;
+  // 6. Tab sentinel — we've landed on a {tab} entry with nothing open.
+  //    This is the genuine "back from a tab root" case. Push a fresh
+  //    sentinel immediately so the next back press hits this same guard
+  //    (prevents the stack from draining and causing unexpected jumps).
+  if (e.state && e.state.tab) {
+    history.pushState({ tab: e.state.tab }, '');
+    return;
+  }
 });
 
 // ═══════════════════════════════════════════════════════
@@ -12854,13 +12865,12 @@ function closeConditionViewer() {
   cvCloseLangDropdown();
   closeScreen('condViewerScr');
   history.replaceState({}, '', window.location.pathname);
-  // Phase 1B: if user came from Favourites, restore the tab and scroll position
+  // Phase 1B: if user came from Favourites, restore the tab immediately
+  // (not after animation delay) so there's never a blank-screen flash.
   if (S.view === 'fav') {
-    setTimeout(() => {
-      document.getElementById('favsScr').classList.add('peer-open');
-      const favsBody = document.querySelector('#favsScr .favs-scroll-body');
-      if (favsBody) favsBody.scrollTop = _favsScrollSave;
-    }, 160); // match closeScreen animation duration
+    document.getElementById('favsScr').classList.add('peer-open');
+    const favsBody = document.querySelector('#favsScr .favs-scroll-body');
+    if (favsBody) favsBody.scrollTop = _favsScrollSave;
   }
 }
 
@@ -16731,13 +16741,12 @@ function _closeDrugViewer() {
   const n = document.getElementById('dvHeaderDrugName');
   if (b) { b.innerHTML=''; b.style.display='none'; }
   if (n) { n.textContent=''; n.style.display='none'; }
-  // Phase 1B: if user came from Favourites, restore the tab and scroll position
+  // Phase 1B: if user came from Favourites, restore the tab immediately
+  // (not after animation delay) so there's never a blank-screen flash.
   if (S.view === 'fav') {
-    setTimeout(() => {
-      document.getElementById('favsScr').classList.add('peer-open');
-      const favsBody = document.querySelector('#favsScr .favs-scroll-body');
-      if (favsBody) favsBody.scrollTop = _favsScrollSave;
-    }, 160); // match closeScreen animation duration
+    document.getElementById('favsScr').classList.add('peer-open');
+    const favsBody = document.querySelector('#favsScr .favs-scroll-body');
+    if (favsBody) favsBody.scrollTop = _favsScrollSave;
   }
 }
 function toggleFavDrugViewer() {
