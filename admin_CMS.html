@@ -6769,7 +6769,7 @@ async function rxLoadAllRows(rxId) {
   try {
     const [drugRows, noteBlocks, textBlocks] = await Promise.all([
       SB.fetchAll('prescription_drugs',
-        'id,prescription_id,drug_id,product_id,dose,dose_ar,drug_note,sort_order,is_alternative,alternative_to_id,dose_source_pd_id',
+        'id,prescription_id,drug_id,product_id,dose,dose_ar,dose_override_reason,drug_note,sort_order,is_alternative,alternative_to_id,dose_source_pd_id',
         `&prescription_id=eq.${rxId}&order=sort_order.asc`),
       SB.fetchAll('rx_note_blocks',
         'id,prescription_id,content,content_ar,sort_order',
