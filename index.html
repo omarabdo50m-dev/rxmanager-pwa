@@ -14339,8 +14339,13 @@ function _cvRenderPrescription(rx, agePrefix) {
           // that field is the CMS signal that this alt intentionally shares the primary's
           // dose block. Without it, an alt with no dose of its own gets an empty dose
           // and sameGroup() will correctly keep it in its own group (or ungrouped).
-          const altDoseEn = (alt.effectiveDoseEn ?? (alt.dose    || '')).trim();
-          const altDoseAr = (alt.effectiveDoseAr ?? (alt.dose_ar || '')).trim();
+          // ── Paeds-aware cascade for alt: ped_dose → effectiveDose → dose (mirrors primary logic)
+          const altDoseEn = _isPaeds
+            ? ((alt.ped_dose    || '').trim() || (alt.effectiveDoseEn ?? (alt.dose    || '')).trim())
+            : (alt.effectiveDoseEn ?? (alt.dose    || '')).trim();
+          const altDoseAr = _isPaeds
+            ? ((alt.ped_dose_ar || '').trim() || (alt.effectiveDoseAr ?? (alt.dose_ar || '')).trim())
+            : (alt.effectiveDoseAr ?? (alt.dose_ar || '')).trim();
           const inheritFromPrimary = !!alt.dose_source_pd_id;
           const effectiveDoseEn = altDoseEn || (inheritFromPrimary ? primaryDoseEn : '');
           const effectiveDoseAr = altDoseAr || (inheritFromPrimary ? primaryDoseAr : '');
@@ -14419,15 +14424,28 @@ function _cvRenderPrescription(rx, agePrefix) {
           brandLinesHtml += `<div class="cv-dose-missing">⚠ No dose specified</div>`;
         }
 
-        // ── Phase 5 (fixed): Ped dose block — injected immediately after the PRIMARY's
-        // dose-group boundary, so the shortcut line appears under its own brand only,
-        // not after all alternatives. Missing-dose warning also fires here.
-        if (_isPaeds && entry.isPrimary && isLastInGroup) {
-          const _pedWtxHtml = _renderPedDoseBlock(d);
-          if (_pedWtxHtml) {
-            brandLinesHtml += `<div class="cv-ped-dose-block">${_pedWtxHtml}</div>`;
-          } else if (_pedDoseMissing) {
-            brandLinesHtml += `<div class="cv-dose-missing-ped"><i class="ph ph-warning" style="font-size:12px"></i> Ped dose not available</div>`;
+        // ── Phase 5 (fixed): Ped dose block — injected immediately after each entry's
+        // dose-group boundary when that entry has its own ped data.
+        // Primary: uses d (the item) for ped fields.
+        // Alt:     uses the resolved alt object directly — it carries its own
+        //          ped_shortcut / ped_wt_divisor resolved by _resolveRpcItem / _resolveDrugRow.
+        if (_isPaeds && isLastInGroup) {
+          if (entry.isPrimary) {
+            const _pedWtxHtml = _renderPedDoseBlock(d);
+            if (_pedWtxHtml) {
+              brandLinesHtml += `<div class="cv-ped-dose-block">${_pedWtxHtml}</div>`;
+            } else if (_pedDoseMissing) {
+              brandLinesHtml += `<div class="cv-dose-missing-ped"><i class="ph ph-warning" style="font-size:12px"></i> Ped dose not available</div>`;
+            }
+          } else {
+            // Alt: find the resolved alt object from item.alternatives by _pdId
+            const _altObj = (item.alternatives || []).find(a => a.id === entry._pdId);
+            if (_altObj) {
+              const _altPedHtml = _renderPedDoseBlock(_altObj);
+              if (_altPedHtml) {
+                brandLinesHtml += `<div class="cv-ped-dose-block">${_altPedHtml}</div>`;
+              }
+            }
           }
         }
       }
