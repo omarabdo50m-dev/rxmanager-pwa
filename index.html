@@ -10857,15 +10857,26 @@ const SB = {
   // Map Supabase products row → app internal product object
   _mapProduct(row) {
     return {
-      id:        row.id,
-      genericId: row.drug_id,   // Supabase uses "drug_id", app uses "genericId"
-      drugId:    row.drug_id,
-      brand:     row.brand     || '',
-      brandAr:   row.brand_ar  || '',
-      formula:   row.formula   || '',
-      conc:      row.conc      || '',
-      dose:      row.dose      || '',
-      doseAr:    row.dose_ar   || '',
+      id:              row.id,
+      genericId:       row.drug_id,   // Supabase uses "drug_id", app uses "genericId"
+      drugId:          row.drug_id,
+      brand:           row.brand           || '',
+      brandAr:         row.brand_ar        || '',
+      formula:         row.formula         || '',
+      conc:            row.conc            || '',
+      dose:            row.dose            || '',
+      doseAr:          row.dose_ar         || '',
+      pedStatus:       row.ped_status      || 'pending',
+      pedDose:         row.ped_dose        || '',
+      pedDoseAr:       row.ped_dose_ar     || '',
+      pedShortcut:     row.ped_shortcut    || '',
+      pedWtDivisor:    row.ped_wt_divisor  ?? null,
+      pedWtMultiplier: row.ped_wt_multiplier ?? 1,
+      pedWtUnit:       row.ped_wt_unit     || 'ml',
+      pedFreq:         row.ped_freq        || null,
+      pedLoadingDose:  row.ped_loading_dose || '',
+      pedAgeLimit:     row.ped_age_limit   || '',
+      pedSource:       row.ped_source      || '',
     };
   },
 
@@ -10874,7 +10885,7 @@ const SB = {
   async fetchLibrary() {
     const [rawDrugs, rawProducts] = await Promise.all([
       this.fetchAll('drugs',    'id,name,group_name,subgroup,therapeutic_class,pharmacological_class,moa,common_uses,dose,dose_ar,max_dose,ped_dose,ped_age_limit,ped_dose_ar,ped_min_age_months,pregnancy,lactation,lactation_note,crosses_bbb,crosses_placenta,bbb_note,placenta_note,metabolism,elimination,interactions,dose_adjustments,side_effects,contra,pregnancy_note,source', '&is_published=eq.true'),
-      this.fetchAll('products', 'id,drug_id,brand,brand_ar,formula,conc,dose,dose_ar,ped_dose,ped_dose_ar,ped_shortcut,ped_wt_divisor,ped_wt_multiplier,ped_wt_unit,ped_freq,ped_loading_dose,ped_age_limit,ped_source', '&is_published=eq.true'),
+      this.fetchAll('products', 'id,drug_id,brand,brand_ar,formula,conc,dose,dose_ar,ped_status,ped_dose,ped_dose_ar,ped_shortcut,ped_wt_divisor,ped_wt_multiplier,ped_wt_unit,ped_freq,ped_loading_dose,ped_age_limit,ped_source', '&is_published=eq.true'),
     ]);
     const drugs    = rawDrugs.map(r => this._mapDrug(r));
     const products = rawProducts.map(r => this._mapProduct(r));
@@ -11228,6 +11239,16 @@ function uid() { return Date.now().toString(36) + Math.random().toString(36).sli
 function esc(s) {
   return String(s||'')
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+// fixRtlNums — wraps digit sequences in LTR embedding marks so they render
+// left-to-right inside Arabic (RTL) text. Fixes browser RTL reversal of numbers
+// like 150→051, 100→001, 25–50→52–05 seen in dose_ar / ped_shortcut strings.
+// Applied to every Arabic dose string before insertion into the DOM.
+// \u202A = LEFT-TO-RIGHT EMBEDDING, \u202C = POP DIRECTIONAL FORMATTING
+function fixRtlNums(s) {
+  if (!s) return s;
+  // Match digit runs including decimal points, slashes, dashes/en-dashes between digits
+  return String(s).replace(/\d[\d.,/×÷\-–]*\d|\d/g, '\u202A$&\u202C');
 }
 function getBrands(drug) {
   // v18: brands may be empty (products store is authoritative), but we keep backward compat
@@ -13519,7 +13540,7 @@ async function fetchConditionData(conditionId) {
       const toIn = arr => arr.map(id => '"' + id + '"').join(',');
 
       const [prodRes, drugLookupRes] = await Promise.all([
-        productIds.length ? fetch(base + 'products?id=in.(' + toIn(productIds) + ')&select=id,brand,brand_ar,formula,conc,ped_dose,ped_dose_ar,ped_shortcut,ped_wt_divisor,ped_wt_multiplier,ped_wt_unit,ped_freq,ped_loading_dose,ped_age_limit', { headers }) : Promise.resolve(null),
+        productIds.length ? fetch(base + 'products?id=in.(' + toIn(productIds) + ')&select=id,brand,brand_ar,formula,conc,ped_status,ped_dose,ped_dose_ar,ped_shortcut,ped_wt_divisor,ped_wt_multiplier,ped_wt_unit,ped_freq,ped_loading_dose,ped_age_limit', { headers }) : Promise.resolve(null),
         drugIds.length    ? fetch(base + 'drugs?id=in.(' + toIn(drugIds) + ')&select=id,name,group_name,subgroup', { headers })           : Promise.resolve(null),
       ]);
 
@@ -13691,7 +13712,7 @@ async function _fetchSiblingCondition(conditionId) {
   const productIds = [...new Set(allDrugsAndAlts.map(d => d.product_id).filter(Boolean))];
   const drugIds    = [...new Set(allDrugsAndAlts.map(d => d.drug_id).filter(Boolean))];
   const [prodRes, drugLookupRes] = await Promise.all([
-    productIds.length ? fetch(base + 'products?id=in.(' + toIn(productIds) + ')&select=id,brand,brand_ar,formula,conc,ped_dose,ped_dose_ar,ped_shortcut,ped_wt_divisor,ped_wt_multiplier,ped_wt_unit,ped_freq,ped_loading_dose,ped_age_limit', { headers }) : Promise.resolve(null),
+    productIds.length ? fetch(base + 'products?id=in.(' + toIn(productIds) + ')&select=id,brand,brand_ar,formula,conc,ped_status,ped_dose,ped_dose_ar,ped_shortcut,ped_wt_divisor,ped_wt_multiplier,ped_wt_unit,ped_freq,ped_loading_dose,ped_age_limit', { headers }) : Promise.resolve(null),
     drugIds.length    ? fetch(base + 'drugs?id=in.(' + toIn(drugIds) + ')&select=id,name,group_name,subgroup', { headers })           : Promise.resolve(null),
   ]);
   const fetchedProducts = prodRes?.ok ? await prodRes.json() : [];
@@ -14082,7 +14103,7 @@ function _renderBrandLine({ brand, brandAr, conc, formula, libDrugId, isPrimary,
 
   // Per-alternative dose lines (only rendered when alt has its own dose)
   const altDoseHtml = (!isPrimary && (altDoseAr || altDoseEn))
-    ? `${altDoseAr ? `<div class="cv-dose-ar" dir="rtl" style="font-size:var(--text-sm-size);margin-top:2px">${esc(altDoseAr)}</div>` : ''}${altDoseEn ? `<div class="cv-dose-en" style="font-size:var(--text-sm-size);margin-top:1px">${esc(altDoseEn)}</div>` : ''}`
+    ? `${altDoseAr ? `<div class="cv-dose-ar" dir="rtl" style="font-size:var(--text-sm-size);margin-top:2px">${esc(fixRtlNums(altDoseAr))}</div>` : ''}${altDoseEn ? `<div class="cv-dose-en" style="font-size:var(--text-sm-size);margin-top:1px">${esc(altDoseEn)}</div>` : ''}`
     : '';
 
   return `
@@ -14127,18 +14148,18 @@ function _renderPedDoseBlock(d) {
 
   if (shortcut) {
     // Use pre-rendered shortcut string directly (preferred path)
-    html += `<div class="cv-ped-wtx-block"><span class="cv-ped-wtx-formula" dir="rtl">${esc(shortcut)}</span></div>`;
+    html += `<div class="cv-ped-wtx-block"><span class="cv-ped-wtx-formula" dir="rtl">${esc(fixRtlNums(shortcut))}</span></div>`;
   } else if (divisor) {
     // Compute fallback if no shortcut stored
     const formula = multiplier > 1
-      ? `وزن × ${multiplier} ÷ ${divisor}`
-      : `وزن ÷ ${divisor}`;
+      ? `وزن × \u202A${multiplier}\u202C ÷ \u202A${divisor}\u202C`
+      : `وزن ÷ \u202A${divisor}\u202C`;
     const exampleWeight = 16;
     const exampleDose   = Math.round((exampleWeight * multiplier) / divisor);
     html += `<div class="cv-ped-wtx-block">
       <span class="cv-ped-wtx-formula" dir="rtl">${formula} = الجرعة ${esc(unit)}</span>
       ${freq ? `<span class="cv-ped-freq" dir="rtl">${esc(freqAr)}</span>` : ''}
-      <span class="cv-ped-example" dir="rtl">(مثال: طفل ${exampleWeight} كغ ← ${exampleDose} ${esc(unit)})</span>
+      <span class="cv-ped-example" dir="rtl">(مثال: طفل \u202A${exampleWeight}\u202C كغ ← \u202A${exampleDose}\u202C ${esc(unit)})</span>
     </div>`;
   }
 
@@ -14377,7 +14398,7 @@ function _cvRenderPrescription(rx, agePrefix) {
           // Phase 4.2: data-dose-tier attr for ?debug=doses QA highlighting
           const tier = entry.doseTier || 'none';
           brandLinesHtml += entry.effectiveDoseAr
-            ? `<div class="cv-dose-ar" dir="rtl" data-dose-tier="${tier}">${esc(entry.effectiveDoseAr)}</div>`
+            ? `<div class="cv-dose-ar" dir="rtl" data-dose-tier="${tier}">${esc(fixRtlNums(entry.effectiveDoseAr))}</div>`
             : '';
           brandLinesHtml += entry.effectiveDoseEn
             ? `<div class="cv-dose-en" data-dose-tier="${tier}">${esc(entry.effectiveDoseEn)}</div>`
@@ -16908,7 +16929,7 @@ async function openDrugViewer(id) {
         </div>
       </div>` : ''}
       ${drug.pedDose ? `<div class="dv-ped-en cv-depth-body-p11" dir="ltr" style="text-align:left;margin-bottom:${hasCalc ? 'var(--space-3)' : '0'}">${esc(drug.pedDose)}</div>` : ''}
-      ${drug.pedDoseAr ? `<div class="dv-ped-ar cv-depth-body-p11" dir="rtl" style="text-align:right;font-family:var(--font-ar);margin-bottom:${hasCalc ? 'var(--space-3)' : '0'}">${esc(drug.pedDoseAr)}</div>` : ''}
+      ${drug.pedDoseAr ? `<div class="dv-ped-ar cv-depth-body-p11" dir="rtl" style="text-align:right;font-family:var(--font-ar);margin-bottom:${hasCalc ? 'var(--space-3)' : '0'}">${esc(fixRtlNums(drug.pedDoseAr))}</div>` : ''}
       ${hasCalc ? `<div class="dv-calc-box-p12">
         <div class="dv-calc-title-p12">
           <i class="ph ph-calculator" style="font-size:13px"></i>
@@ -18026,7 +18047,7 @@ function _singleBrandRow(p, drug, dimmed) {
     <div class="dv-brand-ar-row-p12">
       <div class="dv-brand-ar-content-p12">
         ${brandAr ? `<span class="dv-brand-name-ar-p12" dir="rtl">${esc(brandAr)}</span>` : ''}
-        ${hasAr ? `<span class="dv-brand-dose-ar-p12" dir="rtl">${esc(p.doseAr)}</span>` : ''}
+        ${hasAr ? `<span class="dv-brand-dose-ar-p12" dir="rtl">${esc(fixRtlNums(p.doseAr))}</span>` : ''}
       </div>
       <div class="dv-brand-ar-icon-spacer-p12"></div>
     </div>` : '';

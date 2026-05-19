@@ -2969,6 +2969,22 @@ function _checkGatePassword() {
         <div class="card" style="max-width:var(--admin-panel-max);margin-top:var(--space-4);border-color:var(--color-info)">
           <div class="form-section-title" style="color:var(--color-info)">👶 Paediatric Dosing</div>
 
+          <!-- Ped Status — must be set first before filling any other ped fields -->
+          <div class="form-row">
+            <label class="form-label">
+              Paediatric Status
+              <span style="font-weight:400;color:var(--color-text-tertiary)">— set this first before filling any ped fields</span>
+            </label>
+            <select id="pf-ped_status" onchange="prodSave('ped_status', this.value)">
+              <option value="pending">⏳ Pending — not yet classified</option>
+              <option value="approved">✅ Approved — standard ped dose exists</option>
+              <option value="weight-based">⚖️ Weight-based — Wt/X system</option>
+              <option value="not-recommended">⚠️ Not recommended — not routine for children</option>
+              <option value="contraindicated">🚫 Contraindicated — avoid in children</option>
+              <option value="use-other-formula">↩️ Use other formula — send to syrup/suspension</option>
+            </select>
+          </div>
+
           <!-- Ped Dose EN / AR -->
           <div class="form-row-inline">
             <div class="form-row">
@@ -9206,6 +9222,7 @@ async function prodEdit(id) {
   document.getElementById('pf-last_updated').value = p.last_updated ?? '';
 
   // Paediatric dosing fields
+  document.getElementById('pf-ped_status').value         = p.ped_status         ?? 'pending';
   document.getElementById('pf-ped_dose').value          = p.ped_dose          ?? '';
   document.getElementById('pf-ped_dose_ar').value       = p.ped_dose_ar       ?? '';
   document.getElementById('pf-ped_loading_dose').value  = p.ped_loading_dose  ?? '';
