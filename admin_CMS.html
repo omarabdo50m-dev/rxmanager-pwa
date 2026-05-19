@@ -5905,7 +5905,34 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
              </div>`
           : '';
 
-    return `
+    // Pre-compute adult dose fields HTML — avoids nested backtick inside the return template
+    let _altAdultDoseHtml = '';
+    if (!_rxIsPaeds) {
+      const _overrideReasonHtml = (altDoseEn || altDoseAr)
+        ? '<div style="margin-top:var(--space-2)"><div class="drug-row-field-label" style="color:var(--color-caution)">⚠️ Override reason — required when dose differs from brand default</div>'
+          + '<input type="text" value="' + esc(alt.dose_override_reason ?? '') + '" placeholder="e.g. Reduced dose for renal impairment"'
+          + ' style="border-color:' + (alt.dose_override_reason ? 'var(--color-border-secondary)' : 'var(--color-caution)') + '"'
+          + ' onblur="rxSaveDrugField(\'' + alt.id + '\',\'dose_override_reason\',this.value)"/></div>'
+        : '';
+      _altAdultDoseHtml = `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)">
+              <div>
+                <div class="drug-row-field-label">Dose (EN)</div>
+                <input type="text" value="${esc(altDoseEn)}" placeholder="Leave blank — brand dose used automatically"
+                  onblur="rxSaveDrugField('${alt.id}','dose',this.value)"/>
+              </div>
+              <div>
+                <div class="drug-row-field-label">Dose (AR)</div>
+                <input type="text" dir="rtl" value="${esc(altDoseAr)}" placeholder="اتركه فارغاً"
+                  style="font-family:var(--font-ar)"
+                  onblur="rxSaveDrugField('${alt.id}','dose_ar',this.value)"/>
+              </div>
+            </div>
+            ${doseInheritHintHtml}
+            ${_overrideReasonHtml}`;
+    }
+
+        return `
       <div class="drug-alt-row" id="alt-${alt.id}">
         <!-- ── Alt collapsed header ── -->
         <div class="drug-alt-label">
@@ -5956,28 +5983,7 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
 
           <!-- Dose fields — adult fields hidden in paeds conditions (ped shortcut handles it) -->
           <div style="${alt.dose_source_pd_id ? 'opacity:0.4;pointer-events:none' : ''}">
-            ${!_rxIsPaeds ? `
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)">
-              <div>
-                <div class="drug-row-field-label">Dose (EN)</div>
-                <input type="text" value="${esc(altDoseEn)}" placeholder="Leave blank — brand dose used automatically"
-                  onblur="rxSaveDrugField('${alt.id}','dose',this.value)"/>
-              </div>
-              <div>
-                <div class="drug-row-field-label">Dose (AR)</div>
-                <input type="text" dir="rtl" value="${esc(altDoseAr)}" placeholder="اتركه فارغاً"
-                  style="font-family:var(--font-ar)"
-                  onblur="rxSaveDrugField('${alt.id}','dose_ar',this.value)"/>
-              </div>
-            </div>
-            ${doseInheritHintHtml}
-            ${(altDoseEn || altDoseAr) ? \`<div style="margin-top:var(--space-2)">
-              <div class="drug-row-field-label" style="color:var(--color-caution)">⚠️ Override reason — required when dose differs from brand default</div>
-              <input type="text" value="${esc(alt.dose_override_reason ?? '')}" placeholder="e.g. Reduced dose for renal impairment"
-                style="border-color:${alt.dose_override_reason ? 'var(--color-border-secondary)' : 'var(--color-caution)'}"
-                onblur="rxSaveDrugField('${alt.id}','dose_override_reason',this.value)"/>
-            </div>\` : ''}
-            ` : ''}
+            ${_altAdultDoseHtml}
 
             <!-- Paediatric shortcut — only shown for paeds conditions -->
             ${_rxIsPaeds ? `<div style="margin-top:var(--space-2)">
