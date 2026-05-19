@@ -12676,7 +12676,7 @@ async function _writeAllConditionsToIDB(rows) {
     tx.onabort    = () => reject(new Error('IDB transaction aborted'));
 
     for (const [condId, data] of resolvedMap) {
-      const isAdult = (data.condition.age_group || 'adult') !== 'paeds';
+      const isAdult = (data.condition.age_group || 'adult') !== 'paediatric';
       store.put({
         id:    condId,
         adult: isAdult ? data : null,
@@ -13737,7 +13737,7 @@ async function _fetchSiblingCondition(conditionId) {
 function renderConditionViewer(data) {
   if (!data || !data.condition) return '';
   const { condition, prescriptions } = data;
-  const agePrefix = condition.age_group === 'paeds' ? 'paeds' : 'adult';
+  const agePrefix = condition.age_group === 'paediatric' ? 'paeds' : 'adult';
 
   // ── Build Rx Tab content ──────────────────────────────────────────────
   let rxHtml = '';
