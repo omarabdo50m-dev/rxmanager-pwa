@@ -7880,13 +7880,13 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
 /* Default state (no class set) = AR */
 #drugViewerScr:not(.dv-lang-en) .dv-brand-ar-row-p12 { display: block; }
 
-/* Ped dose — lang toggle: same pattern as brand dose */
-.dv-ped-en { display: none; }
-.dv-ped-ar { display: none; }
+/* Ped dose — always English only, language toggle disabled for this card */
+.dv-ped-en { display: block; }
+.dv-ped-ar { display: none !important; }
 #drugViewerScr.dv-lang-en .dv-ped-en { display: block; }
-#drugViewerScr.dv-lang-ar .dv-ped-ar { display: block; }
-/* Default (no class) = AR */
-#drugViewerScr:not(.dv-lang-en) .dv-ped-ar { display: block; }
+#drugViewerScr.dv-lang-ar .dv-ped-ar { display: none !important; }
+/* Default (no class) = EN for ped */
+#drugViewerScr:not(.dv-lang-en) .dv-ped-ar { display: none !important; }
 
 /* Arabic brand name — hidden by default, shown in Arabic mode */
 .cv-rx-brand-ar { display:none; }
@@ -10798,6 +10798,10 @@ const SB = {
       lactationNote:        row.lactation_note || '',
       crossesBBB:           row.crosses_bbb,
       crossesPlacenta:      row.crosses_placenta,
+      bbbNote:              row.bbb_note || '',
+      placentaNote:         row.placenta_note || '',
+      pregnancyNote:        row.pregnancy_note || '',
+      pedMinAgeMonths:      row.ped_min_age_months ?? null,
       metabolism:           row.metabolism || '',
       elimination:          row.elimination || '',
       interactions:         row.interactions || '',
@@ -10829,7 +10833,7 @@ const SB = {
   // Only published records are fetched — drafts are invisible in the app.
   async fetchLibrary() {
     const [rawDrugs, rawProducts] = await Promise.all([
-      this.fetchAll('drugs',    'id,name,group_name,subgroup,therapeutic_class,pharmacological_class,moa,common_uses,dose,dose_ar,max_dose,ped_dose,ped_age_limit,ped_dose_ar,pregnancy,lactation,lactation_note,crosses_bbb,crosses_placenta,metabolism,elimination,interactions,dose_adjustments,side_effects,contra,source', '&is_published=eq.true'),
+      this.fetchAll('drugs',    'id,name,group_name,subgroup,therapeutic_class,pharmacological_class,moa,common_uses,dose,dose_ar,max_dose,ped_dose,ped_age_limit,ped_dose_ar,ped_min_age_months,pregnancy,lactation,lactation_note,crosses_bbb,crosses_placenta,bbb_note,placenta_note,metabolism,elimination,interactions,dose_adjustments,side_effects,contra,pregnancy_note,source', '&is_published=eq.true'),
       this.fetchAll('products', 'id,drug_id,brand,brand_ar,formula,conc,dose,dose_ar,ped_dose,ped_dose_ar,ped_shortcut,ped_wt_divisor,ped_wt_multiplier,ped_wt_unit,ped_freq,ped_loading_dose,ped_age_limit,ped_source', '&is_published=eq.true'),
     ]);
     const drugs    = rawDrugs.map(r => this._mapDrug(r));
@@ -16752,33 +16756,6 @@ async function openDrugViewer(id) {
 
   // ══ HERO — Phase 12 — badges removed (drug group/class shown in MOA card) ══
 
-  // ══ DRUG DETAILS collapsible — breadcrumb, combo tags, source (collapsed by default) ══
-  const hasDetails = !!(combos.length || drug.source); // group/subgroup moved to hero breadcrumb
-  if (hasDetails) {
-    const detailsPreview = gs.subgroup
-      ? gs.group + ' › ' + gs.subgroup
-      : (gs.group || '');
-    const detailsContent = `
-      <!-- Category row removed — breadcrumb now shown in hero above drug name -->
-      ${combos.length ? `<div class="dv-p12-sub" style="margin-bottom:${drug.source?'var(--space-3)':'0'}">
-        <div class="dv-p12-sub-label">
-          <i class="ph ph-plus-circle" style="font-size:10px"></i>
-          Combination Drug
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:var(--space-2)">
-          ${comboNames.map(n => `<span class="dv-hero-p12-combo-tag">${esc(n)}</span>`).join('')}
-        </div>
-      </div>` : ''}
-      ${drug.source ? `<div class="dv-p12-sub" style="margin-bottom:0">
-        <div class="dv-p12-sub-label">
-          <i class="ph ph-book-open" style="font-size:10px"></i>
-          Source
-        </div>
-        <div style="font-size:var(--text-xs-size);color:var(--color-text-tertiary);font-style:italic;line-height:1.55">${esc(drug.source)}</div>
-      </div>` : ''}`;
-    html += _dvFlatCard({iconBg:'rgba(59,130,246,.10)', iconColor:'var(--color-brand)', iconName:'ph-info', title:'Drug Details', content:detailsContent});
-  }
-
   // ══ MECHANISM OF ACTION — flat card, cv-depth-card style ═══════════════
   if (mechBody) {
     const moaBody = `
@@ -16827,7 +16804,6 @@ async function openDrugViewer(id) {
           Generic Adult Dose
         </div>
         ${genericDoseEn ? `<div class="dv-generic-dose-en-p12">${esc(genericDoseEn)}</div>` : ''}
-        ${genericDoseAr ? `<div class="dv-generic-dose-ar-p12">${esc(genericDoseAr)}</div>` : ''}
         ${drug.max ? `<div class="dv-max-dose-p12">
           <i class="ph ph-warning" style="font-size:11px"></i>
           Max: ${esc(drug.max)}
@@ -16870,13 +16846,25 @@ async function openDrugViewer(id) {
   }
 
   // ══ PAEDIATRIC DOSING — Phase 12 ════════════════════════════
-  if (drug.pedDose || drug.pedAgeLimit) {
+  if (drug.pedDose || drug.pedAgeLimit || drug.pedMinAgeMonths != null) {
     const pedParsed = parsePedDose(drug.pedDose);
     const hasCalc   = !!pedParsed;
+    // ped_min_age_months badge: derive a machine-readable label from the integer value
+    const pedMinAge = drug.pedMinAgeMonths;
+    const pedMinAgeBadge = (() => {
+      if (pedMinAge === null || pedMinAge === undefined) return null;
+      if (pedMinAge === 0)  return { label: 'Safe from birth', color: '#22c55e' };
+      if (pedMinAge === 1)  return { label: 'Specialist use — neonates', color: '#f59e0b' };
+      if (pedMinAge < 12)  return { label: `Not recommended <${pedMinAge} months`, color: '#f59e0b' };
+      const yrs = Math.round(pedMinAge / 12);
+      return { label: `Not recommended <${yrs} year${yrs > 1 ? 's' : ''}`, color: '#f59e0b' };
+    })();
     const pedContent = `
-      ${drug.pedAgeLimit ? `<div class="dv-moa-class-strip" style="margin-bottom:var(--space-2);padding-bottom:var(--space-2)">
-        <div class="dv-moa-class-cell-val" style="display:flex;align-items:flex-start;gap:6px">
-          <i class="ph ph-shield-check" style="font-size:13px;color:var(--color-brand);flex-shrink:0;margin-top:2px;line-height:1"></i>${esc(drug.pedAgeLimit)}
+      ${drug.pedAgeLimit || pedMinAgeBadge ? `<div class="dv-moa-class-strip" style="margin-bottom:var(--space-2);padding-bottom:var(--space-2)">
+        <div class="dv-moa-class-cell-val" style="display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap">
+          <i class="ph ph-shield-check" style="font-size:13px;color:var(--color-brand);flex-shrink:0;margin-top:2px;line-height:1"></i>
+          ${drug.pedAgeLimit && !pedMinAgeBadge ? `<span>${esc(drug.pedAgeLimit)}</span>` : ''}
+          ${pedMinAgeBadge ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:99px;font-size:10px;font-weight:700;background:${pedMinAgeBadge.color}20;color:${pedMinAgeBadge.color};border:1px solid ${pedMinAgeBadge.color}40"><i class="ph ph-clock" style="font-size:9px"></i>${esc(pedMinAgeBadge.label)}</span>` : ''}
         </div>
       </div>` : ''}
       ${drug.pedDose ? `<div class="dv-ped-en cv-depth-body-p11" dir="ltr" style="text-align:left;margin-bottom:${hasCalc ? 'var(--space-3)' : '0'}">${esc(drug.pedDose)}</div>` : ''}
@@ -16940,6 +16928,7 @@ async function openDrugViewer(id) {
             <span class="dv-barrier-icon-p12">${bbbOn ? '<i class="ph ph-check" style="font-size:10px"></i>' : '<i class="ph ph-x" style="font-size:10px"></i>'}</span>
             ${bbbOn ? 'Yes' : 'No'}
           </div>
+          ${drug.bbbNote ? `<div style="font-size:10px;color:var(--color-text-tertiary);margin-top:4px;line-height:1.4">${esc(drug.bbbNote)}</div>` : ''}
         </div>` : ''}
         ${hasPlac ? `<div class="dv-barrier-cell-p12 ${placOn ? 'on' : 'off'}">
           <div class="dv-barrier-question-p12"><i class="ph ph-gender-female" style="font-size:11px"></i> Crosses Placenta?</div>
@@ -16947,6 +16936,7 @@ async function openDrugViewer(id) {
             <span class="dv-barrier-icon-p12">${placOn ? '<i class="ph ph-check" style="font-size:10px"></i>' : '<i class="ph ph-x" style="font-size:10px"></i>'}</span>
             ${placOn ? 'Yes' : 'No'}
           </div>
+          ${drug.placentaNote ? `<div style="font-size:10px;color:var(--color-text-tertiary);margin-top:4px;line-height:1.4">${esc(drug.placentaNote)}</div>` : ''}
         </div>` : ''}
       </div>`;
     }
@@ -16973,6 +16963,7 @@ async function openDrugViewer(id) {
           </div>
         </div>
       </div>
+      ${drug.pregnancyNote ? `<div style="padding:var(--space-2) var(--space-3) var(--space-3);font-size:var(--text-xs-size);color:var(--color-text-secondary);line-height:1.6;border-bottom:1px solid var(--color-border)">${esc(drug.pregnancyNote)}</div>` : ''}
       ${bfRow}
       ${barrierRow}`;
     html += _dvFlatCard({iconBg:'rgba(236,72,153,.10)', iconColor:'#EC4899', iconName:'ph-heartbeat', title:'Pregnancy &amp; Lactation', content:pregContent});
@@ -17056,6 +17047,19 @@ async function openDrugViewer(id) {
       <div class="dv-empty-title-p12">No details added yet</div>
       <div class="dv-empty-sub-p12">Tap Edit to fill in drug information</div>
     </div>`;
+  }
+
+
+  // ══ DRUG DETAILS — minimal footer ══════════════════════════
+  if (combos.length || drug.source) {
+    const footerParts = [];
+    if (combos.length) {
+      footerParts.push(`<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--color-text-tertiary)"><i class="ph ph-plus-circle" style="font-size:10px"></i>Combination: ${comboNames.map(n => esc(n)).join(', ')}</span>`);
+    }
+    if (drug.source) {
+      footerParts.push(`<span style="font-size:10px;color:var(--color-text-tertiary);font-style:italic"><i class="ph ph-book-open" style="font-size:10px;margin-right:3px;vertical-align:-1px"></i>${esc(drug.source)}</span>`);
+    }
+    html += `<div style="margin:0 var(--space-3) var(--space-2);padding:var(--space-2) var(--space-3);border-radius:8px;background:var(--color-surface-raised, rgba(0,0,0,.025));border:1px solid var(--color-border);display:flex;flex-direction:column;gap:4px">${footerParts.join('')}</div>`;
   }
 
   html += '<div style="height:24px"></div>';
