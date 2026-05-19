@@ -14266,7 +14266,15 @@ function _cvRenderPrescription(rx, agePrefix) {
       const libDrug = _LIB.find(lib => lib.name && d.resolvedGeneric &&
         lib.name.toLowerCase() === d.resolvedGeneric.toLowerCase()) || null;
       const libDrugId = libDrug?.id || null;
-      const tagLabel = libDrug?.group || libDrug?.subgroup || null;
+
+      // Breadcrumb tag: suppress when alternatives introduce a different generic —
+      // mixed generics make the group label ambiguous and misleading.
+      const _allGenerics = [
+        d.resolvedGeneric,
+        ...(item.alternatives || []).map(alt => alt.resolvedGeneric)
+      ].filter(Boolean).map(g => g.toLowerCase());
+      const _hasMixedGenerics = new Set(_allGenerics).size > 1;
+      const tagLabel = (!_hasMixedGenerics && (libDrug?.group || libDrug?.subgroup)) || null;
 
       // ── Grouped-dose rendering ──────────────────────────────────────
       // Build a flat list: [primary, ...alternatives].
@@ -14410,17 +14418,17 @@ function _cvRenderPrescription(rx, agePrefix) {
             entry.isPrimary && _debugDoses) {
           brandLinesHtml += `<div class="cv-dose-missing">⚠ No dose specified</div>`;
         }
-      }
 
-      // ── Phase 5: Ped dose block — Wt/X display + missing warning ────────────
-      // Rendered once per drug row (primary only), below the brand-lines group.
-      let pedBlockHtml = '';
-      if (_isPaeds) {
-        const _pedWtxHtml = _renderPedDoseBlock(d);
-        if (_pedWtxHtml) {
-          pedBlockHtml = `<div class="cv-ped-dose-block">${_pedWtxHtml}</div>`;
-        } else if (_pedDoseMissing) {
-          pedBlockHtml = `<div class="cv-dose-missing-ped"><i class="ph ph-warning" style="font-size:12px"></i> Ped dose not available</div>`;
+        // ── Phase 5 (fixed): Ped dose block — injected immediately after the PRIMARY's
+        // dose-group boundary, so the shortcut line appears under its own brand only,
+        // not after all alternatives. Missing-dose warning also fires here.
+        if (_isPaeds && entry.isPrimary && isLastInGroup) {
+          const _pedWtxHtml = _renderPedDoseBlock(d);
+          if (_pedWtxHtml) {
+            brandLinesHtml += `<div class="cv-ped-dose-block">${_pedWtxHtml}</div>`;
+          } else if (_pedDoseMissing) {
+            brandLinesHtml += `<div class="cv-dose-missing-ped"><i class="ph ph-warning" style="font-size:12px"></i> Ped dose not available</div>`;
+          }
         }
       }
 
@@ -14430,7 +14438,6 @@ function _cvRenderPrescription(rx, agePrefix) {
         <div class="cv-rx-brand-lines">
           ${brandLinesHtml}
         </div>
-        ${pedBlockHtml}
         <!-- Line 2b: Drug note — right-aligned, rtl/ltr follows text language -->
         ${d.drug_note ? (() => {
           const isAr = isArabicQuery(d.drug_note);
