@@ -10288,21 +10288,30 @@ function unwrapConfidence(field) {
 // v35: TWO-LEVEL DRUG CATEGORY SYSTEM (replaces CAT_COLORS)
 // ═══════════════════════════════════════════════════════
 const DRUG_GROUPS = {
-  'Antimicrobials':          {ico:'🦠',s:'#43a047',bg:'#e8f5e9',t:'#1b5e20', subgroups:['Antibacterials','Antivirals','Antifungals','Antiprotozoals','Anthelmintics']},
-  'Autonomic Nervous System':{ico:'⚡',s:'#f57c00',bg:'#fff3e0',t:'#e65100', subgroups:['Cholinergic agonists','Cholinergic antagonists','Adrenergic agonists','Adrenergic antagonists']},
-  'Analgesic Agents':        {ico:'💊',s:'#e53935',bg:'#fce8e6',t:'#b71c1c', subgroups:['NSAIDs','Paracetamol','Opioids','Drugs of Migraine','Drugs of muscle spasm']},
-  'Gastrointestinal Drugs':  {ico:'🫃',s:'#fb8c00',bg:'#fff8e1',t:'#e65100', subgroups:['Drugs of peptic ulcer','Antiemetics','Antidiarrhoeals','Anticonstipation drugs','Antispasmodics','Digestants','Drugs of IBD','Drugs of IBS','Liver support preparations','Drugs of biliary disorders','Drugs of obesity']},
-  'Respiratory System':      {ico:'🫁',s:'#1e88e5',bg:'#e8f0fe',t:'#1565c0', subgroups:['Drugs of bronchial asthma','Drugs of Cough']},
-  'Antihistamines':          {ico:'🌿',s:'#7cb342',bg:'#f1f8e9',t:'#33691e', subgroups:['First Generation','Second Generation','Third Generation','Prostaglandins']},
-  'Cardiovascular Drugs':    {ico:'❤️',s:'#e91e63',bg:'#fce4ec',t:'#880e4f', subgroups:['Antihypertensive drugs','Drugs of hypotension','Antianginal drugs','Drugs of heart failure','Antiarrhythmics']},
-  'Drugs of Dyslipidaemia':  {ico:'📊',s:'#66bb6a',bg:'#e8f5e9',t:'#2e7d32', subgroups:['Statins','Ezetimibe','Fibrates','Niacin','Resins','Omega-3 FA','PCSK9 inhibitors']},
-  'Blood':                   {ico:'🩸',s:'#d32f2f',bg:'#ffebee',t:'#b71c1c', subgroups:['Antiplatelets','Anticoagulants','Thrombolytics','Haemostatics']},
-  'Endocrine':               {ico:'⚗️',s:'#00acc1',bg:'#e0f7fa',t:'#006064', subgroups:['Corticosteroids','Drugs of DM','Drugs of thyroid disease','Drugs of hyperparathyroidism','Drugs of fertility','Sex hormones and contraception']},
-  'Central Nervous System':  {ico:'🧠',s:'#7b1fa2',bg:'#f3e5f5',t:'#4a148c', subgroups:['Anxiolytics-Hypnotics','Antidepressants','Drugs of ADHD','Antiepileptic drugs','Antipsychotics','Antiparkinsonian drugs','Drugs of myasthenia gravis','Drugs of Alzheimer disease','Drugs of hypersomnolence','CNS stimulants']},
-  'Ophthalmology':           {ico:'👁️',s:'#1e88e5',bg:'#e3f2fd',t:'#1565c0', subgroups:['Glaucoma','Mydriatics','Anti-allergic eye drops','Decongestant eye drops','Artificial tears','Analgesic eye drops','Steroid eye drops','Antibiotic eye drops','Antifungal eye drops','Antiviral eye drops']},
-  'Dermatology':             {ico:'🩹',s:'#ff8a65',bg:'#fbe9e7',t:'#bf360c', subgroups:['Drugs of acne vulgaris','Drugs of psoriasis','Drugs of hyperpigmentation','Wound healing preparations','Skin care preparations','Preparations of warts','Hair tonic preparations','Minoxidil','Sunscreens']},
-  'Nutrition and Vitamins':  {ico:'🌟',s:'#ffd600',bg:'#fffde7',t:'#f57f17', subgroups:['Vitamins (A/C/E/B/K/D)','Folic acid','Iron','Calcium','Magnesium','Potassium','Zinc','Selenium','Multivitamins','Parenteral nutrition','IV solutions']},
-  'Miscellaneous':           {ico:'📋',s:'#9e9e9e',bg:'#f5f5f5',t:'#424242', subgroups:['Drugs of BPH','Drugs of urinary incontinence','Erectile enhancers','Tocolytics','Drugs of osteoporosis','Drugs of osteoarthritis','Drugs of gout','Immunosuppressives','Venotonics','Preparations of haemorrhoids','Urinary antiseptics','Potassium binders']},
+  'Analgesics & Antipyretics':        {ico:'💊',s:'#e53935',bg:'#fce8e6',t:'#b71c1c', subgroups:['NSAIDs','Paracetamol','Opioids','Drugs of Migraine','Muscle Relaxants']},
+  'Antibiotics':                      {ico:'🦠',s:'#43a047',bg:'#e8f5e9',t:'#1b5e20', subgroups:['Penicillins','Cephalosporins','Macrolides','Fluoroquinolones','Tetracyclines','Aminoglycosides','Carbapenems','Glycopeptides','Lincosamides','Oxazolidinones','Nitroimidazoles','Sulfonamides','Other Antibiotics']},
+  'Antifungals':                      {ico:'🍄',s:'#8d6e63',bg:'#efebe9',t:'#4e342e', subgroups:['Azoles','Polyenes','Echinocandins','Other Antifungals']},
+  'Antivirals':                       {ico:'🧬',s:'#26a69a',bg:'#e0f2f1',t:'#004d40', subgroups:['Antivirals (Herpes)','Antivirals (HIV)','Antivirals (Hepatitis)','Antivirals (Influenza)','Other Antivirals']},
+  'Antiparasitics':                   {ico:'🪱',s:'#558b2f',bg:'#f1f8e9',t:'#33691e', subgroups:['Antiprotozoals','Anthelmintics','Ectoparasiticides']},
+  'Cardiovascular Drugs':             {ico:'❤️',s:'#e91e63',bg:'#fce4ec',t:'#880e4f', subgroups:['ACE Inhibitors','ARBs','Beta-Blockers','Calcium Channel Blockers','Diuretics','Nitrates','Antiarrhythmics','Antihypertensives','Drugs of Heart Failure','Antiplatelets','Anticoagulants','Statins','Other Cardiovascular']},
+  'Respiratory Drugs':                {ico:'🫁',s:'#1e88e5',bg:'#e8f0fe',t:'#1565c0', subgroups:['Bronchodilators','Inhaled Corticosteroids','Mucolytics & Expectorants','Antitussives','Antihistamines','Other Respiratory']},
+  'Gastrointestinal Drugs':           {ico:'🫃',s:'#fb8c00',bg:'#fff8e1',t:'#e65100', subgroups:['PPIs & H2 Blockers','Antacids','Antiemetics','Antidiarrheals','Laxatives','Antispasmodics','Drugs of IBD','Liver Support','Other GI Drugs']},
+  'Endocrine & Metabolic Drugs':      {ico:'⚗️',s:'#00acc1',bg:'#e0f7fa',t:'#006064', subgroups:['Antidiabetics','Insulin','Thyroid Drugs','Corticosteroids','Sex Hormones & Contraceptives','Drugs of Osteoporosis','Other Endocrine']},
+  'Neurological & CNS Drugs':         {ico:'🧠',s:'#7b1fa2',bg:'#f3e5f5',t:'#4a148c', subgroups:['Antiepileptics','Antiparkinsonian Drugs','Drugs of Migraine','Drugs of Multiple Sclerosis','Other Neurological']},
+  'Psychiatric Drugs':                {ico:'🧩',s:'#5c6bc0',bg:'#e8eaf6',t:'#283593', subgroups:['Antidepressants','Antipsychotics','Anxiolytics & Hypnotics','Mood Stabilisers','Drugs of ADHD','Other Psychiatric']},
+  'Ophthalmological Drugs':           {ico:'👁️',s:'#1976d2',bg:'#e3f2fd',t:'#0d47a1', subgroups:['Glaucoma','Mydriatics','Anti-allergic Eye Drops','Antibiotic Eye Drops','Steroid Eye Drops','Antiviral Eye Drops','Antifungal Eye Drops','Artificial Tears','Other Eye Drops']},
+  'Dermatological Drugs':             {ico:'🩹',s:'#ff8a65',bg:'#fbe9e7',t:'#bf360c', subgroups:['Drugs of Acne','Drugs of Psoriasis','Antifungals (Topical)','Antibiotics (Topical)','Steroids (Topical)','Wound Care','Other Dermatological']},
+  'Musculoskeletal Drugs':            {ico:'🦴',s:'#78909c',bg:'#eceff1',t:'#37474f', subgroups:['NSAIDs (Topical)','Muscle Relaxants','Drugs of Gout','Drugs of Osteoporosis','Disease-Modifying Drugs','Other Musculoskeletal']},
+  'Urological Drugs':                 {ico:'🫧',s:'#0288d1',bg:'#e1f5fe',t:'#01579b', subgroups:['Alpha-Blockers (BPH)','5-Alpha Reductase Inhibitors','Drugs of Overactive Bladder','Erectile Dysfunction Agents','Urinary Antiseptics','Other Urological']},
+  'Obstetric & Gynaecological Drugs': {ico:'🤰',s:'#d81b60',bg:'#fce4ec',t:'#880e4f', subgroups:['Tocolytics','Uterotonics','Contraceptives','Fertility Drugs','Other OB/GYN']},
+  'Haematological Drugs':             {ico:'🩸',s:'#c62828',bg:'#ffebee',t:'#b71c1c', subgroups:['Anticoagulants','Antiplatelets','Thrombolytics','Haematinics','Haemostatics','Other Haematological']},
+  'Immunological & Allergy Drugs':    {ico:'🛡️',s:'#7cb342',bg:'#f1f8e9',t:'#33691e', subgroups:['Antihistamines','Corticosteroids (Systemic)','Immunosuppressives','Immunomodulators','Biologics','Other Immunological']},
+  'Oncological Drugs':                {ico:'🎗️',s:'#6d4c41',bg:'#efebe9',t:'#3e2723', subgroups:['Chemotherapy','Targeted Therapy','Hormonal Anticancer','Supportive Oncology']},
+  'Ear, Nose & Throat (ENT) Drugs':  {ico:'👂',s:'#00897b',bg:'#e0f2f1',t:'#004d40', subgroups:['Ear Drops','Nasal Preparations','Throat Preparations','Other ENT']},
+  'Vitamins, Minerals & Supplements': {ico:'🌟',s:'#ffd600',bg:'#fffde7',t:'#f57f17', subgroups:['Vitamins','Minerals','Electrolytes','Multivitamins','Nutritional Supplements']},
+  'IV Fluids & Electrolytes':         {ico:'💧',s:'#29b6f6',bg:'#e1f5fe',t:'#01579b', subgroups:['Crystalloids','Colloids','Blood Products','Parenteral Nutrition']},
+  'Anaesthetic & Perioperative Drugs':{ico:'😴',s:'#5e35b1',bg:'#ede7f6',t:'#311b92', subgroups:['General Anaesthetics','Local Anaesthetics','Neuromuscular Blockers','Reversal Agents','Perioperative Drugs']},
+  'Emergency & Critical Care Drugs':  {ico:'🚨',s:'#d50000',bg:'#ffebee',t:'#b71c1c', subgroups:['Vasopressors','Antidotes','Resuscitation Drugs','Other Emergency']},
 };
 
 // Flatten DRUG_GROUPS into CAT_COLORS-compatible lookup (keyed by GROUP name)
@@ -10317,62 +10326,93 @@ for (const [grp, v] of Object.entries(DRUG_GROUPS)) {
   }
 }
 
-// Migration map: old flat type → {group, subgroup}
+// Migration map: old group_name / type values → new canonical {group, subgroup}
 const TYPE_MIGRATION_MAP = {
-  'Antibiotics':                   {group:'Antimicrobials',         subgroup:'Antibacterials'},
-  'Antivirals':                    {group:'Antimicrobials',         subgroup:'Antivirals'},
-  'Antifungals':                   {group:'Antimicrobials',         subgroup:'Antifungals'},
-  'Antiparasitics/Antiprotozoals': {group:'Antimicrobials',         subgroup:'Antiprotozoals'},
-  'Anthelmintics':                 {group:'Antimicrobials',         subgroup:'Anthelmintics'},
-  'Intestinal Antiseptics':        {group:'Antimicrobials',         subgroup:'Antibacterials'},
-  'Antimycobacterials/Anti-TB':    {group:'Antimicrobials',         subgroup:'Antibacterials'},
-  'Analgesics/NSAIDs':             {group:'Analgesic Agents',       subgroup:'NSAIDs'},
-  'Opioids':                       {group:'Analgesic Agents',       subgroup:'Opioids'},
-  'Muscle Relaxants':              {group:'Analgesic Agents',       subgroup:'Drugs of muscle spasm'},
-  'GI/Gastro':                     {group:'Gastrointestinal Drugs', subgroup:'Antispasmodics'},
-  'Antacids/PPIs/H2':              {group:'Gastrointestinal Drugs', subgroup:'Drugs of peptic ulcer'},
-  'Antiemetics':                   {group:'Gastrointestinal Drugs', subgroup:'Antiemetics'},
-  'Antidiarrhoeals':               {group:'Gastrointestinal Drugs', subgroup:'Antidiarrhoeals'},
-  'Laxatives':                     {group:'Gastrointestinal Drugs', subgroup:'Anticonstipation drugs'},
-  'Hepatoprotectives':             {group:'Gastrointestinal Drugs', subgroup:'Liver support preparations'},
-  'Probiotics':                    {group:'Gastrointestinal Drugs', subgroup:'Digestants'},
-  'Respiratory':                   {group:'Respiratory System',     subgroup:'Drugs of bronchial asthma'},
-  'Bronchodilators':               {group:'Respiratory System',     subgroup:'Drugs of bronchial asthma'},
-  'Inhaled Corticosteroids':       {group:'Respiratory System',     subgroup:'Drugs of bronchial asthma'},
-  'Mucolytics/Expectorants':       {group:'Respiratory System',     subgroup:'Drugs of Cough'},
-  'Antihistamines':                {group:'Antihistamines',         subgroup:'Second Generation'},
-  'Antihypertensives':             {group:'Cardiovascular Drugs',   subgroup:'Antihypertensive drugs'},
-  'Antiarrhythmics':               {group:'Cardiovascular Drugs',   subgroup:'Antiarrhythmics'},
-  'Heart Failure':                 {group:'Cardiovascular Drugs',   subgroup:'Drugs of heart failure'},
-  'Nitrates':                      {group:'Cardiovascular Drugs',   subgroup:'Antianginal drugs'},
-  'Diuretics':                     {group:'Cardiovascular Drugs',   subgroup:'Antihypertensive drugs'},
-  'Statins/Lipid-Lowering':        {group:'Drugs of Dyslipidaemia', subgroup:'Statins'},
-  'Anticoagulants':                {group:'Blood',                  subgroup:'Anticoagulants'},
-  'Antiplatelets':                 {group:'Blood',                  subgroup:'Antiplatelets'},
-  'Antidiabetics':                 {group:'Endocrine',              subgroup:'Drugs of DM'},
-  'Insulin':                       {group:'Endocrine',              subgroup:'Drugs of DM'},
-  'Thyroid':                       {group:'Endocrine',              subgroup:'Drugs of thyroid disease'},
-  'Steroids/Corticosteroids':      {group:'Endocrine',              subgroup:'Corticosteroids'},
-  'Vitamins/Supplements':          {group:'Nutrition and Vitamins', subgroup:'Multivitamins'},
-  'Minerals/Electrolytes':         {group:'Nutrition and Vitamins', subgroup:'Calcium'},
-  'IV Fluids':                     {group:'Nutrition and Vitamins', subgroup:'IV solutions'},
-  'Antiepileptics':                {group:'Central Nervous System', subgroup:'Antiepileptic drugs'},
-  'Antidepressants':               {group:'Central Nervous System', subgroup:'Antidepressants'},
-  'Antipsychotics':                {group:'Central Nervous System', subgroup:'Antipsychotics'},
-  'Anxiolytics/Hypnotics':         {group:'Central Nervous System', subgroup:'Anxiolytics-Hypnotics'},
-  'Antiparkinsonians':             {group:'Central Nervous System', subgroup:'Antiparkinsonian drugs'},
-  'Urology':                       {group:'Miscellaneous',          subgroup:'Drugs of BPH'},
-  'OB/GYN':                        {group:'Endocrine',              subgroup:'Sex hormones and contraception'},
-  'Orthopaedics/MSK':              {group:'Miscellaneous',          subgroup:'Drugs of osteoarthritis'},
-  'Dermatology':                   {group:'Dermatology',            subgroup:'Drugs of acne vulgaris'},
-  'Topical Antiseptics':           {group:'Dermatology',            subgroup:'Wound healing preparations'},
-  'Chemotherapy':                  {group:'Miscellaneous',          subgroup:'Immunosuppressives'},
-  'Immunosuppressants':            {group:'Miscellaneous',          subgroup:'Immunosuppressives'},
-  'Immunomodulators':              {group:'Miscellaneous',          subgroup:'Immunosuppressives'},
-  'Ophthalmology':                 {group:'Ophthalmology',          subgroup:'Antibiotic eye drops'},
-  'ENT':                           {group:'Miscellaneous',          subgroup:'Urinary antiseptics'},
-  'Other':                         {group:'Miscellaneous',          subgroup:''},
+  // ── Old 15-group names → new 24-group names ──
+  'Antimicrobials':                    {group:'Antibiotics',                      subgroup:'Other Antibiotics'},
+  'Analgesic Agents':                  {group:'Analgesics & Antipyretics',        subgroup:'NSAIDs'},
+  'Respiratory System':                {group:'Respiratory Drugs',                subgroup:''},
+  'Antihistamines':                    {group:'Immunological & Allergy Drugs',    subgroup:'Antihistamines'},
+  'Drugs of Dyslipidaemia':            {group:'Cardiovascular Drugs',             subgroup:'Statins'},
+  'Blood':                             {group:'Haematological Drugs',             subgroup:''},
+  'Endocrine':                         {group:'Endocrine & Metabolic Drugs',      subgroup:''},
+  'Central Nervous System':            {group:'Neurological & CNS Drugs',         subgroup:''},
+  'Ophthalmology':                     {group:'Ophthalmological Drugs',           subgroup:''},
+  'Dermatology':                       {group:'Dermatological Drugs',             subgroup:''},
+  'Nutrition and Vitamins':            {group:'Vitamins, Minerals & Supplements', subgroup:''},
+  'Autonomic Nervous System':          {group:'Neurological & CNS Drugs',         subgroup:''},
+  // ── Old flat type strings ──
+  'Antibiotics':                       {group:'Antibiotics',                      subgroup:'Other Antibiotics'},
+  'Antivirals':                        {group:'Antivirals',                       subgroup:'Other Antivirals'},
+  'Antifungals':                       {group:'Antifungals',                      subgroup:'Other Antifungals'},
+  'Antiparasitics/Antiprotozoals':     {group:'Antiparasitics',                   subgroup:'Antiprotozoals'},
+  'Anthelmintics':                     {group:'Antiparasitics',                   subgroup:'Anthelmintics'},
+  'Intestinal Antiseptics':            {group:'Antibiotics',                      subgroup:'Other Antibiotics'},
+  'Antimycobacterials/Anti-TB':        {group:'Antibiotics',                      subgroup:'Other Antibiotics'},
+  'Analgesics/NSAIDs':                 {group:'Analgesics & Antipyretics',        subgroup:'NSAIDs'},
+  'Opioids':                           {group:'Analgesics & Antipyretics',        subgroup:'Opioids'},
+  'Muscle Relaxants':                  {group:'Musculoskeletal Drugs',            subgroup:'Muscle Relaxants'},
+  'GI/Gastro':                         {group:'Gastrointestinal Drugs',           subgroup:''},
+  'Antacids/PPIs/H2':                  {group:'Gastrointestinal Drugs',           subgroup:'PPIs & H2 Blockers'},
+  'Antiemetics':                       {group:'Gastrointestinal Drugs',           subgroup:'Antiemetics'},
+  'Antidiarrhoeals':                   {group:'Gastrointestinal Drugs',           subgroup:'Antidiarrheals'},
+  'Antidiarrheals':                    {group:'Gastrointestinal Drugs',           subgroup:'Antidiarrheals'},
+  'Laxatives':                         {group:'Gastrointestinal Drugs',           subgroup:'Laxatives'},
+  'Hepatoprotectives':                 {group:'Gastrointestinal Drugs',           subgroup:'Liver Support'},
+  'Probiotics':                        {group:'Gastrointestinal Drugs',           subgroup:'Other GI Drugs'},
+  'Respiratory':                       {group:'Respiratory Drugs',                subgroup:''},
+  'Bronchodilators':                   {group:'Respiratory Drugs',                subgroup:'Bronchodilators'},
+  'Inhaled Corticosteroids':           {group:'Respiratory Drugs',                subgroup:'Inhaled Corticosteroids'},
+  'Mucolytics/Expectorants':           {group:'Respiratory Drugs',                subgroup:'Mucolytics & Expectorants'},
+  'Antihypertensives':                 {group:'Cardiovascular Drugs',             subgroup:'Antihypertensives'},
+  'Antiarrhythmics':                   {group:'Cardiovascular Drugs',             subgroup:'Antiarrhythmics'},
+  'Heart Failure':                     {group:'Cardiovascular Drugs',             subgroup:'Drugs of Heart Failure'},
+  'Nitrates':                          {group:'Cardiovascular Drugs',             subgroup:'Nitrates'},
+  'Diuretics':                         {group:'Cardiovascular Drugs',             subgroup:'Diuretics'},
+  'Statins/Lipid-Lowering':            {group:'Cardiovascular Drugs',             subgroup:'Statins'},
+  'Anticoagulants':                    {group:'Haematological Drugs',             subgroup:'Anticoagulants'},
+  'Antiplatelets':                     {group:'Haematological Drugs',             subgroup:'Antiplatelets'},
+  'Antidiabetics':                     {group:'Endocrine & Metabolic Drugs',      subgroup:'Antidiabetics'},
+  'Insulin':                           {group:'Endocrine & Metabolic Drugs',      subgroup:'Insulin'},
+  'Thyroid':                           {group:'Endocrine & Metabolic Drugs',      subgroup:'Thyroid Drugs'},
+  'Steroids/Corticosteroids':          {group:'Endocrine & Metabolic Drugs',      subgroup:'Corticosteroids'},
+  'Vitamins/Supplements':              {group:'Vitamins, Minerals & Supplements', subgroup:'Vitamins'},
+  'Minerals/Electrolytes':             {group:'Vitamins, Minerals & Supplements', subgroup:'Minerals'},
+  'IV Fluids':                         {group:'IV Fluids & Electrolytes',         subgroup:'Crystalloids'},
+  'Antiepileptics':                    {group:'Neurological & CNS Drugs',         subgroup:'Antiepileptics'},
+  'Antidepressants':                   {group:'Psychiatric Drugs',                subgroup:'Antidepressants'},
+  'Antipsychotics':                    {group:'Psychiatric Drugs',                subgroup:'Antipsychotics'},
+  'Anxiolytics/Hypnotics':             {group:'Psychiatric Drugs',                subgroup:'Anxiolytics & Hypnotics'},
+  'Antiparkinsonians':                 {group:'Neurological & CNS Drugs',         subgroup:'Antiparkinsonian Drugs'},
+  'Urology':                           {group:'Urological Drugs',                 subgroup:''},
+  'OB/GYN':                            {group:'Obstetric & Gynaecological Drugs', subgroup:''},
+  'Orthopaedics/MSK':                  {group:'Musculoskeletal Drugs',            subgroup:''},
+  'Dermatology':                       {group:'Dermatological Drugs',             subgroup:''},
+  'Topical Antiseptics':               {group:'Dermatological Drugs',             subgroup:'Wound Care'},
+  'Chemotherapy':                      {group:'Oncological Drugs',                subgroup:'Chemotherapy'},
+  'Immunosuppressants':                {group:'Immunological & Allergy Drugs',    subgroup:'Immunosuppressives'},
+  'Immunomodulators':                  {group:'Immunological & Allergy Drugs',    subgroup:'Immunomodulators'},
+  'Ophthalmology':                     {group:'Ophthalmological Drugs',           subgroup:''},
+  'ENT':                               {group:'Ear, Nose & Throat (ENT) Drugs',  subgroup:''},
+  'Other':                             {group:'Miscellaneous',                    subgroup:''},
+  // ── Masterplan Phase 2 migration values (in case any remain in DB) ──
+  'Antimicrobial Agents':              {group:'Antibiotics',                      subgroup:'Other Antibiotics'},
+  'Analgesic & Antipyretic Agents':    {group:'Analgesics & Antipyretics',        subgroup:''},
+  'Analgesics':                        {group:'Analgesics & Antipyretics',        subgroup:''},
+  'Antihypertensive drugs':            {group:'Cardiovascular Drugs',             subgroup:'Antihypertensives'},
+  'Antidiarrhoeal':                    {group:'Gastrointestinal Drugs',           subgroup:'Antidiarrheals'},
+  'Anticonstipation drugs':            {group:'Gastrointestinal Drugs',           subgroup:'Laxatives'},
+  'Drugs of Cough':                    {group:'Respiratory Drugs',                subgroup:'Antitussives'},
+  'Drugs of BPH':                      {group:'Urological Drugs',                 subgroup:'Alpha-Blockers (BPH)'},
+  'Erectile enhancers':                {group:'Urological Drugs',                 subgroup:'Erectile Dysfunction Agents'},
+  'Drugs of muscle spasm':             {group:'Musculoskeletal Drugs',            subgroup:'Muscle Relaxants'},
+  'Drugs of osteoporosis':             {group:'Musculoskeletal Drugs',            subgroup:'Drugs of Osteoporosis'},
+  'Drugs of osteoarthritis':           {group:'Musculoskeletal Drugs',            subgroup:''},
+  'Drugs of gout':                     {group:'Musculoskeletal Drugs',            subgroup:'Drugs of Gout'},
+  'Immunosuppressives':                {group:'Immunological & Allergy Drugs',    subgroup:'Immunosuppressives'},
+  'Miscellaneous':                     {group:'Miscellaneous',                    subgroup:''},
 };
+
 
 // ═══════════════════════════════════════════════════════
 // PHASE 1 — buildCategoryGridData
@@ -18887,64 +18927,80 @@ The app that imports your output has a fixed, hard-coded category list.
 If you use ANY other string for "group" or "subgroup", the drug will be
 silently miscategorized. There is no fallback. There is no fuzzy match.
 
-The "group" field MUST be one of these 15 strings — copied character for character:
+The "group" field MUST be one of these 24 strings — copied character for character:
 
-  Antimicrobials
-  Autonomic Nervous System
-  Analgesic Agents
-  Gastrointestinal Drugs
-  Respiratory System
-  Antihistamines
+  Analgesics & Antipyretics
+  Antibiotics
+  Antifungals
+  Antivirals
+  Antiparasitics
   Cardiovascular Drugs
-  Drugs of Dyslipidaemia
-  Blood
-  Endocrine
-  Central Nervous System
-  Ophthalmology
-  Dermatology
-  Nutrition and Vitamins
-  Miscellaneous
+  Respiratory Drugs
+  Gastrointestinal Drugs
+  Endocrine & Metabolic Drugs
+  Neurological & CNS Drugs
+  Psychiatric Drugs
+  Ophthalmological Drugs
+  Dermatological Drugs
+  Musculoskeletal Drugs
+  Urological Drugs
+  Obstetric & Gynaecological Drugs
+  Haematological Drugs
+  Immunological & Allergy Drugs
+  Oncological Drugs
+  Ear, Nose & Throat (ENT) Drugs
+  Vitamins, Minerals & Supplements
+  IV Fluids & Electrolytes
+  Anaesthetic & Perioperative Drugs
+  Emergency & Critical Care Drugs
 
 The "subgroup" field MUST be one of the subgroups listed here for the chosen group:
 
-  Antimicrobials          → Antibacterials | Antivirals | Antifungals | Antiprotozoals | Anthelmintics
-  Autonomic Nervous System → Cholinergic agonists | Cholinergic antagonists | Adrenergic agonists | Adrenergic antagonists
-  Analgesic Agents        → NSAIDs | Paracetamol | Opioids | Drugs of Migraine | Drugs of muscle spasm
-  Gastrointestinal Drugs  → Drugs of peptic ulcer | Antiemetics | Antidiarrhoeals | Anticonstipation drugs | Antispasmodics | Digestants | Drugs of IBD | Drugs of IBS | Liver support preparations | Drugs of biliary disorders | Drugs of obesity
-  Respiratory System      → Drugs of bronchial asthma | Drugs of Cough
-  Antihistamines          → First Generation | Second Generation | Third Generation | Prostaglandins
-  Cardiovascular Drugs    → Antihypertensive drugs | Drugs of hypotension | Antianginal drugs | Drugs of heart failure | Antiarrhythmics
-  Drugs of Dyslipidaemia  → Statins | Ezetimibe | Fibrates | Niacin | Resins | Omega-3 FA | PCSK9 inhibitors
-  Blood                   → Antiplatelets | Anticoagulants | Thrombolytics | Haemostatics
-  Endocrine               → Corticosteroids | Drugs of DM | Drugs of thyroid disease | Drugs of hyperparathyroidism | Drugs of fertility | Sex hormones and contraception
-  Central Nervous System  → Anxiolytics-Hypnotics | Antidepressants | Drugs of ADHD | Antiepileptic drugs | Antipsychotics | Antiparkinsonian drugs | Drugs of myasthenia gravis | Drugs of Alzheimer disease | Drugs of hypersomnolence | CNS stimulants
-  Ophthalmology           → Glaucoma | Mydriatics | Anti-allergic eye drops | Decongestant eye drops | Artificial tears | Analgesic eye drops | Steroid eye drops | Antibiotic eye drops | Antifungal eye drops | Antiviral eye drops
-  Dermatology             → Drugs of acne vulgaris | Drugs of psoriasis | Drugs of hyperpigmentation | Wound healing preparations | Skin care preparations | Preparations of warts | Hair tonic preparations | Minoxidil | Sunscreens
-  Nutrition and Vitamins  → Vitamins (A/C/E/B/K/D) | Folic acid | Iron | Calcium | Magnesium | Potassium | Zinc | Selenium | Multivitamins | Parenteral nutrition | IV solutions
-  Miscellaneous           → Drugs of BPH | Drugs of urinary incontinence | Erectile enhancers | Tocolytics | Drugs of osteoporosis | Drugs of osteoarthritis | Drugs of gout | Immunosuppressives | Venotonics | Preparations of haemorrhoids | Urinary antiseptics | Potassium binders
+  Analgesics & Antipyretics        → NSAIDs | Paracetamol | Opioids | Drugs of Migraine | Muscle Relaxants
+  Antibiotics                      → Penicillins | Cephalosporins | Macrolides | Fluoroquinolones | Tetracyclines | Aminoglycosides | Carbapenems | Glycopeptides | Lincosamides | Oxazolidinones | Nitroimidazoles | Sulfonamides | Other Antibiotics
+  Antifungals                      → Azoles | Polyenes | Echinocandins | Other Antifungals
+  Antivirals                       → Antivirals (Herpes) | Antivirals (HIV) | Antivirals (Hepatitis) | Antivirals (Influenza) | Other Antivirals
+  Antiparasitics                   → Antiprotozoals | Anthelmintics | Ectoparasiticides
+  Cardiovascular Drugs             → ACE Inhibitors | ARBs | Beta-Blockers | Calcium Channel Blockers | Diuretics | Nitrates | Antiarrhythmics | Antihypertensives | Drugs of Heart Failure | Antiplatelets | Anticoagulants | Statins | Other Cardiovascular
+  Respiratory Drugs                → Bronchodilators | Inhaled Corticosteroids | Mucolytics & Expectorants | Antitussives | Antihistamines | Other Respiratory
+  Gastrointestinal Drugs           → PPIs & H2 Blockers | Antacids | Antiemetics | Antidiarrheals | Laxatives | Antispasmodics | Drugs of IBD | Liver Support | Other GI Drugs
+  Endocrine & Metabolic Drugs      → Antidiabetics | Insulin | Thyroid Drugs | Corticosteroids | Sex Hormones & Contraceptives | Drugs of Osteoporosis | Other Endocrine
+  Neurological & CNS Drugs         → Antiepileptics | Antiparkinsonian Drugs | Drugs of Migraine | Drugs of Multiple Sclerosis | Other Neurological
+  Psychiatric Drugs                → Antidepressants | Antipsychotics | Anxiolytics & Hypnotics | Mood Stabilisers | Drugs of ADHD | Other Psychiatric
+  Ophthalmological Drugs           → Glaucoma | Mydriatics | Anti-allergic Eye Drops | Antibiotic Eye Drops | Steroid Eye Drops | Antiviral Eye Drops | Antifungal Eye Drops | Artificial Tears | Other Eye Drops
+  Dermatological Drugs             → Drugs of Acne | Drugs of Psoriasis | Antifungals (Topical) | Antibiotics (Topical) | Steroids (Topical) | Wound Care | Other Dermatological
+  Musculoskeletal Drugs            → NSAIDs (Topical) | Muscle Relaxants | Drugs of Gout | Drugs of Osteoporosis | Disease-Modifying Drugs | Other Musculoskeletal
+  Urological Drugs                 → Alpha-Blockers (BPH) | 5-Alpha Reductase Inhibitors | Drugs of Overactive Bladder | Erectile Dysfunction Agents | Urinary Antiseptics | Other Urological
+  Obstetric & Gynaecological Drugs → Tocolytics | Uterotonics | Contraceptives | Fertility Drugs | Other OB/GYN
+  Haematological Drugs             → Anticoagulants | Antiplatelets | Thrombolytics | Haematinics | Haemostatics | Other Haematological
+  Immunological & Allergy Drugs    → Antihistamines | Corticosteroids (Systemic) | Immunosuppressives | Immunomodulators | Biologics | Other Immunological
+  Oncological Drugs                → Chemotherapy | Targeted Therapy | Hormonal Anticancer | Supportive Oncology
+  Ear, Nose & Throat (ENT) Drugs   → Ear Drops | Nasal Preparations | Throat Preparations | Other ENT
+  Vitamins, Minerals & Supplements → Vitamins | Minerals | Electrolytes | Multivitamins | Nutritional Supplements
+  IV Fluids & Electrolytes         → Crystalloids | Colloids | Blood Products | Parenteral Nutrition
+  Anaesthetic & Perioperative Drugs → General Anaesthetics | Local Anaesthetics | Neuromuscular Blockers | Reversal Agents | Perioperative Drugs
+  Emergency & Critical Care Drugs  → Vasopressors | Antidotes | Resuscitation Drugs | Other Emergency
 
 Rules:
-  - If no group fits → use exactly: Miscellaneous
+  - If no group fits → use exactly: Analgesics & Antipyretics (or the closest match above)
   - If no subgroup fits → use exactly: "" (empty string)
   - NEVER invent a group name. NEVER abbreviate. NEVER paraphrase.
 
 Common mistakes to avoid:
-  WRONG "Analgesics"           → RIGHT "Analgesic Agents"
-  WRONG "Antibiotics"          → RIGHT "Antimicrobials"  subgroup: "Antibacterials"
-  WRONG "Antiprotozoals"       → RIGHT "Antimicrobials"  subgroup: "Antiprotozoals"
-  WRONG "Antidiarrheals"       → RIGHT "Gastrointestinal Drugs"  subgroup: "Antidiarrhoeals"
-  WRONG "GI Drugs"             → RIGHT "Gastrointestinal Drugs"
-  WRONG "CNS"                  → RIGHT "Central Nervous System"
-  WRONG "Vitamins"             → RIGHT "Nutrition and Vitamins"
-  WRONG "Erectile Dysfunction" → RIGHT "Miscellaneous"  subgroup: "Erectile enhancers"
-  WRONG "Antihypertensives"    → RIGHT "Cardiovascular Drugs"  subgroup: "Antihypertensive drugs"
-  WRONG "Laxatives"            → RIGHT "Gastrointestinal Drugs"  subgroup: "Anticonstipation drugs"
-  WRONG "Muscle Relaxants"     → RIGHT "Analgesic Agents"  subgroup: "Drugs of muscle spasm"
-  WRONG "Probiotics"           → RIGHT "Gastrointestinal Drugs"  subgroup: "Digestants"
-  WRONG "Rehydration"          → RIGHT "Gastrointestinal Drugs"  subgroup: "Antidiarrhoeals"
-  WRONG "Corticosteroids"      → RIGHT "Endocrine"  subgroup: "Corticosteroids"
-  WRONG "Anticoagulants"       → RIGHT "Blood"  subgroup: "Anticoagulants"
-  WRONG "Antidiabetics"        → RIGHT "Endocrine"  subgroup: "Drugs of DM"
+  WRONG "Analgesic Agents"     → RIGHT "Analgesics & Antipyretics"
+  WRONG "Antimicrobials"       → RIGHT "Antibiotics"  (for antibacterials)
+  WRONG "Respiratory System"   → RIGHT "Respiratory Drugs"
+  WRONG "Central Nervous System" → RIGHT "Neurological & CNS Drugs" or "Psychiatric Drugs"
+  WRONG "Endocrine"            → RIGHT "Endocrine & Metabolic Drugs"
+  WRONG "Ophthalmology"        → RIGHT "Ophthalmological Drugs"
+  WRONG "Dermatology"          → RIGHT "Dermatological Drugs"
+  WRONG "Nutrition and Vitamins" → RIGHT "Vitamins, Minerals & Supplements"
+  WRONG "Blood"                → RIGHT "Haematological Drugs"
+  WRONG "Antihistamines"       → RIGHT "Immunological & Allergy Drugs"  subgroup: "Antihistamines"
+  WRONG "Drugs of Dyslipidaemia" → RIGHT "Cardiovascular Drugs"  subgroup: "Statins"
+  WRONG "Muscle Relaxants"     → RIGHT "Musculoskeletal Drugs"  subgroup: "Muscle Relaxants"
+  WRONG "Urology"              → RIGHT "Urological Drugs"
+  WRONG "OB/GYN"               → RIGHT "Obstetric & Gynaecological Drugs"
 
 
 ████████████████████████████████████████████████████████████████████
