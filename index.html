@@ -14292,8 +14292,12 @@ function _cvRenderPrescription(rx, agePrefix) {
         ? ((d.ped_dose_ar || '').trim() || (d.effectiveDoseAr ?? (d.dose_ar || '')).trim())
         : (d.effectiveDoseAr ?? (d.dose_ar || '')).trim();
 
-      // Ped dose missing warning: paeds condition, no ped dose AND no Wt/X divisor AND no shortcut
-      const _pedDoseMissing = _isPaeds && !primaryDoseEn && !primaryDoseAr
+      // Ped dose missing warning: paeds condition, no ped dose AND no Wt/X divisor AND no shortcut.
+      // Phase 9 (Change 3): suppress warning for products explicitly classified via ped_status —
+      // contraindicated / not-recommended / use-other-formula are intentional states, not gaps.
+      const _pedClassified = ['contraindicated', 'not-recommended', 'use-other-formula']
+        .includes(d.ped_status);
+      const _pedDoseMissing = _isPaeds && !_pedClassified && !primaryDoseEn && !primaryDoseAr
         && !d.ped_shortcut && !d.ped_wt_divisor && !d.ped_loading_dose;
 
       // ── Phase 4 (masterplan): normDose — collapse whitespace + lowercase for grouping keys.
@@ -18052,6 +18056,20 @@ function _singleBrandRow(p, drug, dimmed) {
       <div class="dv-brand-ar-icon-spacer-p12"></div>
     </div>` : '';
 
+  // Phase 9 (Change 4): ped_status badge — shown only for actionable negative states.
+  // 'pending', 'approved', 'weight-based' are silent (no badge needed in the brand row).
+  const pedStatusBadge = (() => {
+    const labels = {
+      'contraindicated':   { text: 'ممنوع للأطفال',          color: 'var(--red,#ef4444)' },
+      'not-recommended':   { text: 'غير موصى للأطفال',       color: 'var(--color-caution,#f59e0b)' },
+      'use-other-formula': { text: 'استخدم الشراب للأطفال',  color: 'var(--color-info,#3b82f6)' },
+    };
+    const lbl = labels[p.pedStatus];
+    return lbl
+      ? `<span style="font-size:10px;font-weight:600;color:${lbl.color};display:block;margin-top:2px" dir="rtl">${lbl.text}</span>`
+      : '';
+  })();
+
   return `<div class="dv-brand-row-p12${dimmed ? ' dimmed' : ''}" onclick="void(0)">
     <div class="dv-brand-main-p12">
       <div class="dv-brand-top-p12">
@@ -18062,6 +18080,7 @@ function _singleBrandRow(p, drug, dimmed) {
             ${p.formula ? `<span class="dv-formula-badge-p12">${esc(p.formula)}</span>` : ''}
           </div>
           ${hasEn ? `<div class="dv-brand-dose-p12"><i class="ph ph-prescription" style="font-size:11px;vertical-align:-1px;margin-right:3px;color:var(--color-text-tertiary)"></i>${esc(p.dose)}</div>` : ''}
+          ${pedStatusBadge}
         </div>
         <a href="${googleImgUrl}" target="_blank" rel="noopener"
           class="dv-img-btn-p12"
