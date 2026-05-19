@@ -5770,23 +5770,35 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
     .filter(r => r.is_alternative && r.alternative_to_id === row.id)
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
+  // Detect whether the current prescription belongs to a paediatric condition
+  const _rxCurrRx   = _PRESCRIPTIONS.find(p => p.id === _rxEditId);
+  const _rxCurrCond = _COND_MAP[_rxCurrRx?.condition_id];
+  const _rxIsPaeds  = _rxCurrCond?.age_group === 'paediatric';
+
   const altHtml = alts.map(alt => {
     const ap = _PRODUCT_MAP[alt.product_id];
+    const altDrug = _DRUG_MAP[alt.drug_id];
     const apLabel = ap
       ? `${esc(ap.brand || '')}${ap.conc ? ' ' + esc(ap.conc) : ''}${ap.formula ? ' ' + esc(ap.formula) : ''}`
       : '<span style="color:var(--color-caution)">⚠ No product</span>';
-    // Phase 3: dose indicator badge
+    const altGenericLabel = altDrug ? esc(altDrug.name) : '';
+
+    // Dose fields
     const altDoseEn = alt.dose ?? '';
     const altDoseAr = alt.dose_ar ?? '';
-    const altHasDose = altDoseEn || altDoseAr;
-    // Resolve what dose the alt will actually show (pd.dose → product.dose → drug.dose)
-    const altProd = _PRODUCT_MAP[alt.product_id];
-    const altDrug = _DRUG_MAP[alt.drug_id];
-    const altEffectiveDose = altDoseEn || altDoseAr
-      || altProd?.dose || altProd?.dose_ar
-      || altDrug?.dose || altDrug?.dose_ar;
+
+    // Adult dose inherit hint (same logic as primary)
+    const refDoseEn = ap?.dose || altDrug?.dose || null;
+    const refDoseAr = ap?.dose_ar || altDrug?.dose_ar || null;
+    const refSource = (ap?.dose || ap?.dose_ar) ? 'product' : (altDrug?.dose || altDrug?.dose_ar) ? 'generic' : null;
+    const hasOwnDose = !!(altDoseEn || altDoseAr);
+
+    // Ped shortcut: rx-level override → product fallback
+    const altPedShortcut = alt.ped_shortcut ?? ap?.ped_shortcut ?? '';
+
+    // Dose badge for collapsed header
     const altDoseSource = (altDoseEn || altDoseAr) ? 'rx override'
-      : (altProd?.dose || altProd?.dose_ar) ? 'brand dose'
+      : (ap?.dose || ap?.dose_ar) ? 'brand dose'
       : (altDrug?.dose || altDrug?.dose_ar) ? 'generic dose'
       : null;
     const doseBadge = alt.dose_source_pd_id
@@ -5796,16 +5808,51 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
         : altDoseSource
           ? `<span class="alt-dose-indicator" style="background:rgba(16,185,129,.1);color:var(--color-safe);border-color:rgba(16,185,129,.3)" title="Using ${altDoseSource} — no override needed">${altDoseSource}</span>`
           : `<span class="alt-dose-indicator inherited" style="background:rgba(239,68,68,.1);color:var(--color-danger);border-color:rgba(239,68,68,.3)" title="No dose found anywhere — add one to the brand or generic">⚠ no dose</span>`;
-    // Phase 6.3: reorder handles — hide up on first, hide down on last
+
+    // Ped badge on header
+    const pedBadge = _rxIsPaeds
+      ? `<span class="alt-dose-indicator" style="background:var(--color-info-light);color:var(--color-info);border-color:var(--color-info)" title="Paediatric condition — ped shortcut field is active">👶 ped</span>`
+      : '';
+
+    // Phase 6.3: reorder handles
     const altIdx  = alts.indexOf(alt);
     const isFirst = altIdx === 0;
     const isLast  = altIdx === alts.length - 1;
+
+    // Adult dose inherit hint HTML (mirrors primary)
+    const doseInheritHintHtml = (!hasOwnDose && (refDoseEn || refDoseAr))
+      ? (() => {
+          const doseText = [
+            refDoseAr ? `<span dir="rtl" style="font-family:var(--font-ar)">${esc(refDoseAr)}</span>` : '',
+            refDoseEn ? `<span>${esc(refDoseEn)}</span>` : ''
+          ].filter(Boolean).join(' / ');
+          return `<div class="dose-inherit-hint">
+            <i class="ph ph-arrow-bend-down-right"></i>
+            <span class="dose-inherit-source-badge">${esc(refSource)}</span>
+            <span>Inheriting:</span>
+            ${doseText}
+            <button class="dose-inherit-fill-btn" title="Copy into this row so you can edit it"
+              onclick="rxFillAltDoseFromRef('${alt.id}','${esc(refDoseEn || '')}','${esc(refDoseAr || '')}')">
+              <i class="ph ph-arrow-down-left"></i> Fill
+            </button>
+          </div>`;
+        })()
+      : (!hasOwnDose && !refDoseEn && !refDoseAr)
+        ? `<div class="dose-inherit-hint dose-inherit-warn">
+            <i class="ph ph-warning"></i>
+            No dose found at any level — add one here, or set it on the product / generic.
+           </div>`
+        : '';
+
     return `
       <div class="drug-alt-row" id="alt-${alt.id}">
+        <!-- ── Alt collapsed header ── -->
         <div class="drug-alt-label">
           <span class="drug-alt-or">or</span>
           <span>${apLabel}</span>
+          ${altGenericLabel ? `<span style="font-size:var(--text-xs-size);color:var(--color-text-tertiary);font-style:italic">${altGenericLabel}</span>` : ''}
           ${doseBadge}
+          ${pedBadge}
         </div>
         <div style="display:flex;align-items:center;gap:var(--space-2);flex-shrink:0">
           <div class="alt-reorder-btns" title="Reorder alternative">
@@ -5814,7 +5861,7 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
             <button class="btn btn-ghost btn-xs alt-reorder-btn" onclick="rxMoveAlt('${alt.id}','down')"
               ${isLast ? 'disabled' : ''} title="Move down"><i class="ph ph-caret-down"></i></button>
           </div>
-          <button class="btn btn-ghost btn-sm" onclick="rxToggleAltDose('${alt.id}')" title="Edit dose for this alternative">
+          <button class="btn btn-ghost btn-sm" onclick="rxToggleAltDose('${alt.id}')" title="Edit all fields for this alternative">
             <i class="ph ph-pencil-line"></i>
           </button>
           <button class="btn btn-ghost btn-sm" onclick="rxPickAltProduct('${alt.id}')" title="Change product">
@@ -5824,15 +5871,16 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
             <i class="ph ph-trash"></i>
           </button>
         </div>
-        <!-- Phase 3: collapsible dose panel for this alternative -->
-        <div class="drug-alt-dose-panel" id="alt-dose-${alt.id}"
-             style="display:none;width:100%;margin-top:var(--space-2);padding-top:var(--space-2);border-top:1px solid var(--color-border)">
-          <!-- Phase 7.6: "Group with primary dose" toggle — sets dose_source_pd_id -->
 
-          <!-- Resolved brand/generic dose for this alt — shown as info -->
+        <!-- ── Alt expanded edit panel — full parity with primary ── -->
+        <div class="drug-alt-dose-panel" id="alt-dose-${alt.id}"
+             style="display:none;width:100%;margin-top:var(--space-3);padding-top:var(--space-3);border-top:1px solid var(--color-border)">
+
+          <!-- Default dose preview from brand/generic -->
           ${_renderAltDosePreview(alt)}
 
-          <label style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-2);
+          <!-- Force-group toggle -->
+          <label style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-3);
                         font-size:var(--text-xs-size);color:var(--color-text-secondary);cursor:pointer;
                         padding:var(--space-2);border-radius:var(--radius-sm);
                         background:var(--color-surface-2);border:1px solid var(--color-border)">
@@ -5840,28 +5888,57 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
               onchange="rxToggleDoseSource('${alt.id}','${row.id}',this.checked)"
               style="width:14px;height:14px;flex-shrink:0;cursor:pointer"/>
             <span>
-              <strong>Force same dose as primary</strong> — tick this only when this alternative
-              is the exact same drug and concentration as the primary and should show
-              a single shared dose block. Leave unticked to show this alt's own brand dose.
+              <strong>Force same dose as primary</strong> — tick only when this alt is the exact same
+              drug &amp; concentration as the primary and should share a single dose block.
             </span>
           </label>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);
-                      ${alt.dose_source_pd_id ? 'opacity:0.4;pointer-events:none' : ''}">
-            <div>
-              <div class="drug-row-field-label">Prescription dose override (EN) — optional</div>
-              <input type="text" value="${esc(altDoseEn)}" placeholder="Leave blank — brand dose used automatically"
-                onblur="rxSaveDrugField('${alt.id}','dose',this.value)"/>
+
+          <!-- Adult dose fields (dimmed when grouped) -->
+          <div style="${alt.dose_source_pd_id ? 'opacity:0.4;pointer-events:none' : ''}">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)">
+              <div>
+                <div class="drug-row-field-label">Dose (EN)</div>
+                <input type="text" value="${esc(altDoseEn)}" placeholder="Leave blank — brand dose used automatically"
+                  onblur="rxSaveDrugField('${alt.id}','dose',this.value)"/>
+              </div>
+              <div>
+                <div class="drug-row-field-label">Dose (AR)</div>
+                <input type="text" dir="rtl" value="${esc(altDoseAr)}" placeholder="اتركه فارغاً"
+                  style="font-family:var(--font-ar)"
+                  onblur="rxSaveDrugField('${alt.id}','dose_ar',this.value)"/>
+              </div>
             </div>
-            <div>
-              <div class="drug-row-field-label">Prescription dose override (AR) — optional</div>
-              <input type="text" dir="rtl" value="${esc(altDoseAr)}" placeholder="اتركه فارغاً"
-                style="font-family:var(--font-ar)"
-                onblur="rxSaveDrugField('${alt.id}','dose_ar',this.value)"/>
+            ${doseInheritHintHtml}
+            ${(altDoseEn || altDoseAr) ? `<div style="margin-top:var(--space-2)">
+              <div class="drug-row-field-label" style="color:var(--color-caution)">⚠️ Override reason — required when dose differs from brand default</div>
+              <input type="text" value="${esc(alt.dose_override_reason ?? '')}" placeholder="e.g. Reduced dose for renal impairment"
+                style="border-color:${alt.dose_override_reason ? 'var(--color-border-secondary)' : 'var(--color-caution)'}"
+                onblur="rxSaveDrugField('${alt.id}','dose_override_reason',this.value)"/>
+            </div>` : ''}
+
+            <!-- Paediatric shortcut — only shown for paeds conditions -->
+            ${_rxIsPaeds ? `<div style="margin-top:var(--space-2)">
+              <div class="drug-row-field-label" style="color:var(--color-info)">👶 Ped Shortcut
+                <span style="font-weight:400;color:var(--color-text-tertiary)"> — override for this prescription (leave blank to use product default)</span>
+              </div>
+              <input type="text" dir="rtl" value="${esc(altPedShortcut)}"
+                placeholder="${esc(ap?.ped_shortcut ? 'Product default: ' + ap.ped_shortcut : 'e.g. الوزن ÷ 6 مل — كل 8 ساعات')}"
+                style="font-family:var(--font-ar);border-color:${alt.ped_shortcut ? 'var(--color-info)' : 'var(--color-border)'}"
+                onblur="rxSaveDrugField('${alt.id}','ped_shortcut',this.value)"/>
+              ${ap?.ped_shortcut && !alt.ped_shortcut
+                ? `<div style="margin-top:3px;font-size:var(--text-xs-size);color:var(--color-text-tertiary)">
+                    Using product default: <span dir="rtl" style="font-family:var(--font-ar)">${esc(ap.ped_shortcut)}</span>
+                   </div>`
+                : ''}
+            </div>` : ''}
+
+            <!-- Drug note -->
+            <div style="margin-top:var(--space-2)">
+              <div class="drug-row-field-label">Drug Note</div>
+              <input type="text" value="${esc(alt.drug_note ?? '')}" placeholder="Optional note"
+                onblur="rxSaveDrugField('${alt.id}','drug_note',this.value)"/>
             </div>
-          </div>
-          <div style="margin-top:var(--space-1);font-size:var(--text-xs-size);color:var(--color-text-tertiary)">
-            Override fields: only fill when this specific prescription needs a different instruction than the brand default (e.g. half dose for elderly). Leave blank for normal cases.
-          </div>
+          </div><!-- /dimmed-when-grouped -->
         </div>
       </div>`;
   }).join('');
@@ -6845,6 +6922,23 @@ async function rxFillDoseFromRef(rowId, doseEn, doseAr) {
   if (arInput && doseAr) { arInput.value = doseAr; await rxSaveDrugField(rowId, 'dose_ar', doseAr); filled = true; }
   if (filled) {
     rxRenderUnified();  // re-render so hint disappears now that the row has its own dose
+    toast('Dose filled — edit or clear to revert to inherited.', 'success');
+  }
+}
+
+/* ── Alt quick-fill: same as above but targets the alt expanded panel ── */
+async function rxFillAltDoseFromRef(altId, doseEn, doseAr) {
+  const panel = document.getElementById(`alt-dose-${altId}`);
+  if (!panel) return;
+  // First two text inputs in the panel are Dose EN and Dose AR
+  const inputs = panel.querySelectorAll('input[type="text"]');
+  const enInput = inputs[0];
+  const arInput = inputs[1];
+  let filled = false;
+  if (enInput && doseEn) { enInput.value = doseEn; await rxSaveDrugField(altId, 'dose', doseEn); filled = true; }
+  if (arInput && doseAr) { arInput.value = doseAr; await rxSaveDrugField(altId, 'dose_ar', doseAr); filled = true; }
+  if (filled) {
+    rxRenderUnified();
     toast('Dose filled — edit or clear to revert to inherited.', 'success');
   }
 }
