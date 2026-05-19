@@ -5709,8 +5709,61 @@ function rxRenderUnified() {
 
 /* ── Alt dose preview helper — avoids nested escaped backticks ── */
 function _renderAltDosePreview(alt) {
-  const altProd     = _PRODUCT_MAP[alt.product_id];
-  const altDrug     = _DRUG_MAP[alt.drug_id];
+  const altProd = _PRODUCT_MAP[alt.product_id];
+  const altDrug = _DRUG_MAP[alt.drug_id];
+
+  // Detect paeds context
+  const _previewRx    = _PRESCRIPTIONS.find(p => p.id === _rxEditId);
+  const _previewCond  = _COND_MAP[_previewRx?.condition_id];
+  const _previewPaeds = _previewCond?.age_group === 'paediatric';
+
+  if (_previewPaeds) {
+    // ── Paeds mode: show ped_dose + shortcut, ignore adult dose entirely ──
+    const pedDoseEn   = altProd?.ped_dose    || altDrug?.ped_dose    || '';
+    const pedDoseAr   = altProd?.ped_dose_ar || altDrug?.ped_dose_ar || '';
+    const pedShortcut = altProd?.ped_shortcut || '';
+    const pedSource   = (altProd?.ped_dose || altProd?.ped_dose_ar) ? 'brand'
+                      : (altDrug?.ped_dose || altDrug?.ped_dose_ar) ? 'generic' : null;
+
+    if (!pedDoseEn && !pedDoseAr && !pedShortcut) {
+      return `<div style="margin-bottom:var(--space-3);padding:var(--space-2) var(--space-3);
+                border-radius:var(--radius-sm);background:rgba(239,68,68,.08);
+                border:1px solid rgba(239,68,68,.2);font-size:var(--text-xs-size);color:var(--color-danger)">
+                <i class="ph ph-warning"></i> No paediatric dose stored for this brand — add ped_dose / ped_shortcut in the Products editor.
+              </div>`;
+    }
+
+    const arHtml = pedDoseAr
+      ? `<span dir="rtl" style="font-family:var(--font-ar);display:block;margin-top:2px">${esc(pedDoseAr)}</span>`
+      : '';
+    const enSnippet = pedDoseEn.length > 120 ? pedDoseEn.substring(0, 120) + '\u2026' : pedDoseEn;
+    const enHtml = pedDoseEn
+      ? `<span style="display:block;margin-top:2px">${esc(enSnippet)}</span>`
+      : '';
+    const shortcutHtml = pedShortcut
+      ? `<span dir="rtl" style="font-family:var(--font-ar);display:block;margin-top:4px;
+           padding:3px 8px;border-radius:4px;background:rgba(96,165,250,.12);
+           color:var(--color-info);font-size:var(--text-xs-size)">
+           Shortcut: ${esc(pedShortcut)}
+         </span>`
+      : '';
+
+    return `<div style="margin-bottom:var(--space-3);padding:var(--space-2) var(--space-3);
+              border-radius:var(--radius-sm);background:var(--color-info-light);
+              border:1px solid var(--color-info);font-size:var(--text-xs-size);color:var(--color-text-secondary)">
+              <span style="font-weight:700;color:var(--color-info)">
+                <i class="ph ph-baby"></i> Paed dose from ${esc(pedSource || 'brand')}:
+              </span>
+              ${arHtml}
+              ${enHtml}
+              ${shortcutHtml}
+              <span style="color:var(--color-text-tertiary);margin-top:4px;display:block">
+                Used automatically. Override with the Ped Shortcut field below if this prescription needs a different instruction.
+              </span>
+            </div>`;
+  }
+
+  // ── Adult mode ──
   const brandDoseEn = altProd?.dose    || '';
   const brandDoseAr = altProd?.dose_ar || '';
   const genDoseEn   = altDrug?.dose    || '';
@@ -5720,7 +5773,7 @@ function _renderAltDosePreview(alt) {
   const source      = (brandDoseEn || brandDoseAr) ? 'brand' : (genDoseEn || genDoseAr) ? 'generic' : null;
 
   if (!inheritedEn && !inheritedAr) {
-    return `<div style="margin-bottom:var(--space-2);padding:var(--space-2) var(--space-3);
+    return `<div style="margin-bottom:var(--space-3);padding:var(--space-2) var(--space-3);
               border-radius:var(--radius-sm);background:rgba(239,68,68,.08);
               border:1px solid rgba(239,68,68,.2);font-size:var(--text-xs-size);color:var(--color-danger)">
               <i class="ph ph-warning"></i> No dose stored on this brand or generic — add one in the Products or Drugs editor.
@@ -5730,12 +5783,12 @@ function _renderAltDosePreview(alt) {
   const arHtml = inheritedAr
     ? `<span dir="rtl" style="font-family:var(--font-ar);display:block;margin-top:2px">${esc(inheritedAr)}</span>`
     : '';
-  const enSnippet = inheritedEn.length > 120 ? inheritedEn.substring(0, 120) + '…' : inheritedEn;
+  const enSnippet = inheritedEn.length > 120 ? inheritedEn.substring(0, 120) + '\u2026' : inheritedEn;
   const enHtml = inheritedEn
     ? `<span style="display:block;margin-top:2px">${esc(enSnippet)}</span>`
     : '';
 
-  return `<div style="margin-bottom:var(--space-2);padding:var(--space-2) var(--space-3);
+  return `<div style="margin-bottom:var(--space-3);padding:var(--space-2) var(--space-3);
             border-radius:var(--radius-sm);background:var(--color-surface-2);
             border:1px solid var(--color-border);font-size:var(--text-xs-size);color:var(--color-text-secondary)">
             <span style="font-weight:700;color:var(--color-text-primary)"><i class="ph ph-arrow-bend-down-right"></i> Default dose from ${esc(source)}:</span>
@@ -5744,7 +5797,6 @@ function _renderAltDosePreview(alt) {
             <span style="color:var(--color-text-tertiary);margin-top:4px;display:block">This is shown automatically when unchecked below and no override is set.</span>
           </div>`;
 }
-
 /* ── DRUG ROW CARD RENDERER ──────────────────────────────────── */
 function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
   const drug    = _DRUG_MAP[row.drug_id];
@@ -5787,10 +5839,16 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
     const altDoseEn = alt.dose ?? '';
     const altDoseAr = alt.dose_ar ?? '';
 
-    // Adult dose inherit hint (same logic as primary)
-    const refDoseEn = ap?.dose || altDrug?.dose || null;
-    const refDoseAr = ap?.dose_ar || altDrug?.dose_ar || null;
-    const refSource = (ap?.dose || ap?.dose_ar) ? 'product' : (altDrug?.dose || altDrug?.dose_ar) ? 'generic' : null;
+    // Dose inherit hint — paeds-aware: use ped_dose when paeds condition, adult dose otherwise
+    const refDoseEn = _rxIsPaeds
+      ? (ap?.ped_dose    || altDrug?.ped_dose    || null)
+      : (ap?.dose        || altDrug?.dose        || null);
+    const refDoseAr = _rxIsPaeds
+      ? (ap?.ped_dose_ar || altDrug?.ped_dose_ar || null)
+      : (ap?.dose_ar     || altDrug?.dose_ar     || null);
+    const refSource = _rxIsPaeds
+      ? ((ap?.ped_dose || ap?.ped_dose_ar) ? 'product ped' : (altDrug?.ped_dose || altDrug?.ped_dose_ar) ? 'generic ped' : null)
+      : ((ap?.dose || ap?.dose_ar) ? 'product' : (altDrug?.dose || altDrug?.dose_ar) ? 'generic' : null);
     const hasOwnDose = !!(altDoseEn || altDoseAr);
 
     // Ped shortcut: rx-level override → product fallback
@@ -5819,30 +5877,33 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
     const isFirst = altIdx === 0;
     const isLast  = altIdx === alts.length - 1;
 
-    // Adult dose inherit hint HTML (mirrors primary)
-    const doseInheritHintHtml = (!hasOwnDose && (refDoseEn || refDoseAr))
-      ? (() => {
-          const doseText = [
-            refDoseAr ? `<span dir="rtl" style="font-family:var(--font-ar)">${esc(refDoseAr)}</span>` : '',
-            refDoseEn ? `<span>${esc(refDoseEn)}</span>` : ''
-          ].filter(Boolean).join(' / ');
-          return `<div class="dose-inherit-hint">
-            <i class="ph ph-arrow-bend-down-right"></i>
-            <span class="dose-inherit-source-badge">${esc(refSource)}</span>
-            <span>Inheriting:</span>
-            ${doseText}
-            <button class="dose-inherit-fill-btn" title="Copy into this row so you can edit it"
-              onclick="rxFillAltDoseFromRef('${alt.id}','${esc(refDoseEn || '')}','${esc(refDoseAr || '')}')">
-              <i class="ph ph-arrow-down-left"></i> Fill
-            </button>
-          </div>`;
-        })()
-      : (!hasOwnDose && !refDoseEn && !refDoseAr)
-        ? `<div class="dose-inherit-hint dose-inherit-warn">
-            <i class="ph ph-warning"></i>
-            No dose found at any level — add one here, or set it on the product / generic.
-           </div>`
-        : '';
+    // Dose inherit hint — in paeds mode the preview block already shows the ped dose,
+    // so we only show the fill/inherit hint for adult conditions.
+    const doseInheritHintHtml = _rxIsPaeds
+      ? ''   // paeds: preview block handles it; no fill-from-adult noise
+      : (!hasOwnDose && (refDoseEn || refDoseAr))
+        ? (() => {
+            const doseText = [
+              refDoseAr ? `<span dir="rtl" style="font-family:var(--font-ar)">${esc(refDoseAr)}</span>` : '',
+              refDoseEn ? `<span>${esc(refDoseEn)}</span>` : ''
+            ].filter(Boolean).join(' / ');
+            return `<div class="dose-inherit-hint">
+              <i class="ph ph-arrow-bend-down-right"></i>
+              <span class="dose-inherit-source-badge">${esc(refSource)}</span>
+              <span>Inheriting:</span>
+              ${doseText}
+              <button class="dose-inherit-fill-btn" title="Copy into this row so you can edit it"
+                onclick="rxFillAltDoseFromRef('${alt.id}','${esc(refDoseEn || '')}','${esc(refDoseAr || '')}')">
+                <i class="ph ph-arrow-down-left"></i> Fill
+              </button>
+            </div>`;
+          })()
+        : (!hasOwnDose && !refDoseEn && !refDoseAr)
+          ? `<div class="dose-inherit-hint dose-inherit-warn">
+              <i class="ph ph-warning"></i>
+              No dose found at any level — add one here, or set it on the product / generic.
+             </div>`
+          : '';
 
     return `
       <div class="drug-alt-row" id="alt-${alt.id}">
@@ -5893,8 +5954,9 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
             </span>
           </label>
 
-          <!-- Adult dose fields (dimmed when grouped) -->
+          <!-- Dose fields — adult fields hidden in paeds conditions (ped shortcut handles it) -->
           <div style="${alt.dose_source_pd_id ? 'opacity:0.4;pointer-events:none' : ''}">
+            ${!_rxIsPaeds ? `
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)">
               <div>
                 <div class="drug-row-field-label">Dose (EN)</div>
@@ -5909,12 +5971,13 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
               </div>
             </div>
             ${doseInheritHintHtml}
-            ${(altDoseEn || altDoseAr) ? `<div style="margin-top:var(--space-2)">
+            ${(altDoseEn || altDoseAr) ? \`<div style="margin-top:var(--space-2)">
               <div class="drug-row-field-label" style="color:var(--color-caution)">⚠️ Override reason — required when dose differs from brand default</div>
               <input type="text" value="${esc(alt.dose_override_reason ?? '')}" placeholder="e.g. Reduced dose for renal impairment"
                 style="border-color:${alt.dose_override_reason ? 'var(--color-border-secondary)' : 'var(--color-caution)'}"
                 onblur="rxSaveDrugField('${alt.id}','dose_override_reason',this.value)"/>
-            </div>` : ''}
+            </div>\` : ''}
+            ` : ''}
 
             <!-- Paediatric shortcut — only shown for paeds conditions -->
             ${_rxIsPaeds ? `<div style="margin-top:var(--space-2)">
