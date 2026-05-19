@@ -2864,13 +2864,14 @@ function _checkGatePassword() {
                 <th>Generic (Drug)</th>
                 <th>Formula</th>
                 <th>Concentration</th>
+                <th>Ped Status</th>
                 <th>Published</th>
                 <th>Review</th>
                 <th style="width:60px"></th>
               </tr>
             </thead>
             <tbody id="prod-tbody">
-              <tr><td colspan="6"><div class="empty-state" style="padding:var(--space-8)"><i class="ph ph-spinner" style="animation:spin 1s linear infinite"></i><p>Loading…</p></div></td></tr>
+              <tr><td colspan="8"><div class="empty-state" style="padding:var(--space-8)"><i class="ph ph-spinner" style="animation:spin 1s linear infinite"></i><p>Loading…</p></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -2975,7 +2976,7 @@ function _checkGatePassword() {
               Paediatric Status
               <span style="font-weight:400;color:var(--color-text-tertiary)">— set this first before filling any ped fields</span>
             </label>
-            <select id="pf-ped_status" onchange="prodSave('ped_status', this.value)">
+            <select id="pf-ped_status" onchange="prodSave('ped_status',this.value);pedStatusChanged(this.value)">
               <option value="pending">⏳ Pending — not yet classified</option>
               <option value="approved">✅ Approved — standard ped dose exists</option>
               <option value="weight-based">⚖️ Weight-based — Wt/X system</option>
@@ -2996,7 +2997,7 @@ function _checkGatePassword() {
             <div class="form-row">
               <label class="form-label">Ped Dose (AR)</label>
               <textarea id="pf-ped_dose_ar" rows="2" dir="rtl" style="resize:vertical;font-family:var(--font-ar)"
-                placeholder="١٠-١٥ مغ/كغ/جرعة"
+                placeholder="١٠-١٥ مجم/كغ/جرعة"
                 onblur="prodSave('ped_dose_ar',this.value||null)"></textarea>
             </div>
           </div>
@@ -3018,7 +3019,7 @@ function _checkGatePassword() {
           </div>
 
           <!-- Wt/X Calculator Fields -->
-          <div class="form-row">
+          <div class="form-row" data-wtx="1">
             <label class="form-label">Wt/X Calculator</label>
             <div style="display:grid;grid-template-columns:auto auto auto auto auto auto auto;align-items:center;gap:var(--space-2);flex-wrap:wrap;margin-bottom:var(--space-2)">
               <span style="font-size:var(--text-xs-size);color:var(--color-text-secondary);font-weight:600">Multiplier</span>
@@ -5890,6 +5891,12 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
                 onblur="rxSaveDrugField('${row.id}','dose_ar',this.value)"/>
             </div>
           </div>
+          ${(row.dose || row.dose_ar) ? `<div style="margin-top:var(--space-1)">
+            <div class="drug-row-field-label" style="color:var(--color-caution)">⚠️ Override reason (D7) — required when dose differs from brand default</div>
+            <input type="text" value="${esc(row.dose_override_reason ?? '')}" placeholder="e.g. Reduced dose for renal impairment"
+              style="border-color:${row.dose_override_reason ? 'var(--color-border-secondary)' : 'var(--color-caution)'}"
+              onblur="rxSaveDrugField('${row.id}','dose_override_reason',this.value)"/>
+          </div>` : ''}
           ${(function(){
             // Phase 5.1 + 5.3: dose inherit hint & quick-fill button
             const refProduct = _PRODUCT_MAP[row.product_id];
@@ -9076,11 +9083,25 @@ function prodRenderList(list) {
   if (!tbody) return;
 
   if (!list || !list.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state" style="padding:var(--space-8)">
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state" style="padding:var(--space-8)">
       <i class="ph ph-package"></i><p>No products found.</p>
     </div></td></tr>`;
     return;
   }
+
+  const pedStatusPill = (status) => {
+    const cfg = {
+      'pending':          ['#888780', '#F1EFE8', '⏳'],
+      'approved':         ['#3B6D11', '#EAF3DE', '✅'],
+      'weight-based':     ['#185FA5', '#E6F1FB', '⚖️'],
+      'use-other-formula':['#0F6E56', '#E1F5EE', '↩️'],
+      'not-recommended':  ['#BA7517', '#FAEEDA', '⚠️'],
+      'contraindicated':  ['#A32D2D', '#FCEBEB', '🚫'],
+    };
+    const [color, bg, icon] = cfg[status] || cfg['pending'];
+    const label = status || 'pending';
+    return `<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;background:${bg};color:${color};white-space:nowrap">${icon} ${label}</span>`;
+  };
 
   tbody.innerHTML = list.map(p => {
     const pub = p.is_published === true || p.is_published === 'true';
@@ -9098,6 +9119,7 @@ function prodRenderList(list) {
       <td class="secondary">${genericName}</td>
       <td class="secondary">${esc(p.formula || '—')}</td>
       <td class="secondary">${esc(p.conc || '—')}</td>
+      <td>${pedStatusPill(p.ped_status)}</td>
       <td>
         <button class="toggle ${pub ? 'on' : ''}" title="${pub ? 'Published' : 'Draft'}"
           onclick="prodTogglePublish('${p.id}',this)"></button>
@@ -9233,6 +9255,7 @@ async function prodEdit(id) {
   document.getElementById('pf-ped_freq').value          = p.ped_freq          ?? '';
   document.getElementById('pf-ped_age_limit').value     = p.ped_age_limit     ?? '';
   document.getElementById('pf-ped_source').value        = p.ped_source        ?? 'Ref3awiat — Hegazy (2025)';
+  pedStatusChanged(p.ped_status ?? 'pending');
   _pedUpdatePreview();
 
   document.getElementById('app-main').scrollTop = 0;
@@ -9340,6 +9363,18 @@ function _pedUpdatePreview() {
   el.style.display = 'block';
 }
 
+/** Show/hide ped fields based on ped_status selection */
+function pedStatusChanged(value) {
+  const showDoseFields = ['approved', 'weight-based'].includes(value);
+  const showWtx        = value === 'weight-based';
+
+  const doseRow   = document.getElementById('pf-ped_dose')?.closest('.form-row-inline');
+  const wtxRow    = document.querySelector('[data-wtx]');
+
+  if (doseRow)  doseRow.style.display  = showDoseFields ? '' : 'none';
+  if (wtxRow)   wtxRow.style.display   = showWtx        ? '' : 'none';
+}
+
 async function prodSave(field, value) {
   if (!_prodEditId) return;
   if (_PROD_NOT_NULL.has(field) && (value === null || value === '')) {
@@ -9369,6 +9404,28 @@ async function prodSave(field, value) {
 /* ── Publish toggle in edit header ──────────────────────────── */
 function prodHeaderTogglePublish(btn) {
   const newVal = !btn.classList.contains('on');
+
+  if (newVal) {
+    const p = _PRODUCT_MAP[_prodEditId];
+    const warnings = [];
+    if (!p?.brand)    warnings.push('Brand name (EN) is required');
+    if (!p?.drug_id)  warnings.push('Generic drug link is required');
+    if (!p?.formula)  warnings.push('Formula is required');
+    if (!p?.conc)     warnings.push('Concentration is required');
+    const topicals = ['Cream','Ointment','Gel','Patch','Spray'];
+    if (!p?.dose && !topicals.includes(p?.formula))
+                      warnings.push('Adult dose (EN) is missing');
+    if (p?.dose && !p?.dose_ar)
+                      warnings.push('Adult dose (AR) is missing');
+    if (!p?.ped_status || p?.ped_status === 'pending')
+                      warnings.push('Paediatric status is not classified');
+
+    if (warnings.length) {
+      toast('Cannot publish: ' + warnings[0], 'error');
+      return;
+    }
+  }
+
   btn.classList.toggle('on', newVal);
   document.getElementById('prod-pub-label').textContent = newVal ? 'Published' : 'Draft';
   if (_PRODUCT_MAP[_prodEditId]) _PRODUCT_MAP[_prodEditId].is_published = newVal;
