@@ -12610,7 +12610,7 @@ function _resolveRpcItem(item) {
     // ── Phase 5: Ped fields — product tier preferred, drug tier fallback ──
     ped_dose:          (product.ped_dose          || '').trim() || (generic.ped_dose     || '').trim() || null,
     ped_dose_ar:       (product.ped_dose_ar        || '').trim() || (generic.ped_dose_ar  || '').trim() || null,
-    ped_shortcut:      (product.ped_shortcut       || '').trim() || null,
+    ped_shortcut:      (pd.ped_shortcut || '').trim() || (product.ped_shortcut || '').trim() || null,
     ped_wt_divisor:    product.ped_wt_divisor    ?? null,
     ped_wt_multiplier: product.ped_wt_multiplier ?? 1,
     ped_wt_unit:       product.ped_wt_unit       || 'ml',
@@ -13347,7 +13347,7 @@ function _resolveDrugRow(d, prodMap, drugMap) {
     brand = p.brand || ''; formula = p.formula || ''; conc = p.conc || ''; brandAr = p.brand_ar || '';
     pedDose        = p.ped_dose          || null;
     pedDoseAr      = p.ped_dose_ar       || null;
-    pedShortcut    = p.ped_shortcut      || null;
+    pedShortcut    = d.ped_shortcut || p.ped_shortcut || null;
     pedWtDivisor   = p.ped_wt_divisor    ?? null;
     pedWtMultiplier= p.ped_wt_multiplier ?? 1;
     pedWtUnit      = p.ped_wt_unit       || 'ml';
