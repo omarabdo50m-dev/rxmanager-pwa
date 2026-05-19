@@ -10804,7 +10804,6 @@ const SB = {
       doseAdjustments:      row.dose_adjustments || '',
       sideEffects:          row.side_effects || '',
       contra:               row.contra || '',
-      additionalInfo:       row.additional_info || '',
       source:               row.source || '',
       combinations:         [], // combinations column removed from Supabase; kept as empty array for local editor compat
       brands:               [],   // populated later from products
@@ -10830,7 +10829,7 @@ const SB = {
   // Only published records are fetched — drafts are invisible in the app.
   async fetchLibrary() {
     const [rawDrugs, rawProducts] = await Promise.all([
-      this.fetchAll('drugs',    'id,name,group_name,subgroup,therapeutic_class,pharmacological_class,moa,common_uses,dose,dose_ar,max_dose,ped_dose,ped_age_limit,ped_dose_ar,pregnancy,lactation,lactation_note,crosses_bbb,crosses_placenta,metabolism,elimination,interactions,dose_adjustments,side_effects,contra,additional_info,source', '&is_published=eq.true'),
+      this.fetchAll('drugs',    'id,name,group_name,subgroup,therapeutic_class,pharmacological_class,moa,common_uses,dose,dose_ar,max_dose,ped_dose,ped_age_limit,ped_dose_ar,pregnancy,lactation,lactation_note,crosses_bbb,crosses_placenta,metabolism,elimination,interactions,dose_adjustments,side_effects,contra,source', '&is_published=eq.true'),
       this.fetchAll('products', 'id,drug_id,brand,brand_ar,formula,conc,dose,dose_ar,ped_dose,ped_dose_ar,ped_shortcut,ped_wt_divisor,ped_wt_multiplier,ped_wt_unit,ped_freq,ped_loading_dose,ped_age_limit,ped_source', '&is_published=eq.true'),
     ]);
     const drugs    = rawDrugs.map(r => this._mapDrug(r));
@@ -11022,9 +11021,6 @@ function _normaliseLibrary(drugs, products, source) {
 
     // brands array must exist for getBrands() calls
     if (!n.brands) n.brands = [];
-
-    // combinations — empty array for local drug editor compat (column removed from Supabase)
-    if (!n.combinations) n.combinations = [];
 
     // source — citation string from Gemini import
     if (!n.source) n.source = '';
@@ -15507,7 +15503,7 @@ async function buildSearchIndex() {
       }
     }
     const localNote = localStorage.getItem('rxmgr_drug_notes_' + d.id) || '';
-    const noteText  = d.additionalInfo || localNote;
+    const noteText  = localNote;
     // Strip bracket prefix from mech for cleaner search
     const mechClean = (d.mech || '').replace(/^\[[^\]]+\]\s*[-\u2013\u2014]?\s*/, '').toLowerCase();
     SEARCH_INDEX.set(d.id, {
@@ -16603,7 +16599,7 @@ async function dvSaveMyNotes(drugId) {
   const val = ta.value.trim();
   const drug = await DB.get('library', drugId);
   if (!drug) return;
-  await DB.put('library', {...drug, additionalInfo: val});
+  await DB.put('library', {...drug, notes: val});
   // Also clear any legacy localStorage copy
   localStorage.removeItem('rxmgr_drug_notes_' + drugId);
   // Update view
