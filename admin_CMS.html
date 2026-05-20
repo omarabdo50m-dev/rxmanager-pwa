@@ -6903,8 +6903,40 @@ async function rxLoadAllRows(rxId) {
 
 async function rxSaveDrugField(rowId, field, value) {
   const row = _rxDrugRows.find(r => r.id === rowId);
-  if (row) row[field] = value === '' ? null : value;
-  await autoSave('prescription_drugs', rowId, field, value === '' ? null : value);
+  const coerced = value === '' ? null : value;
+  if (row) row[field] = coerced;
+
+  // When saving a dose override, clear dose_source_pd_id in the same PATCH so the
+  // row stops inheriting the primary's dose, and the three-tier cascade in the app
+  // will correctly pick up pd.dose → product.dose → generic.dose.
+  if ((field === 'dose' || field === 'dose_ar') && coerced !== null) {
+    try {
+      await SB.patch('prescription_drugs', rowId, { [field]: coerced, dose_source_pd_id: null });
+      if (row) row.dose_source_pd_id = null;
+      flashSaved();
+    } catch(e) {
+      console.error('[rxSaveDrugField]', field, e.message);
+      toast('Save failed: ' + e.message, 'error', 6000);
+      return;
+    }
+  } else {
+    await autoSave('prescription_drugs', rowId, field, coerced);
+  }
+
+  // Bust the app's IndexedDB rx_cache by bumping the conditions version.
+  // The app checks this version on every launch and discards stale IDB entries
+  // when it changes — so edited doses appear immediately on next app load.
+  if (['dose','dose_ar','dose_override_reason','ped_shortcut'].includes(field)) {
+    try {
+      await fetch(`${SB.URL}/rest/v1/rpc/bump_conditions_version`, {
+        method: 'POST',
+        headers: SB._writeHeaders({ 'Content-Type': 'application/json' }),
+        body: '{}',
+      });
+    } catch(e) {
+      console.warn('[rxSaveDrugField] bump_conditions_version failed (non-fatal):', e.message);
+    }
+  }
 }
 
 async function rxDeleteDrugRow(rowId) {

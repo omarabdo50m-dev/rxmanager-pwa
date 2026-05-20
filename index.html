@@ -12566,6 +12566,8 @@ function _resolveRpcItem(item) {
   // ── Phase 1 (masterplan): Three-tier dose cascade ────────────────────────
   // pd.dose → product.dose → generic.dose  (first non-empty wins)
   // The RPC already returns product.dose / generic.dose at every level.
+  // NOTE: pd.dose_source_pd_id being set does NOT suppress an explicit pd.dose override —
+  // if the CMS editor set dose/dose_ar on this row, those values always take priority.
   const pdDoseEn   = (pd.dose          || '').trim();
   const pdDoseAr   = (pd.dose_ar       || '').trim();
   const prodDoseEn = (product.dose     || '').trim();
@@ -14346,7 +14348,9 @@ function _cvRenderPrescription(rx, agePrefix) {
           const altDoseAr = _isPaeds
             ? ((alt.ped_dose_ar || '').trim() || (alt.effectiveDoseAr ?? (alt.dose_ar || '')).trim())
             : (alt.effectiveDoseAr ?? (alt.dose_ar || '')).trim();
-          const inheritFromPrimary = !!alt.dose_source_pd_id;
+          // Inherit from primary only when dose_source_pd_id is set AND this alt has no
+          // explicit dose override of its own. An explicit pd.dose always wins.
+          const inheritFromPrimary = !!alt.dose_source_pd_id && !altDoseEn && !altDoseAr;
           const effectiveDoseEn = altDoseEn || (inheritFromPrimary ? primaryDoseEn : '');
           const effectiveDoseAr = altDoseAr || (inheritFromPrimary ? primaryDoseAr : '');
           return {
