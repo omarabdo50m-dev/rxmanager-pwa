@@ -2779,15 +2779,9 @@ function _checkGatePassword() {
               <input type="text" id="rxf-duration" onblur="rxSave('duration',this.value)" placeholder="e.g. 7-10 days"/>
             </div>
           </div>
-          <div class="form-row-inline">
-            <div class="form-row">
-              <label class="form-label">Iteration Note (EN)</label>
-              <textarea id="rxf-iteration_note" rows="2" onblur="rxSave('iteration_note',this.value)"></textarea>
-            </div>
-            <div class="form-row">
-              <label class="form-label">Iteration Note (AR)</label>
-              <textarea id="rxf-iteration_note_ar" dir="rtl" rows="2" onblur="rxSave('iteration_note_ar',this.value)"></textarea>
-            </div>
+          <div class="form-row">
+            <label class="form-label">Iteration Note</label>
+            <textarea id="rxf-iteration_note_ar" dir="auto" rows="2" onblur="rxSave('iteration_note_ar',this.value)"></textarea>
           </div>
           <div class="form-row-inline">
             <div class="form-row">
@@ -6360,7 +6354,6 @@ function rxRenderList() {
     ? _PRESCRIPTIONS.filter(p => p.condition_id === _rxCondFilter)
     : [..._PRESCRIPTIONS];
 
-  // Text search: match condition name, iteration_label, or iteration_context
   if (q) {
     filtered = filtered.filter(rx => {
       const condName = (_COND_MAP[rx.condition_id]?.name || '').toLowerCase();
@@ -6370,7 +6363,6 @@ function rxRenderList() {
     });
   }
 
-  // Summary strip
   const summary = document.getElementById('rx-list-summary');
   if (summary) {
     if (q || _rxCondFilter) {
@@ -6400,12 +6392,10 @@ function rxRenderList() {
     return na.localeCompare(nb);
   });
 
-  // Keep track of which groups were open before re-render
   const prevOpen = new Set();
   container.querySelectorAll('.rx-group-body').forEach(el => {
     if (el.style.display !== 'none') prevOpen.add(el.id);
   });
-  // If nothing was tracked yet (first render), collapse all unless searching
   const firstRender = prevOpen.size === 0;
 
   let html = '';
@@ -6414,8 +6404,6 @@ function rxRenderList() {
     const condName = cond ? esc(cond.name) : '<span style="color:var(--color-text-tertiary)">No condition</span>';
     const rxList = groups[cid];
     const groupId = 'rxg-' + cid;
-
-    // Open group if: search is active, or it was open before, or it's the only group
     const isOpen = q || (!firstRender && prevOpen.has(groupId)) || condKeys.length === 1;
 
     const liveCt  = rxList.filter(r => r.is_published === true || r.is_published === 'true' || r.is_published === 1).length;
@@ -6437,7 +6425,6 @@ function rxRenderList() {
           const pub = rx.is_published === true || rx.is_published === 'true' || rx.is_published === 1 || rx.is_published === '1';
           const label = rx.iteration_label?.trim() || '';
           const ctx   = rx.iteration_context?.trim() || '';
-          // Display name: prefer label, then context, then "Untitled"
           const displayName = label || ctx || 'Untitled';
           const warningParts = [];
           if (!rx.source?.trim())      warningParts.push('no source');
@@ -6476,12 +6463,8 @@ function toggleRxGroup(id) {
   if (!el) return;
   const isOpen = el.style.display !== 'none';
   el.style.display = isOpen ? 'none' : '';
-  // Rotate caret
-  const header = el.previousElementSibling;
-  if (header) {
-    const caret = header.querySelector('.ph-caret-right');
-    if (caret) caret.style.transform = isOpen ? '' : 'rotate(90deg)';
-  }
+  const caret = el.previousElementSibling?.querySelector('.ph-caret-right');
+  if (caret) caret.style.transform = isOpen ? '' : 'rotate(90deg)';
 }
 
 function rxExpandAll() {
@@ -6856,7 +6839,6 @@ async function prescriptionEdit(id) {
 
   document.getElementById('rxf-iteration_label').value    = rx.iteration_label    ?? '';
   document.getElementById('rxf-iteration_context').value  = rx.iteration_context  ?? '';
-  document.getElementById('rxf-iteration_note').value     = rx.iteration_note     ?? '';
   document.getElementById('rxf-iteration_note_ar').value  = rx.iteration_note_ar  ?? '';
   document.getElementById('rxf-duration').value           = rx.duration           ?? '';
   document.getElementById('rxf-source').value             = rx.source             ?? '';
@@ -7621,12 +7603,12 @@ function pickerFilter() {
   // Phase 2: _pickerDrugId lock removed — alternatives can now be cross-generic.
   // All products are visible; the picker context label shows which primary is being targeted.
 
-  // Apply text search
+  // Apply text search — brand name and generic name only, word-start matching
   if (q) {
+    const wordStart = new RegExp('(^|\s|-)' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
     results = results.filter(r =>
-      r.brand.toLowerCase().includes(q) ||
-      r.genericName.toLowerCase().includes(q) ||
-      r.conc.toLowerCase().includes(q)
+      wordStart.test(r.brand) ||
+      wordStart.test(r.genericName)
     );
   }
 
