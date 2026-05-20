@@ -2767,9 +2767,15 @@ function _checkGatePassword() {
               <input type="text" id="rxf-duration" onblur="rxSave('duration',this.value)" placeholder="e.g. 7-10 days"/>
             </div>
           </div>
-          <div class="form-row">
-            <label class="form-label">Iteration Note</label>
-            <textarea id="rxf-iteration_note_ar" dir="auto" rows="2" onblur="rxSave('iteration_note_ar',this.value)"></textarea>
+          <div class="form-row-inline">
+            <div class="form-row">
+              <label class="form-label">Iteration Note (EN)</label>
+              <textarea id="rxf-iteration_note" rows="2" onblur="rxSave('iteration_note',this.value)"></textarea>
+            </div>
+            <div class="form-row">
+              <label class="form-label">Iteration Note (AR)</label>
+              <textarea id="rxf-iteration_note_ar" dir="rtl" rows="2" onblur="rxSave('iteration_note_ar',this.value)"></textarea>
+            </div>
           </div>
           <div class="form-row-inline">
             <div class="form-row">
@@ -6758,6 +6764,7 @@ async function prescriptionEdit(id) {
 
   document.getElementById('rxf-iteration_label').value    = rx.iteration_label    ?? '';
   document.getElementById('rxf-iteration_context').value  = rx.iteration_context  ?? '';
+  document.getElementById('rxf-iteration_note').value     = rx.iteration_note     ?? '';
   document.getElementById('rxf-iteration_note_ar').value  = rx.iteration_note_ar  ?? '';
   document.getElementById('rxf-duration').value           = rx.duration           ?? '';
   document.getElementById('rxf-source').value             = rx.source             ?? '';
@@ -7522,12 +7529,13 @@ function pickerFilter() {
   // Phase 2: _pickerDrugId lock removed — alternatives can now be cross-generic.
   // All products are visible; the picker context label shows which primary is being targeted.
 
-  // Apply text search
+  // Apply text search — brand name and generic name only, word-start matching
   if (q) {
+    // Match q against the start of any word in the field (e.g. "azo" matches "Azomycin" but NOT "Ciprodiazole")
+    const wordStart = new RegExp('(^|\\s|-)' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
     results = results.filter(r =>
-      r.brand.toLowerCase().includes(q) ||
-      r.genericName.toLowerCase().includes(q) ||
-      r.conc.toLowerCase().includes(q)
+      wordStart.test(r.brand) ||
+      wordStart.test(r.genericName)
     );
   }
 
