@@ -6001,18 +6001,25 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
               </div>
             </div>
             <div style="margin-top:var(--space-2)">
-              <div class="drug-row-field-label" style="color:var(--color-info)">👶 Ped Shortcut
-                <span style="font-weight:400;color:var(--color-text-tertiary)"> — override for this prescription (leave blank to use product default)</span>
+              <div class="drug-row-field-label" style="color:var(--color-info)">Dose Shortcut
+                <span style="font-weight:400;color:var(--color-text-tertiary);text-transform:none"> — calculation helper shown in app</span>
               </div>
-              <input type="text" dir="rtl" value="${esc(altPedShortcut)}"
-                placeholder="${esc(ap?.ped_shortcut ? 'Product default: ' + ap.ped_shortcut : 'e.g. الوزن ÷ 6 مل — كل 8 ساعات')}"
+              <input type="text" dir="rtl" value="${esc(alt.ped_shortcut ?? '')}"
+                placeholder="${esc(ap?.ped_shortcut ? 'brand default: ' + ap.ped_shortcut : 'e.g. الوزن ÷ 6 مل — كل 8 ساعات')}"
                 style="font-family:var(--font-ar);border-color:${alt.ped_shortcut ? 'var(--color-info)' : 'var(--color-border)'}"
                 onblur="rxSaveDrugField('${alt.id}','ped_shortcut',this.value)"/>
-              ${ap?.ped_shortcut && !alt.ped_shortcut
-                ? `<div style="margin-top:3px;font-size:var(--text-xs-size);color:var(--color-text-tertiary)">
-                    Using product default: <span dir="rtl" style="font-family:var(--font-ar)">${esc(ap.ped_shortcut)}</span>
-                   </div>`
-                : ''}
+              ${ap?.ped_shortcut && !alt.ped_shortcut ? `
+              <div class="dose-inherit-hint" style="margin-top:3px">
+                <i class="ph ph-arrow-bend-down-right"></i>
+                <span class="dose-inherit-source-badge">brand</span>
+                <span>Inheriting:</span>
+                <span dir="rtl" style="font-family:var(--font-ar)">${esc(ap.ped_shortcut)}</span>
+              </div>` : ''}
+              ${!ap?.ped_shortcut && !alt.ped_shortcut ? `
+              <div class="dose-inherit-hint dose-inherit-warn" style="margin-top:3px">
+                <i class="ph ph-warning"></i>
+                No shortcut on this product — add one here or on the product record.
+              </div>` : ''}
             </div>` : ''}
 
             <!-- Drug note -->
@@ -6140,13 +6147,40 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
               </div>` : ''}`;
             }
           })()}
-          <div>
-            <div class="drug-row-field-label">Ped Shortcut</div>
-            <input type="text" dir="rtl" value="${esc(row.ped_shortcut ?? product?.ped_shortcut ?? '')}"
-              placeholder="e.g. الجرعة = الوزن ÷ 6 مل — كل 8 ساعات"
-              style="font-family:var(--font-ar)"
-              onblur="rxSaveDrugField('${row.id}','ped_shortcut',this.value)"/>
-          </div>
+          ${_rxIsPaeds ? (function() {
+            // Ped Shortcut — same inherit-hint pattern as ped dose fields.
+            // Value: rx-row override (pd.ped_shortcut) only — never silently merge
+            // the product default into the saved value, so clearing the field
+            // always reverts to the product default in the app.
+            const prodShortcut  = product?.ped_shortcut || '';
+            const hasOwnShortcut = !!(row.ped_shortcut);
+            return `
+            <div style="margin-top:var(--space-2)">
+              <div class="drug-row-field-label" style="color:var(--color-info)">Dose Shortcut
+                <span style="font-weight:400;color:var(--color-text-tertiary);text-transform:none"> — calculation helper shown in app</span>
+              </div>
+              <input type="text" dir="rtl" value="${esc(row.ped_shortcut ?? '')}"
+                placeholder="${esc(prodShortcut ? 'brand default: ' + prodShortcut : 'e.g. الوزن ÷ 4 مل — كل 12 ساعة')}"
+                style="font-family:var(--font-ar);border-color:${hasOwnShortcut ? 'var(--color-info)' : 'var(--color-border)'}"
+                onblur="rxSaveDrugField('${row.id}','ped_shortcut',this.value)"/>
+              ${prodShortcut && !hasOwnShortcut ? `
+              <div class="dose-inherit-hint" style="margin-top:3px">
+                <i class="ph ph-arrow-bend-down-right"></i>
+                <span class="dose-inherit-source-badge">brand</span>
+                <span>Inheriting:</span>
+                <span dir="rtl" style="font-family:var(--font-ar)">${esc(prodShortcut)}</span>
+                <button class="dose-inherit-fill-btn" title="Copy into this row so you can edit it"
+                  onclick="rxFillPedShortcutFromRef('${row.id}','${esc(prodShortcut)}')">
+                  <i class="ph ph-arrow-down-left"></i> Fill
+                </button>
+              </div>` : ''}
+              ${!prodShortcut && !hasOwnShortcut ? `
+              <div class="dose-inherit-hint dose-inherit-warn" style="margin-top:3px">
+                <i class="ph ph-warning"></i>
+                No shortcut on this product — add one here or set it on the product record.
+              </div>` : ''}
+            </div>`;
+          })() : ''}
             <div class="drug-row-field-label">Drug Note</div>
             <input type="text" value="${esc(row.drug_note ?? '')}" placeholder="Optional note"
               onblur="rxSaveDrugField('${row.id}','drug_note',this.value)"/>
@@ -7090,6 +7124,16 @@ function rxToggleAltDose(altId) {
 }
 
 /* ── Phase 5.3: Quick-fill dose from product/generic reference ── */
+async function rxFillPedShortcutFromRef(rowId, shortcut) {
+  const card = document.getElementById(`drow-${rowId}`);
+  if (!card) return;
+  // Find the shortcut input — it's the dir="rtl" input inside the shortcut block
+  const inp = card.querySelector('.drug-row-body input[dir="rtl"][onblur*="ped_shortcut"]');
+  if (inp) { inp.value = shortcut; await rxSaveDrugField(rowId, 'ped_shortcut', shortcut); }
+  rxRenderUnified();
+  toast('Shortcut filled — edit or clear to revert to brand default.', 'success');
+}
+
 async function rxFillPedDoseFromRef(rowId, doseEn, doseAr) {
   const card = document.getElementById(`drow-${rowId}`);
   if (!card) return;
