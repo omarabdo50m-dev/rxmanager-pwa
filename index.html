@@ -14375,8 +14375,15 @@ function _cvRenderPrescription(rx, agePrefix) {
             ? ((alt.ped_dose_ar || '').trim() || (alt.effectiveDoseAr ?? (alt.dose_ar || '')).trim())
             : (alt.effectiveDoseAr ?? (alt.dose_ar || '')).trim();
           // Inherit from primary only when dose_source_pd_id is set AND this alt has no
-          // explicit dose override of its own. An explicit pd.dose always wins.
-          const inheritFromPrimary = !!alt.dose_source_pd_id && !altDoseEn && !altDoseAr;
+          // explicit pd-level dose override of its own. An explicit pd.dose always wins.
+          // NOTE: we check alt.dose / alt.dose_ar (the raw rx-row fields) here, NOT
+          // altDoseEn / altDoseAr — because altDoseEn may be populated from the product
+          // or generic fallback tier even when no custom dose was entered. Using the
+          // full cascade would cause the brand default to block inheritance, showing the
+          // alt's brand dose instead of the primary's dose when the checkbox is ticked.
+          const _pdDoseEn = (alt.dose    || '').trim();
+          const _pdDoseAr = (alt.dose_ar || '').trim();
+          const inheritFromPrimary = !!alt.dose_source_pd_id && !_pdDoseEn && !_pdDoseAr;
           const effectiveDoseEn = altDoseEn || (inheritFromPrimary ? primaryDoseEn : '');
           const effectiveDoseAr = altDoseAr || (inheritFromPrimary ? primaryDoseAr : '');
           return {
