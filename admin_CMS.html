@@ -6038,68 +6038,107 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
           </div>
           <div class="drug-row-name">${brandLabel}</div>
           ${genericLabel ? `<div class="drug-row-generic">Generic: ${genericLabel}</div>` : ''}
-          <div class="drug-row-fields">
-            <div>
-              <div class="drug-row-field-label">Dose (EN) <span style="font-weight:400;color:var(--color-text-tertiary);text-transform:none">— adult view</span></div>
-              <input type="text" value="${esc(row.dose ?? '')}" placeholder="e.g. 500mg twice daily"
-                onblur="rxSaveDrugField('${row.id}','dose',this.value)"/>
-            </div>
-            <div>
-              <div class="drug-row-field-label">Dose (AR) <span style="font-weight:400;color:var(--color-text-tertiary);text-transform:none">— adult view</span></div>
-              <input type="text" dir="rtl" value="${esc(row.dose_ar ?? '')}" placeholder="الجرعة"
-                style="font-family:var(--font-ar)"
-                onblur="rxSaveDrugField('${row.id}','dose_ar',this.value)"/>
-            </div>
-          </div>
-          <div class="drug-row-fields" style="margin-top:var(--space-2)">
-            <div>
-              <div class="drug-row-field-label" style="color:var(--color-info)">Ped Dose (EN) <span style="font-weight:400;color:var(--color-text-tertiary);text-transform:none">— paeds view override</span></div>
-              <input type="text" value="${esc(row.ped_dose ?? '')}" placeholder="e.g. 25–50 mg/kg/day; max 90mg/kg/day"
-                onblur="rxSaveDrugField('${row.id}','ped_dose',this.value)"/>
-            </div>
-            <div>
-              <div class="drug-row-field-label" style="color:var(--color-info)">Ped Dose (AR) <span style="font-weight:400;color:var(--color-text-tertiary);text-transform:none">— paeds view override</span></div>
-              <input type="text" dir="rtl" value="${esc(row.ped_dose_ar ?? '')}" placeholder="جرعة الأطفال"
-                style="font-family:var(--font-ar)"
-                onblur="rxSaveDrugField('${row.id}','ped_dose_ar',this.value)"/>
-            </div>
-          </div>
-          ${(row.dose || row.dose_ar) ? `<div style="margin-top:var(--space-1)">
-            <div class="drug-row-field-label" style="color:var(--color-caution)">⚠️ Override reason (D7) — required when dose differs from brand default</div>
-            <input type="text" value="${esc(row.dose_override_reason ?? '')}" placeholder="e.g. Reduced dose for renal impairment"
-              style="border-color:${row.dose_override_reason ? 'var(--color-border-secondary)' : 'var(--color-caution)'}"
-              onblur="rxSaveDrugField('${row.id}','dose_override_reason',this.value)"/>
-          </div>` : ''}
-          ${(function(){
-            // Phase 5.1 + 5.3: dose inherit hint & quick-fill button
+          ${(function() {
             const refProduct = _PRODUCT_MAP[row.product_id];
             const refDrug    = _DRUG_MAP[row.drug_id];
-            const refDoseEn  = refProduct?.dose || refDrug?.dose || null;
-            const refDoseAr  = refProduct?.dose_ar || refDrug?.dose_ar || null;
-            const refSource  = refProduct?.dose || refProduct?.dose_ar ? 'product' : refDrug?.dose || refDrug?.dose_ar ? 'generic' : null;
-            const hasOwnDose = !!(row.dose || row.dose_ar);
-            if (!hasOwnDose && (refDoseEn || refDoseAr)) {
-              const doseText = [
-                refDoseAr ? `<span dir="rtl" style="font-family:var(--font-ar)">${esc(refDoseAr)}</span>` : '',
-                refDoseEn ? `<span>${esc(refDoseEn)}</span>` : ''
-              ].filter(Boolean).join(' / ');
-              return `<div class="dose-inherit-hint">
+
+            if (_rxIsPaeds) {
+              // ── Paeds condition: show ONLY ped dose fields ──────────────────────────
+              // Adult dose fields are irrelevant here — the app never shows them in
+              // paeds mode. Pre-fill placeholders from the product/generic ped_dose so
+              // the editor knows what the current default is.
+              const prodPedEn = refProduct?.ped_dose    || refDrug?.ped_dose    || '';
+              const prodPedAr = refProduct?.ped_dose_ar || refDrug?.ped_dose_ar || '';
+              const pedSource = (refProduct?.ped_dose || refProduct?.ped_dose_ar) ? 'brand' : 'generic';
+              const hasOwnPed = !!(row.ped_dose || row.ped_dose_ar);
+
+              return `
+              <div class="drug-row-fields">
+                <div>
+                  <div class="drug-row-field-label" style="color:var(--color-info)">Dose (EN)</div>
+                  <input type="text" value="${esc(row.ped_dose ?? '')}"
+                    placeholder="${esc(prodPedEn ? pedSource + ' default: ' + prodPedEn : 'e.g. 25–50 mg/kg/day')}"
+                    onblur="rxSaveDrugField('${row.id}','ped_dose',this.value)"/>
+                </div>
+                <div>
+                  <div class="drug-row-field-label" style="color:var(--color-info)">Dose (AR)</div>
+                  <input type="text" dir="rtl" value="${esc(row.ped_dose_ar ?? '')}"
+                    placeholder="${esc(prodPedAr ? pedSource + ' default: ' + prodPedAr : 'جرعة الأطفال')}"
+                    style="font-family:var(--font-ar)"
+                    onblur="rxSaveDrugField('${row.id}','ped_dose_ar',this.value)"/>
+                </div>
+              </div>
+              ${!hasOwnPed && (prodPedEn || prodPedAr) ? `
+              <div class="dose-inherit-hint">
                 <i class="ph ph-arrow-bend-down-right"></i>
-                <span class="dose-inherit-source-badge">${esc(refSource)}</span>
-                <span>Inheriting:</span>
-                ${doseText}
+                <span class="dose-inherit-source-badge">${esc(pedSource)}</span>
+                <span>Inheriting ped dose:</span>
+                ${prodPedAr ? `<span dir="rtl" style="font-family:var(--font-ar)">${esc(prodPedAr)}</span>` : ''}
+                ${prodPedEn ? `<span>${esc(prodPedEn)}</span>` : ''}
                 <button class="dose-inherit-fill-btn" title="Copy into this row so you can edit it"
-                  onclick="rxFillDoseFromRef('${row.id}','${esc(refDoseEn || '')}','${esc(refDoseAr || '')}')">
+                  onclick="rxFillPedDoseFromRef('${row.id}','${esc(prodPedEn || '')}','${esc(prodPedAr || '')}')">
                   <i class="ph ph-arrow-down-left"></i> Fill
                 </button>
-              </div>`;
-            } else if (!hasOwnDose && !refDoseEn && !refDoseAr) {
-              return `<div class="dose-inherit-hint dose-inherit-warn">
+              </div>` : ''}
+              ${!hasOwnPed && !prodPedEn && !prodPedAr ? `
+              <div class="dose-inherit-hint dose-inherit-warn">
                 <i class="ph ph-warning"></i>
-                No dose found at any level — add one here, or set it on the product / generic.
-              </div>`;
+                No paediatric dose on this product — add one here or set it on the product record.
+              </div>` : ''}`;
+
+            } else {
+              // ── Adult condition: show adult dose fields + inherit hint ───────────────
+              const refDoseEn = refProduct?.dose || refDrug?.dose || null;
+              const refDoseAr = refProduct?.dose_ar || refDrug?.dose_ar || null;
+              const refSource = refProduct?.dose || refProduct?.dose_ar ? 'product' : refDrug?.dose || refDrug?.dose_ar ? 'generic' : null;
+              const hasOwnDose = !!(row.dose || row.dose_ar);
+
+              const inheritHtml = (!hasOwnDose && (refDoseEn || refDoseAr))
+                ? (() => {
+                    const doseText = [
+                      refDoseAr ? `<span dir="rtl" style="font-family:var(--font-ar)">${esc(refDoseAr)}</span>` : '',
+                      refDoseEn ? `<span>${esc(refDoseEn)}</span>` : ''
+                    ].filter(Boolean).join(' / ');
+                    return `<div class="dose-inherit-hint">
+                      <i class="ph ph-arrow-bend-down-right"></i>
+                      <span class="dose-inherit-source-badge">${esc(refSource)}</span>
+                      <span>Inheriting:</span>
+                      ${doseText}
+                      <button class="dose-inherit-fill-btn" title="Copy into this row so you can edit it"
+                        onclick="rxFillDoseFromRef('${row.id}','${esc(refDoseEn || '')}','${esc(refDoseAr || '')}')">
+                        <i class="ph ph-arrow-down-left"></i> Fill
+                      </button>
+                    </div>`;
+                  })()
+                : (!hasOwnDose && !refDoseEn && !refDoseAr)
+                  ? `<div class="dose-inherit-hint dose-inherit-warn">
+                      <i class="ph ph-warning"></i>
+                      No dose found at any level — add one here, or set it on the product / generic.
+                    </div>`
+                  : '';
+
+              return `
+              <div class="drug-row-fields">
+                <div>
+                  <div class="drug-row-field-label">Dose (EN)</div>
+                  <input type="text" value="${esc(row.dose ?? '')}" placeholder="e.g. 500mg twice daily"
+                    onblur="rxSaveDrugField('${row.id}','dose',this.value)"/>
+                </div>
+                <div>
+                  <div class="drug-row-field-label">Dose (AR)</div>
+                  <input type="text" dir="rtl" value="${esc(row.dose_ar ?? '')}" placeholder="الجرعة"
+                    style="font-family:var(--font-ar)"
+                    onblur="rxSaveDrugField('${row.id}','dose_ar',this.value)"/>
+                </div>
+              </div>
+              ${inheritHtml}
+              ${(row.dose || row.dose_ar) ? `<div style="margin-top:var(--space-1)">
+                <div class="drug-row-field-label" style="color:var(--color-caution)">⚠️ Override reason (D7) — required when dose differs from brand default</div>
+                <input type="text" value="${esc(row.dose_override_reason ?? '')}" placeholder="e.g. Reduced dose for renal impairment"
+                  style="border-color:${row.dose_override_reason ? 'var(--color-border-secondary)' : 'var(--color-caution)'}"
+                  onblur="rxSaveDrugField('${row.id}','dose_override_reason',this.value)"/>
+              </div>` : ''}`;
             }
-            return '';
           })()}
           <div>
             <div class="drug-row-field-label">Ped Shortcut</div>
@@ -7051,6 +7090,21 @@ function rxToggleAltDose(altId) {
 }
 
 /* ── Phase 5.3: Quick-fill dose from product/generic reference ── */
+async function rxFillPedDoseFromRef(rowId, doseEn, doseAr) {
+  const card = document.getElementById(`drow-${rowId}`);
+  if (!card) return;
+  const inputs = card.querySelectorAll('.drug-row-fields input[type="text"]');
+  const enInput = inputs[0];
+  const arInput = inputs[1];
+  let filled = false;
+  if (enInput && doseEn) { enInput.value = doseEn; await rxSaveDrugField(rowId, 'ped_dose', doseEn); filled = true; }
+  if (arInput && doseAr) { arInput.value = doseAr; await rxSaveDrugField(rowId, 'ped_dose_ar', doseAr); filled = true; }
+  if (filled) {
+    rxRenderUnified();
+    toast('Ped dose filled — edit or clear to revert to inherited.', 'success');
+  }
+}
+
 async function rxFillDoseFromRef(rowId, doseEn, doseAr) {
   const card = document.getElementById(`drow-${rowId}`);
   if (!card) return;
