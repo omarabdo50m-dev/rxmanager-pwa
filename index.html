@@ -12616,9 +12616,11 @@ function _resolveRpcItem(item) {
     _productDoseAr:   prodDoseAr,
     _genericDoseEn:   genDoseEn,
     _genericDoseAr:   genDoseAr,
-    // ── Phase 5: Ped fields — product tier preferred, drug tier fallback ──
-    ped_dose:          (product.ped_dose          || '').trim() || (generic.ped_dose     || '').trim() || null,
-    ped_dose_ar:       (product.ped_dose_ar        || '').trim() || (generic.ped_dose_ar  || '').trim() || null,
+    // ── Phase 5: Ped fields — pd (rx-row override) → product → generic fallback ──
+    // pd.ped_dose / pd.ped_dose_ar are the new rx-row-level ped overrides added so
+    // the CMS can set a paeds dose per-prescription-row, not just globally on the product.
+    ped_dose:          (pd.ped_dose              || '').trim() || (product.ped_dose          || '').trim() || (generic.ped_dose     || '').trim() || null,
+    ped_dose_ar:       (pd.ped_dose_ar           || '').trim() || (product.ped_dose_ar        || '').trim() || (generic.ped_dose_ar  || '').trim() || null,
     ped_shortcut:      (pd.ped_shortcut || '').trim() || (product.ped_shortcut || '').trim() || null,
     ped_wt_divisor:    product.ped_wt_divisor    ?? null,
     ped_wt_multiplier: product.ped_wt_multiplier ?? 1,

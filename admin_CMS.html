@@ -5985,8 +5985,22 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
           <div style="${alt.dose_source_pd_id ? 'opacity:0.4;pointer-events:none' : ''}">
             ${_altAdultDoseHtml}
 
-            <!-- Paediatric shortcut — only shown for paeds conditions -->
-            ${_rxIsPaeds ? `<div style="margin-top:var(--space-2)">
+            <!-- Paediatric fields — only shown for paeds conditions -->
+            ${_rxIsPaeds ? `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);margin-top:var(--space-2)">
+              <div>
+                <div class="drug-row-field-label" style="color:var(--color-info)">👶 Ped Dose (EN) <span style="font-weight:400;color:var(--color-text-tertiary);text-transform:none">— paeds view override</span></div>
+                <input type="text" value="${esc(alt.ped_dose ?? '')}" placeholder="e.g. 25–50 mg/kg/day"
+                  onblur="rxSaveDrugField('${alt.id}','ped_dose',this.value)"/>
+              </div>
+              <div>
+                <div class="drug-row-field-label" style="color:var(--color-info)">👶 Ped Dose (AR) <span style="font-weight:400;color:var(--color-text-tertiary);text-transform:none">— paeds view override</span></div>
+                <input type="text" dir="rtl" value="${esc(alt.ped_dose_ar ?? '')}" placeholder="جرعة الأطفال"
+                  style="font-family:var(--font-ar)"
+                  onblur="rxSaveDrugField('${alt.id}','ped_dose_ar',this.value)"/>
+              </div>
+            </div>
+            <div style="margin-top:var(--space-2)">
               <div class="drug-row-field-label" style="color:var(--color-info)">👶 Ped Shortcut
                 <span style="font-weight:400;color:var(--color-text-tertiary)"> — override for this prescription (leave blank to use product default)</span>
               </div>
@@ -6026,15 +6040,28 @@ function rxRenderDrugRowCard(row, orderBtns, displayIdx) {
           ${genericLabel ? `<div class="drug-row-generic">Generic: ${genericLabel}</div>` : ''}
           <div class="drug-row-fields">
             <div>
-              <div class="drug-row-field-label">Dose (EN)</div>
+              <div class="drug-row-field-label">Dose (EN) <span style="font-weight:400;color:var(--color-text-tertiary);text-transform:none">— adult view</span></div>
               <input type="text" value="${esc(row.dose ?? '')}" placeholder="e.g. 500mg twice daily"
                 onblur="rxSaveDrugField('${row.id}','dose',this.value)"/>
             </div>
             <div>
-              <div class="drug-row-field-label">Dose (AR)</div>
+              <div class="drug-row-field-label">Dose (AR) <span style="font-weight:400;color:var(--color-text-tertiary);text-transform:none">— adult view</span></div>
               <input type="text" dir="rtl" value="${esc(row.dose_ar ?? '')}" placeholder="الجرعة"
                 style="font-family:var(--font-ar)"
                 onblur="rxSaveDrugField('${row.id}','dose_ar',this.value)"/>
+            </div>
+          </div>
+          <div class="drug-row-fields" style="margin-top:var(--space-2)">
+            <div>
+              <div class="drug-row-field-label" style="color:var(--color-info)">Ped Dose (EN) <span style="font-weight:400;color:var(--color-text-tertiary);text-transform:none">— paeds view override</span></div>
+              <input type="text" value="${esc(row.ped_dose ?? '')}" placeholder="e.g. 25–50 mg/kg/day; max 90mg/kg/day"
+                onblur="rxSaveDrugField('${row.id}','ped_dose',this.value)"/>
+            </div>
+            <div>
+              <div class="drug-row-field-label" style="color:var(--color-info)">Ped Dose (AR) <span style="font-weight:400;color:var(--color-text-tertiary);text-transform:none">— paeds view override</span></div>
+              <input type="text" dir="rtl" value="${esc(row.ped_dose_ar ?? '')}" placeholder="جرعة الأطفال"
+                style="font-family:var(--font-ar)"
+                onblur="rxSaveDrugField('${row.id}','ped_dose_ar',this.value)"/>
             </div>
           </div>
           ${(row.dose || row.dose_ar) ? `<div style="margin-top:var(--space-1)">
@@ -6876,7 +6903,7 @@ async function rxLoadAllRows(rxId) {
   try {
     const [drugRows, noteBlocks, textBlocks] = await Promise.all([
       SB.fetchAll('prescription_drugs',
-        'id,prescription_id,drug_id,product_id,dose,dose_ar,dose_override_reason,ped_shortcut,drug_note,sort_order,is_alternative,alternative_to_id,dose_source_pd_id',
+        'id,prescription_id,drug_id,product_id,dose,dose_ar,ped_dose,ped_dose_ar,dose_override_reason,ped_shortcut,drug_note,sort_order,is_alternative,alternative_to_id,dose_source_pd_id',
         `&prescription_id=eq.${rxId}&order=sort_order.asc`),
       SB.fetchAll('rx_note_blocks',
         'id,prescription_id,content,content_ar,sort_order',
@@ -6926,7 +6953,7 @@ async function rxSaveDrugField(rowId, field, value) {
   // Bust the app's IndexedDB rx_cache by bumping the conditions version.
   // The app checks this version on every launch and discards stale IDB entries
   // when it changes — so edited doses appear immediately on next app load.
-  if (['dose','dose_ar','dose_override_reason','ped_shortcut'].includes(field)) {
+  if (['dose','dose_ar','ped_dose','ped_dose_ar','dose_override_reason','ped_shortcut'].includes(field)) {
     try {
       await fetch(`${SB.URL}/rest/v1/rpc/bump_conditions_version_rpc`, {
         method: 'POST',
