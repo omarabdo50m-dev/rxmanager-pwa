@@ -2767,15 +2767,9 @@ function _checkGatePassword() {
               <input type="text" id="rxf-duration" onblur="rxSave('duration',this.value)" placeholder="e.g. 7-10 days"/>
             </div>
           </div>
-          <div class="form-row-inline">
-            <div class="form-row">
-              <label class="form-label">Iteration Note (EN)</label>
-              <textarea id="rxf-iteration_note" rows="2" onblur="rxSave('iteration_note',this.value)"></textarea>
-            </div>
-            <div class="form-row">
-              <label class="form-label">Iteration Note (AR)</label>
-              <textarea id="rxf-iteration_note_ar" dir="rtl" rows="2" onblur="rxSave('iteration_note_ar',this.value)"></textarea>
-            </div>
+          <div class="form-row">
+            <label class="form-label">Iteration Note</label>
+            <textarea id="rxf-iteration_note_ar" dir="auto" rows="2" onblur="rxSave('iteration_note_ar',this.value)"></textarea>
           </div>
           <div class="form-row-inline">
             <div class="form-row">
@@ -6764,7 +6758,6 @@ async function prescriptionEdit(id) {
 
   document.getElementById('rxf-iteration_label').value    = rx.iteration_label    ?? '';
   document.getElementById('rxf-iteration_context').value  = rx.iteration_context  ?? '';
-  document.getElementById('rxf-iteration_note').value     = rx.iteration_note     ?? '';
   document.getElementById('rxf-iteration_note_ar').value  = rx.iteration_note_ar  ?? '';
   document.getElementById('rxf-duration').value           = rx.duration           ?? '';
   document.getElementById('rxf-source').value             = rx.source             ?? '';

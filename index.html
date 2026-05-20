@@ -8111,19 +8111,14 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   font-size:var(--text-sm-size);
   font-weight:600;
   color:var(--color-text-primary);
-  direction:rtl;
-  text-align:right;
+  direction:auto;
+  text-align:start;
   line-height:1.8;
-  display:none;
+  display:block;
 }
 .cv-iter-note-en {
-  font-size:var(--text-sm-size);
-  color:var(--color-text-secondary);
-  line-height:var(--text-base-height);
   display:none;
 }
-#condViewerScr.lang-ar .cv-iter-note-ar { display:block; }
-#condViewerScr.lang-en .cv-iter-note-en { display:block; }
 
 /* Source citation */
 .cv-rx-source {
@@ -14530,8 +14525,7 @@ function _cvRenderPrescription(rx, agePrefix) {
     html += `<div class="cv-iter-note-card">
       <span class="cv-iter-note-ico"><i class="ph ph-lightbulb" style="color:var(--color-caution)"></i></span>
       <div style="flex:1;min-width:0">
-        ${rx.iteration_note_ar ? `<div class="cv-iter-note-ar" dir="rtl">${esc(rx.iteration_note_ar)}</div>` : ''}
-        ${rx.iteration_note    ? `<div class="cv-iter-note-en">${esc(rx.iteration_note)}</div>`             : ''}
+        <div class="cv-iter-note-ar" dir="auto">${esc(rx.iteration_note_ar || rx.iteration_note)}</div>
       </div>
     </div>`;
   }
