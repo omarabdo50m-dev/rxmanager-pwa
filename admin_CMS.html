@@ -2703,10 +2703,6 @@ function _checkGatePassword() {
         <div class="panel-header">
           <div class="panel-title"><i class="ph ph-notepad"></i> Prescriptions</div>
           <div class="panel-actions">
-            <select id="rx-cond-filter" onchange="rxFilterList()" style="max-width:220px">
-              <option value="">All Conditions</option>
-            </select>
-            <!-- Phase 9.1: Dose audit toggle -->
             <button class="dose-audit-toggle" id="dose-audit-btn" onclick="rxToggleDoseAudit()" title="Show dose coverage audit table">
               <i class="ph ph-stethoscope"></i> Dose Audit
             </button>
@@ -2715,6 +2711,22 @@ function _checkGatePassword() {
             </button>
           </div>
         </div>
+        <!-- Search + filter bar -->
+        <div style="display:flex;gap:var(--space-2);padding:var(--space-3) 0 var(--space-2);align-items:center;flex-wrap:wrap">
+          <div class="search-wrap" style="flex:1;min-width:180px">
+            <i class="ph ph-magnifying-glass"></i>
+            <input type="search" id="rx-search" placeholder="Search condition or prescription…" oninput="rxRenderList()" autocomplete="off"/>
+          </div>
+          <select id="rx-cond-filter" onchange="rxFilterList()" style="max-width:200px;flex-shrink:0">
+            <option value="">All Conditions</option>
+          </select>
+          <div style="display:flex;gap:var(--space-2);flex-shrink:0">
+            <button class="btn btn-ghost btn-sm" onclick="rxExpandAll()" title="Expand all groups"><i class="ph ph-arrows-out-simple"></i></button>
+            <button class="btn btn-ghost btn-sm" onclick="rxCollapseAll()" title="Collapse all groups"><i class="ph ph-arrows-in-simple"></i></button>
+          </div>
+        </div>
+        <!-- Summary strip -->
+        <div id="rx-list-summary" style="display:none;padding:var(--space-1) 0 var(--space-2);font-size:var(--text-xs-size);color:var(--color-text-tertiary)"></div>
         <!-- Phase 9.1: Dose audit table (hidden by default) -->
         <div id="dose-audit-table-wrap" style="display:none"></div>
         <div id="rx-grouped-list"></div>
@@ -6342,12 +6354,35 @@ function rxRenderList() {
   const container = document.getElementById('rx-grouped-list');
   if (!container) return;
 
-  const filtered = _rxCondFilter
+  const q = (document.getElementById('rx-search')?.value || '').trim().toLowerCase();
+
+  let filtered = _rxCondFilter
     ? _PRESCRIPTIONS.filter(p => p.condition_id === _rxCondFilter)
     : [..._PRESCRIPTIONS];
 
+  // Text search: match condition name, iteration_label, or iteration_context
+  if (q) {
+    filtered = filtered.filter(rx => {
+      const condName = (_COND_MAP[rx.condition_id]?.name || '').toLowerCase();
+      const label    = (rx.iteration_label   || '').toLowerCase();
+      const ctx      = (rx.iteration_context || '').toLowerCase();
+      return condName.includes(q) || label.includes(q) || ctx.includes(q);
+    });
+  }
+
+  // Summary strip
+  const summary = document.getElementById('rx-list-summary');
+  if (summary) {
+    if (q || _rxCondFilter) {
+      summary.style.display = 'block';
+      summary.textContent = `${filtered.length} of ${_PRESCRIPTIONS.length} prescription${_PRESCRIPTIONS.length !== 1 ? 's' : ''} shown`;
+    } else {
+      summary.style.display = 'none';
+    }
+  }
+
   if (!filtered.length) {
-    container.innerHTML = `<div class="empty-state"><i class="ph ph-notepad"></i><p>No prescriptions found.</p></div>`;
+    container.innerHTML = `<div class="empty-state"><i class="ph ph-notepad"></i><p>No prescriptions found${q ? ' for "' + esc(q) + '"' : ''}.</p></div>`;
     return;
   }
 
@@ -6359,32 +6394,65 @@ function rxRenderList() {
   });
   Object.values(groups).forEach(arr => arr.sort((a,b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)));
 
-  let html = '';
   const condKeys = Object.keys(groups).sort((a,b) => {
     const na = a === '__none__' ? 'zzz' : (_COND_MAP[a]?.name ?? 'zzz');
     const nb = b === '__none__' ? 'zzz' : (_COND_MAP[b]?.name ?? 'zzz');
     return na.localeCompare(nb);
   });
 
+  // Keep track of which groups were open before re-render
+  const prevOpen = new Set();
+  container.querySelectorAll('.rx-group-body').forEach(el => {
+    if (el.style.display !== 'none') prevOpen.add(el.id);
+  });
+  // If nothing was tracked yet (first render), collapse all unless searching
+  const firstRender = prevOpen.size === 0;
+
+  let html = '';
   condKeys.forEach(cid => {
     const cond = _COND_MAP[cid];
     const condName = cond ? esc(cond.name) : '<span style="color:var(--color-text-tertiary)">No condition</span>';
     const rxList = groups[cid];
     const groupId = 'rxg-' + cid;
 
+    // Open group if: search is active, or it was open before, or it's the only group
+    const isOpen = q || (!firstRender && prevOpen.has(groupId)) || condKeys.length === 1;
+
+    const liveCt  = rxList.filter(r => r.is_published === true || r.is_published === 'true' || r.is_published === 1).length;
+    const draftCt = rxList.length - liveCt;
+    const badgeParts = [];
+    if (liveCt)  badgeParts.push(`<span style="color:var(--color-success);font-weight:700">${liveCt} live</span>`);
+    if (draftCt) badgeParts.push(`<span style="color:var(--color-text-tertiary)">${draftCt} draft</span>`);
+
     html += `
       <div class="rx-group-header" onclick="toggleRxGroup('${groupId}')">
-        <h4><i class="ph ph-stethoscope" style="color:var(--color-brand)"></i>${condName}</h4>
-        <span class="rx-group-count">${rxList.length} prescription${rxList.length !== 1 ? 's' : ''}</span>
+        <h4>
+          <i class="ph ph-caret-right" style="font-size:12px;transition:transform .15s;${isOpen ? 'transform:rotate(90deg)' : ''}"></i>
+          <i class="ph ph-stethoscope" style="color:var(--color-brand)"></i>${condName}
+        </h4>
+        <span class="rx-group-count">${badgeParts.join('<span style="color:var(--color-text-tertiary);margin:0 3px">·</span>')} <span style="color:var(--color-text-tertiary)">(${rxList.length})</span></span>
       </div>
-      <div class="rx-group-body" id="${groupId}">
+      <div class="rx-group-body" id="${groupId}" style="${isOpen ? '' : 'display:none'}">
         ${rxList.map(rx => {
-            const pub = rx.is_published === true || rx.is_published === 'true' || rx.is_published === 1 || rx.is_published === '1';
-            return `
+          const pub = rx.is_published === true || rx.is_published === 'true' || rx.is_published === 1 || rx.is_published === '1';
+          const label = rx.iteration_label?.trim() || '';
+          const ctx   = rx.iteration_context?.trim() || '';
+          // Display name: prefer label, then context, then "Untitled"
+          const displayName = label || ctx || 'Untitled';
+          const warningParts = [];
+          if (!rx.source?.trim())      warningParts.push('no source');
+          if (!rx.reviewed_by?.trim()) warningParts.push('not reviewed');
+          const warningBadge = warningParts.length
+            ? `<span title="${warningParts.join(', ')}" style="display:inline-flex;align-items:center;gap:3px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.35);color:#d97706;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;vertical-align:middle;margin-left:6px"><i class="ph ph-warning" style="font-size:10px"></i>${warningParts.join(' · ')}</span>`
+            : '';
+          const missingDoseBadge = rxHasMissingDose(rx.id)
+            ? '<span class="rx-dose-missing-badge"><i class="ph ph-warning" style="font-size:10px"></i> missing dose</span>'
+            : '';
+          return `
           <div class="rx-list-row">
             <div style="flex:1;min-width:0">
-              <div style="font-weight:600;font-size:var(--text-sm-size)">${esc(rx.iteration_label || 'Untitled')}${(!rx.source?.trim() || !rx.reviewed_by?.trim()) ? `<span title="${[!rx.source?.trim() ? 'no source' : '', !rx.reviewed_by?.trim() ? 'not reviewed' : ''].filter(Boolean).join(', ')}" style="display:inline-flex;align-items:center;gap:3px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.35);color:#d97706;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;vertical-align:middle;margin-left:6px"><i class="ph ph-warning" style="font-size:10px"></i>${[!rx.source?.trim() ? 'no source' : '', !rx.reviewed_by?.trim() ? 'not reviewed' : ''].filter(Boolean).join(' · ')}</span>` : ''}${rxHasMissingDose(rx.id) ? '<span class="rx-dose-missing-badge"><i class="ph ph-warning" style="font-size:10px"></i> missing dose</span>' : ''}</div>
-              ${rx.iteration_context ? `<div class="rx-list-meta">${esc(rx.iteration_context)}</div>` : ''}
+              <div style="font-weight:600;font-size:var(--text-sm-size)">${esc(displayName)}${warningBadge}${missingDoseBadge}</div>
+              ${label && ctx ? `<div class="rx-list-meta">${esc(ctx)}</div>` : ''}
               ${rx.duration ? `<div class="rx-list-meta"><i class="ph ph-clock" style="font-size:11px"></i> ${esc(rx.duration)}</div>` : ''}
             </div>
             <div style="display:flex;align-items:center;gap:var(--space-2);flex-shrink:0">
@@ -6396,7 +6464,7 @@ function rxRenderList() {
               </button>
             </div>
           </div>`;
-          }).join('')}
+        }).join('')}
       </div>`;
   });
 
@@ -6405,7 +6473,31 @@ function rxRenderList() {
 
 function toggleRxGroup(id) {
   const el = document.getElementById(id);
-  if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : '';
+  // Rotate caret
+  const header = el.previousElementSibling;
+  if (header) {
+    const caret = header.querySelector('.ph-caret-right');
+    if (caret) caret.style.transform = isOpen ? '' : 'rotate(90deg)';
+  }
+}
+
+function rxExpandAll() {
+  document.querySelectorAll('.rx-group-body').forEach(el => {
+    el.style.display = '';
+    const caret = el.previousElementSibling?.querySelector('.ph-caret-right');
+    if (caret) caret.style.transform = 'rotate(90deg)';
+  });
+}
+
+function rxCollapseAll() {
+  document.querySelectorAll('.rx-group-body').forEach(el => {
+    el.style.display = 'none';
+    const caret = el.previousElementSibling?.querySelector('.ph-caret-right');
+    if (caret) caret.style.transform = '';
+  });
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -7529,13 +7621,12 @@ function pickerFilter() {
   // Phase 2: _pickerDrugId lock removed — alternatives can now be cross-generic.
   // All products are visible; the picker context label shows which primary is being targeted.
 
-  // Apply text search — brand name and generic name only, word-start matching
+  // Apply text search
   if (q) {
-    // Match q against the start of any word in the field (e.g. "azo" matches "Azomycin" but NOT "Ciprodiazole")
-    const wordStart = new RegExp('(^|\\s|-)' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
     results = results.filter(r =>
-      wordStart.test(r.brand) ||
-      wordStart.test(r.genericName)
+      r.brand.toLowerCase().includes(q) ||
+      r.genericName.toLowerCase().includes(q) ||
+      r.conc.toLowerCase().includes(q)
     );
   }
 
