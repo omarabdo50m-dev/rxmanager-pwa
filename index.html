@@ -14278,7 +14278,11 @@ function _cvRenderPrescription(rx, agePrefix) {
       // Handle prescription_drug (existing logic)
       const d = item;
 
-      const isBrandDifferentFromGeneric = d.resolvedBrand && d.resolvedGeneric &&
+      // Only show generic name when brand differs from generic AND there are no
+      // mixed generics across primary + alternatives. When alternatives have a
+      // different generic (e.g. Brufen=Ibuprofen vs Cataflam=Diclofenac), showing
+      // the primary's generic name alone is misleading — suppress it entirely.
+      const isBrandDifferentFromGeneric = !_hasMixedGenerics && d.resolvedBrand && d.resolvedGeneric &&
         d.resolvedBrand.toLowerCase() !== d.resolvedGeneric.toLowerCase();
 
       // Match against _LIB for drug viewer link
