@@ -7776,6 +7776,7 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   line-height:1.7;
   display:none;
   font-family:var(--font);
+  padding-left:26px;  /* 18px (№ col) + 8px (gap) — aligns dose text with brand name */
   padding-right:24px; /* reserve space matching search icon col so text doesn't cross right line */
 }
 .cv-dose-ar {
@@ -7788,8 +7789,8 @@ html:not([data-theme="dark"]):not([data-theme="light"]) .fav-btn .fav-ico-outlin
   margin-top:var(--space-1);
   line-height:1.7;
   display:none;
-  padding-right:0; /* right edge flush — aligns with search icon via text-align:right */
-  padding-left:24px; /* mirror: don't let AR text start before the left column ends */
+  padding-right:26px; /* 18px (№ col) + 8px (gap) — aligns dose text with brand name */
+  padding-left:24px;  /* mirror: don't let AR text start before the left column ends */
 }
 /* Language visibility — controlled by condViewerScr class */
 #condViewerScr.lang-ar .cv-dose-ar { display:block; }
