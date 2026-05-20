@@ -14367,23 +14367,25 @@ function _cvRenderPrescription(rx, agePrefix) {
           // that field is the CMS signal that this alt intentionally shares the primary's
           // dose block. Without it, an alt with no dose of its own gets an empty dose
           // and sameGroup() will correctly keep it in its own group (or ungrouped).
-          // ── Paeds-aware cascade for alt: ped_dose → effectiveDose → dose (mirrors primary logic)
-          const altDoseEn = _isPaeds
-            ? ((alt.ped_dose    || '').trim() || (alt.effectiveDoseEn ?? (alt.dose    || '')).trim())
-            : (alt.effectiveDoseEn ?? (alt.dose    || '')).trim();
-          const altDoseAr = _isPaeds
-            ? ((alt.ped_dose_ar || '').trim() || (alt.effectiveDoseAr ?? (alt.dose_ar || '')).trim())
-            : (alt.effectiveDoseAr ?? (alt.dose_ar || '')).trim();
-          // Inherit from primary only when dose_source_pd_id is set AND this alt has no
-          // explicit pd-level dose override of its own. An explicit pd.dose always wins.
-          // NOTE: we check alt.dose / alt.dose_ar (the raw rx-row fields) here, NOT
-          // altDoseEn / altDoseAr — because altDoseEn may be populated from the product
-          // or generic fallback tier even when no custom dose was entered. Using the
-          // full cascade would cause the brand default to block inheritance, showing the
-          // alt's brand dose instead of the primary's dose when the checkbox is ticked.
+          // ── pd-level dose only (no product/generic fallback) ──────────────────
+          // When dose_source_pd_id is set the alt intentionally shares the primary's
+          // dose block. In that case we must NOT let the product/generic fallback tier
+          // populate altDoseEn/Ar — otherwise the brand default blocks inheritance even
+          // though no custom dose was ever typed for this alt.
           const _pdDoseEn = (alt.dose    || '').trim();
           const _pdDoseAr = (alt.dose_ar || '').trim();
-          const inheritFromPrimary = !!alt.dose_source_pd_id && !_pdDoseEn && !_pdDoseAr;
+          const _suppressCascade = !!alt.dose_source_pd_id && !_pdDoseEn && !_pdDoseAr;
+
+          // ── Paeds-aware cascade for alt: ped_dose → effectiveDose → dose (mirrors primary logic)
+          // When _suppressCascade is true, force empty so inheritFromPrimary kicks in below.
+          const altDoseEn = _suppressCascade ? '' : (_isPaeds
+            ? ((alt.ped_dose    || '').trim() || (alt.effectiveDoseEn ?? (alt.dose    || '')).trim())
+            : (alt.effectiveDoseEn ?? (alt.dose    || '')).trim());
+          const altDoseAr = _suppressCascade ? '' : (_isPaeds
+            ? ((alt.ped_dose_ar || '').trim() || (alt.effectiveDoseAr ?? (alt.dose_ar || '')).trim())
+            : (alt.effectiveDoseAr ?? (alt.dose_ar || '')).trim());
+
+          const inheritFromPrimary = _suppressCascade;
           const effectiveDoseEn = altDoseEn || (inheritFromPrimary ? primaryDoseEn : '');
           const effectiveDoseAr = altDoseAr || (inheritFromPrimary ? primaryDoseAr : '');
           return {
