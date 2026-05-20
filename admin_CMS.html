@@ -6928,7 +6928,7 @@ async function rxSaveDrugField(rowId, field, value) {
   // when it changes — so edited doses appear immediately on next app load.
   if (['dose','dose_ar','dose_override_reason','ped_shortcut'].includes(field)) {
     try {
-      await fetch(`${SB.URL}/rest/v1/rpc/bump_conditions_version`, {
+      await fetch(`${SB.URL}/rest/v1/rpc/bump_conditions_version_rpc`, {
         method: 'POST',
         headers: SB._writeHeaders({ 'Content-Type': 'application/json' }),
         body: '{}',
