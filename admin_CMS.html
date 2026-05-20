@@ -6936,6 +6936,19 @@ async function rxSaveDrugField(rowId, field, value) {
     } catch(e) {
       console.warn('[rxSaveDrugField] bump_conditions_version failed (non-fatal):', e.message);
     }
+
+    // FIX: Also clear the app's localStorage version sentinel so the next app
+    // load always sees condChanged=true and clears its IDB rx_cache.
+    // Without this, the app can store the bumped conditions_ts after the first
+    // post-edit load, then serve stale cached doses on subsequent refreshes
+    // (until the 90s TTL expires). Since the CMS and app share the same origin,
+    // this localStorage write is visible to the app immediately.
+    try {
+      localStorage.removeItem('rxmgr_conditions_version');
+      console.log('[rxSaveDrugField] cleared rxmgr_conditions_version — app will re-fetch on next load');
+    } catch(e) {
+      console.warn('[rxSaveDrugField] could not clear conditions version key:', e.message);
+    }
   }
 }
 

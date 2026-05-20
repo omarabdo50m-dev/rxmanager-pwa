@@ -12210,7 +12210,7 @@ async function _rxReadCache(conditionId) {
 }
 
 // ── Phase 1: Cache Staleness Gate (async version for Phase 6B) ──────────────
-const RX_CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
+const RX_CACHE_TTL_MS = 90 * 1000; // 90 seconds — short TTL so CMS dose edits appear quickly
 
 // ── Session-level rx_cache invalidation ──────────────────────────────────────
 // Set to Date.now() by checkContentVersion() whenever a conditions_ts change is
@@ -12222,6 +12222,13 @@ let _rxCacheInvalidatedAt = 0;
 // Tracks when checkContentVersion() last ran — used by the visibilitychange
 // listener to avoid re-checking too frequently on rapid app switches.
 let _lastVersionCheckAt = 0;
+
+// Maximum age of the last version check before we refuse to serve zero-skeleton
+// cache and instead re-verify the version first. This closes the gap where the
+// app stores the new conditions_ts in localStorage after one load, then on the
+// next hard refresh sees condChanged=false (no cache clear) and serves stale
+// dose data for the full TTL window.
+const VERSION_CHECK_MAX_AGE_MS = 60 * 1000; // 60 seconds
 
 // Returns true if the IDB payload for conditionId is fresh enough to skip a
 // network fetch. Must be awaited — IDB read is always async.
@@ -13184,7 +13191,14 @@ async function openConditionViewer(conditionId, onVisible) {
   // Condition: cache is fresh AND has fully-resolved prescriptions (from bulk
   // fetch or previous individual fetch). Render full content immediately with
   // zero skeleton — no loading state, no network call.
-  if (_cacheIsFresh && _hasResolvedCache) {
+  //
+  // FIX: Also require that a version check ran recently (within VERSION_CHECK_MAX_AGE_MS).
+  // Without this guard, the app can store the bumped conditions_ts after one load,
+  // then on the next hard refresh see condChanged=false and serve stale dose data
+  // from IDB for the entire TTL window — even after a CMS edit.
+  const _versionCheckAge = Date.now() - _lastVersionCheckAt;
+  const _versionIsRecent = _versionCheckAge < VERSION_CHECK_MAX_AGE_MS;
+  if (_cacheIsFresh && _hasResolvedCache && _versionIsRecent) {
     _cvAdultData = _patchedAdult;
     _cvPaedsData = _patchedPaeds;
     const _ageToShow  = _cvAdultData ? 'adult' : 'paeds';
