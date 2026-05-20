@@ -14278,13 +14278,6 @@ function _cvRenderPrescription(rx, agePrefix) {
       // Handle prescription_drug (existing logic)
       const d = item;
 
-      // Only show generic name when brand differs from generic AND there are no
-      // mixed generics across primary + alternatives. When alternatives have a
-      // different generic (e.g. Brufen=Ibuprofen vs Cataflam=Diclofenac), showing
-      // the primary's generic name alone is misleading — suppress it entirely.
-      const isBrandDifferentFromGeneric = !_hasMixedGenerics && d.resolvedBrand && d.resolvedGeneric &&
-        d.resolvedBrand.toLowerCase() !== d.resolvedGeneric.toLowerCase();
-
       // Match against _LIB for drug viewer link
       const libDrug = _LIB.find(lib => lib.name && d.resolvedGeneric &&
         lib.name.toLowerCase() === d.resolvedGeneric.toLowerCase()) || null;
@@ -14298,6 +14291,12 @@ function _cvRenderPrescription(rx, agePrefix) {
       ].filter(Boolean).map(g => g.toLowerCase());
       const _hasMixedGenerics = new Set(_allGenerics).size > 1;
       const tagLabel = (!_hasMixedGenerics && (libDrug?.group || libDrug?.subgroup)) || null;
+
+      // Only show generic name when brand differs AND all drugs share the same generic.
+      // Mixed generics (e.g. Ibuprofen + Diclofenac) — suppress to avoid showing
+      // only the primary's generic as if it represents the whole group.
+      const isBrandDifferentFromGeneric = !_hasMixedGenerics && d.resolvedBrand && d.resolvedGeneric &&
+        d.resolvedBrand.toLowerCase() !== d.resolvedGeneric.toLowerCase();
 
       // ── Grouped-dose rendering ──────────────────────────────────────
       // Build a flat list: [primary, ...alternatives].
