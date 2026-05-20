@@ -12113,7 +12113,7 @@ const VERSION_KEY_LIBRARY    = 'rxmgr_library_version';
 //
 // Bump history:
 //   1.0.0 — initial (Phase 03)
-const CACHE_SCHEMA_VERSION = '1.1.0';
+const CACHE_SCHEMA_VERSION = '1.2.0';
 const CACHE_VERSION_KEY    = 'rxmgr_cache_schema_version';
 
 // Wipes all local caches when the schema version changes.
@@ -14129,13 +14129,19 @@ function _renderBrandLine({ brand, brandAr, conc, formula, libDrugId, isPrimary,
 // Renders the paediatric dose block for a single drug row.
 // Priority: ped_shortcut (pre-rendered Arabic string) → computed Wt/X fallback.
 function _renderPedDoseBlock(d) {
-  const shortcut    = d.ped_shortcut;
-  const divisor     = d.ped_wt_divisor;
-  const multiplier  = d.ped_wt_multiplier || 1;
-  const unit        = d.ped_wt_unit || 'ml';
-  const freq        = d.ped_freq;
+  // Resolve product from _PRODS cache as fallback when ped fields are missing
+  // from the resolved item (can happen when IDB cache was written before a product update).
+  const _prod = (d.product_id && _PRODS.length)
+    ? _PRODS.find(p => p.id === d.product_id)
+    : null;
+
+  const shortcut    = d.ped_shortcut    || _prod?.pedShortcut  || null;
+  const divisor     = d.ped_wt_divisor  ?? _prod?.pedWtDivisor ?? null;
+  const multiplier  = d.ped_wt_multiplier ?? _prod?.pedWtMultiplier ?? 1;
+  const unit        = d.ped_wt_unit     || _prod?.pedWtUnit    || 'ml';
+  const freq        = d.ped_freq        || _prod?.pedFreq      || null;
   const freqAr      = freq ? (PED_FREQ_AR[freq] || freq) : '';
-  const loadingDose = d.ped_loading_dose;
+  const loadingDose = d.ped_loading_dose || _prod?.pedLoadingDose || null;
 
   let html = '';
 
@@ -14303,8 +14309,12 @@ function _cvRenderPrescription(rx, agePrefix) {
       // contraindicated / not-recommended / use-other-formula are intentional states, not gaps.
       const _pedClassified = ['contraindicated', 'not-recommended', 'use-other-formula']
         .includes(d.ped_status);
+      // Also check _PRODS for ped_shortcut/wt_divisor in case the resolved item is missing them
+      const _prodFallback  = (d.product_id && _PRODS.length) ? _PRODS.find(p => p.id === d.product_id) : null;
       const _pedDoseMissing = _isPaeds && !_pedClassified && !primaryDoseEn && !primaryDoseAr
-        && !d.ped_shortcut && !d.ped_wt_divisor && !d.ped_loading_dose;
+        && !d.ped_shortcut && !_prodFallback?.pedShortcut
+        && !d.ped_wt_divisor && !_prodFallback?.pedWtDivisor
+        && !d.ped_loading_dose && !_prodFallback?.pedLoadingDose;
 
       // ── Phase 4 (masterplan): normDose — collapse whitespace + lowercase for grouping keys.
       // Prevents silent grouping failures from trailing spaces or mixed capitalisation.
